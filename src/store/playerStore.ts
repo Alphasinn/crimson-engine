@@ -348,14 +348,17 @@ export const usePlayerStore = create<PlayerState>()(
             setFinesseTicks: (ticks) => set({ finesseTicksRemaining: ticks }),
 
             stabilizeIchor: () => set((state) => {
+                if (state.crucibleSealed) return state;
                 if (state.bloodShards >= 125 && state.cursedIchor >= 1) {
-                    const lastRisk = useCombatStore.getState().lastSession?.lastScentIntensity ?? 0;
+                    const lastSession = useCombatStore.getState().lastSession;
+                    const lastRisk = (lastSession && !lastSession.wasSlain) ? (lastSession.lastScentIntensity ?? 0) : 0;
                     const yieldMult = 1 + lastRisk;
                     
                     return {
                         bloodShards: state.bloodShards - 125,
                         cursedIchor: state.cursedIchor - 1,
-                        stabilizedIchor: state.stabilizedIchor + yieldMult
+                        stabilizedIchor: state.stabilizedIchor + yieldMult,
+                        crucibleSealed: true
                     };
                 }
                 return state;

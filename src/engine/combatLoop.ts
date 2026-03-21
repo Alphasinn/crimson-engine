@@ -487,7 +487,7 @@ export class CombatEngine {
                 damage = Math.min(mitigated, this.playerHp); // Cap damage to current player HP
                 this.playerHp -= damage;
                 this.lastDamageTick = this.currentTick;
-                this._scentIntensity = 0; // Reset scent on damage
+                this._scentIntensity *= 0.5; // Partial decay on damage (Option B)
                 this.log('enemy_hit', `${this.enemy.name} hits you for ${damage} damage.`, damage);
 
                 // --- Blood Siphon (v1.2 Sorcery Set Bonus) ---
