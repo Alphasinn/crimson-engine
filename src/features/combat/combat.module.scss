@@ -393,7 +393,32 @@
     animation: bloodPulse 1.5s ease-in-out infinite;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: $space-3;
+}
+
+.respawnBtn {
+    margin-top: $space-2;
+    padding: $space-2 $space-4;
+    background: $color-blood-light;
+    border: 1px solid $color-gold;
+    border-radius: $radius-md;
+    color: white;
+    font-family: $font-heading;
+    font-size: $font-size-md;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all $transition-normal;
+    box-shadow: 0 0 10px rgba(196, 30, 58, 0.4);
+
+    &:hover {
+        background: $color-crimson;
+        transform: translateY(-1px);
+        box-shadow: 0 0 15px rgba(196, 30, 58, 0.6), 0 0 5px $color-gold;
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
 }
 
 .persistentHpArea {

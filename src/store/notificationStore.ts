@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type NotificationType = 'xp' | 'loot';
+export type NotificationType = 'xp' | 'loot' | 'death';
 
 export interface NotificationItem {
     id: string;

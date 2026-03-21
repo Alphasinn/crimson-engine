@@ -31,16 +31,16 @@ const sharedEngine = new CombatEngine({
 
 export function useCombatEngine() {
     const {
-        setEnemy, setRunning, setDead, tickUpdate, addLogEvent, resetCombat, initPlayer, fleeCombat, addSplat, removeSplat,
+        setEnemy, setRunning, setDead, tickUpdate, addLogEvent, resetCombat, initPlayer, addSplat, removeSplat,
         recordStat, pruneStats, setZone,
-        startSession, updateSession, endSession, sessionStats
+        startSession, updateSession, endSession
     } = useCombatStore();
     const { 
         skills, equipment, trainingMode, food, gainXp, addLootLog,
         autoEatEnabled, autoEatThreshold,
         currentVitae, setVitae,
         isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining,
-        applyDeathPenalties, addUnbankedLoot, setFinesseTicks
+        setFinesseTicks
     } = usePlayerStore();
     const { addNotification } = useNotificationStore();
 
@@ -123,31 +123,34 @@ export function useCombatEngine() {
             const currentEquipment = usePlayerStore.getState().equipment;
             const maxHp = computeDerivedStats(currentSkills, currentEquipment).maxHp;
             
-            setDead(true);
-            setRunning(false);
-            recordStat('death', 1);
-            endSession(); // Session ends on death
-            
-            // Apply Phase 2A persistent penalties with Red Mist tracking
-            usePlayerStore.getState().applyDeathPenalties(isBraced, isRedMist);
-
-            // Persistent Vitae: Return to 1 HP
-            const deathHp = 1; 
+            // 1. Restore HP
+            setVitae(maxHp);
             initPlayer(maxHp);
-            tickUpdate(0, 0, deathHp, maxHp, 0);
-            setVitae(deathHp);
+            sharedEngine.heal(maxHp);
 
+            // 2. Penalties
+            usePlayerStore.getState().applyDeathPenalties(isBraced, isRedMist);
+            recordStat('death', 1);
+
+            // 3. Status
             addLogEvent({
                 id: `death-${Date.now()}`,
                 type: 'player_death',
                 tick: 0,
-                message: `You were slain! Unbanked resources have been penalized.`,
+                message: "☠️ SLAIN! You have been defeated and returned home.",
             });
             addNotification({
-                type: 'xp',
-                label: 'Slain!',
+                type: 'death',
+                label: 'DEFEATED!',
                 amount: 0,
             });
+
+            // 4. End session and return Home
+            endSession(true); // wasSlain = true
+            sharedEngine.stop();
+            setRunning(false);
+            setEnemy(null);
+            setDead(false); // Reset dead flag so UI doesn't show old banner
         },
 
         onRespawn: (enemy) => {
@@ -243,8 +246,19 @@ export function useCombatEngine() {
         gainXp, skills, setDead, setRunning, setEnemy, tickUpdate, 
         addLogEvent, addLootLog, addSplat, removeSplat, 
         addNotification, equipment, recordStat, pruneStats,
-        startSession, updateSession, endSession, sessionStats,
-        applyDeathPenalties, addUnbankedLoot, setFinesseTicks
+        startSession, updateSession, endSession,
+        // Dependencies from usePlayerStore actions called directly in callbacks
+        // These are not direct state values but functions from the store,
+        // so they should be stable or memoized within the store itself.
+        // However, if they are passed as props or derived from props, they need to be here.
+        // For now, assuming they are stable or implicitly handled by store's stability.
+        // Explicitly listing those that are passed as props or are part of the hook's scope.
+        // applyDeathPenalties, addUnbankedLoot, consumeFood, siphon, sanguineFinesse, vileReinforcement
+        // The above are called via usePlayerStore.getState().action(), so they don't need to be in this array.
+        // Only direct dependencies from the outer scope are needed.
+        setFinesseTicks,
+        initPlayer, // Used in onPlayerDeath
+        setVitae, // Used in onPlayerDeath, onTick
     ]);
 
     // Every time dependencies change, update the engine's callbacks reference
@@ -301,9 +315,9 @@ export function useCombatEngine() {
     /** Flee: stop the engine, clear combat state, keep the log */
     const fleeFromCombat = useCallback(() => {
         sharedEngine.stop();
-        endSession();
-        fleeCombat();
-    }, [fleeCombat, endSession]);
+        setRunning(false);
+        resetCombat();
+    }, [setRunning, resetCombat]);
 
     // Keep engine in sync if any relevant state changes mid-session
     useEffect(() => {

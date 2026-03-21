@@ -35,6 +35,21 @@
         border-color: rgba($color-gold, 0.4);
         .amount { color: $color-gold; }
     }
+
+    &.type-death {
+        background: rgba(139, 0, 0, 0.9);
+        border: 2px solid #ff0000;
+        box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+        animation: toastFloatUpDeath 4s ease-out forwards;
+        
+        .label {
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    }
 }
 
 .iconWrap {
@@ -92,6 +107,30 @@
         100% {
             opacity: 0;
             transform: translateY(-60px) scale(0.9);
+        }
+    }
+
+    @keyframes toastFloatUpDeath {
+        0% {
+            opacity: 0;
+            transform: translateY(200px) scale(0.5);
+        }
+        15% {
+            opacity: 1;
+            transform: translateY(0) scale(1.2);
+            filter: brightness(2);
+        }
+        25% {
+            transform: translateY(0) scale(1);
+            filter: brightness(1);
+        }
+        85% {
+            opacity: 1;
+            transform: translateY(-10px);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-40px);
         }
     }
 }

@@ -59,8 +59,12 @@ export const SessionSummaryModal: React.FC<Props> = ({ active, onClose }) => {
     return (
         <div className={styles.overlay} onClick={handleClose}>
             <div className={styles.modal} onClick={e => e.stopPropagation()}>
-                <h2 className={styles.title}>Hunting Gains</h2>
-                <div className={styles.subtitle}>{active ? 'Current Hunt' : 'Session Complete'}</div>
+                <h2 className={`${styles.title} ${data.wasSlain ? styles.slainTitle : ''}`}>
+                    {data.wasSlain ? '☠️ SLAIN IN COMBAT' : 'Hunting Gains'}
+                </h2>
+                <div className={styles.subtitle}>
+                    {active ? 'Current Hunt' : (data.wasSlain ? 'DEFEATED' : 'Session Complete')}
+                </div>
 
                 <div className={styles.statsGrid}>
                     <div className={styles.statCard}>

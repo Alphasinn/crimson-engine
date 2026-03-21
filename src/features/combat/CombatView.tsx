@@ -54,7 +54,7 @@ function CombatLog() {
 
 export function CombatView() {
     const {
-        selectedZone, activeEnemy, isRunning, isDead,
+        selectedZone, activeEnemy, isRunning,
         playerHp, playerMaxHp, enemyHp, enemyMaxHp,
         playerMeter, enemyMeter, lastSession
     } = useCombatStore();
@@ -223,12 +223,6 @@ export function CombatView() {
                     )}
                 </div>
 
-                {isDead && (
-                    <div className={styles.deadBanner}>
-                        <div>☠️ You have been slain</div>
-                        <div className={styles.deadSubtext}>Pending loot was lost</div>
-                    </div>
-                )}
 
                 {/* Persistent Vitae Bar */}
                 <div className={styles.persistentHpArea}>

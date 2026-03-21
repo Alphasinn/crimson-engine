@@ -315,6 +315,9 @@ export class CombatEngine {
             this.resolveEnemyAttack();
         }
 
+        // --- Phase 2A: Early exit if dead to prevent onTick overwriting recovery HP ---
+        if (this.playerHp <= 0) return;
+
         // --- Auto-eat check ---
         if (this.autoEatEnabled && (this.playerHp / this.playerMaxHp < this.autoEatThreshold)) {
             this.tryAutoEat();

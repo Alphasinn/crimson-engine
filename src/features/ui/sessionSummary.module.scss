@@ -45,6 +45,11 @@
     text-transform: uppercase;
     letter-spacing: 2px;
     text-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+
+    &.slainTitle {
+        color: #c41e3a;
+        text-shadow: 0 0 20px #8b0000, 0 0 10px #c41e3a;
+    }
 }
 
 .subtitle {

@@ -11,6 +11,7 @@ import iconMagic from '../../assets/icons/blood_magic.png';
 
 export function NotificationToast({ item }: { item: NotificationItem }) {
     const isXp = item.type === 'xp';
+    const isDeath = item.type === 'death';
     
     // Simple helper to get icons for common skill names
     const getSkillIcon = (label: string) => {
@@ -24,7 +25,7 @@ export function NotificationToast({ item }: { item: NotificationItem }) {
         return null;
     };
 
-    const icon = isXp ? getSkillIcon(item.label) : item.icon;
+    const icon = isDeath ? '☠️' : (isXp ? getSkillIcon(item.label) : item.icon);
 
     return (
         <div className={`${styles.toast} ${styles[`type-${item.type}`]}`}>
@@ -36,7 +37,7 @@ export function NotificationToast({ item }: { item: NotificationItem }) {
                 )}
             </div>
             
-            <div className={styles.amount}>+{item.amount}</div>
+            {!isDeath && <div className={styles.amount}>+{item.amount}</div>}
             <div className={styles.label}>{item.label}</div>
         </div>
     );

@@ -53,7 +53,7 @@ interface CombatState {
 
     // Actions
     setZone: (zone: Zone) => void;
-    setEnemy: (enemy: Enemy) => void;
+    setEnemy: (enemy: Enemy | null) => void;
     setRunning: (running: boolean) => void;
     setDead: (dead: boolean) => void;
     tickUpdate: (playerMeter: number, enemyMeter: number, playerHp: number, enemyHp: number, tick: number) => void;
@@ -72,7 +72,7 @@ interface CombatState {
     // Session Actions
     startSession: () => void;
     updateSession: (patch: Partial<SessionStats> | ((prev: SessionStats) => Partial<SessionStats>)) => void;
-    endSession: () => void;
+    endSession: (wasSlain?: boolean) => void;
     clearLastSession: () => void;
 }
 
@@ -101,13 +101,20 @@ export const useCombatStore = create<CombatState>()((set) => ({
 
     setZone: (zone) => set({ selectedZone: zone, isRunning: false, activeEnemy: null }),
 
-    setEnemy: (enemy) => set({
-        activeEnemy: enemy,
-        enemyHp: enemy.stats.hp,
-        enemyMaxHp: enemy.stats.hp,
-        playerMeter: 0,
-        enemyMeter: 0,
-    }),
+    setEnemy: (enemy) => {
+        if (!enemy) {
+            set({ activeEnemy: null, enemyHp: 0, enemyMaxHp: 0, playerMeter: 0, enemyMeter: 0 });
+            return;
+        }
+        set({
+            activeEnemy: enemy,
+            enemyHp: enemy.stats.hp,
+            enemyMaxHp: enemy.stats.hp,
+            playerMeter: 0,
+            enemyMeter: 0,
+            isRunning: false, // Don't auto-start
+        });
+    },
 
     setRunning: (running) => set({ isRunning: running }),
 
@@ -206,9 +213,9 @@ export const useCombatStore = create<CombatState>()((set) => ({
         };
     }),
 
-    endSession: () => set((state) => {
+    endSession: (wasSlain?: boolean) => set((state) => {
         if (!state.sessionStats) return {};
-        const lastSession = { ...state.sessionStats, endTime: Date.now() };
+        const lastSession = { ...state.sessionStats, endTime: Date.now(), wasSlain };
         return {
             sessionStats: null,
             lastSession

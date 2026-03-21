@@ -256,6 +256,7 @@ export interface SessionStats {
     xpGained: number;
     lootCount: number;
     lootItems: LootDrop[];
+    wasSlain?: boolean;
 }
 
 // --- Inventory Item (stub for future expansion) ---
