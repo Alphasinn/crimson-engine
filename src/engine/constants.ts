@@ -117,3 +117,9 @@ export const RED_MIST_THRESHOLD = 0.30;
 export const RED_MIST_DMG_BONUS = 1.20;
 /** Additive drop rate bonus for Cursed Ichor during Red Mist */
 export const RED_MIST_ICHOR_MOD = 0.10;
+
+// --- Phase 2B Progression ---
+/** Maximum additive Scent accumulation penalty from gear (50%) */
+export const MAX_SCENT_SENSITIVITY = 0.50;
+/** Scent accumulation penalty per refinement level (2% multiplicative or additive) */
+export const REFINEMENT_SCENT_MULT = 0.02;

@@ -92,6 +92,9 @@ export interface EquipmentItem {
     minDamagePct?: number;        // 0.0–1.0 fraction of max hit as minimum damage
     specialTrait?: string;
     specialTraitValue?: number;
+    // Phase 2B Progression
+    refinement: number;           // 0-5
+    specPath?: 'sanguine' | 'vile';
 }
 
 export type PlayerEquipment = Partial<Record<EquipmentSlot, EquipmentItem>>;
@@ -221,6 +224,7 @@ export interface DerivedStats {
     siphonAmount: number;
     armPen: number;              // Total armor pen from gear/weapon
     minDamagePct: number;        // Highest min damage floor from gear
+    scentSensitivity: number;    // Phase 2B: 0.0 to 0.50
     weaponStyle: CombatStyle;   // derived from equipped weapon, not training mode
     weaponSubStyle: Weakness;
 }

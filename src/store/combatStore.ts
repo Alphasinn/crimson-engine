@@ -5,6 +5,7 @@
 // =============================================================================
 
 import { create } from 'zustand';
+import { usePlayerStore } from './playerStore';
 import type { Zone, Enemy, CombatEvent, PlayerSkills, StatWindowEntry, SessionStats } from '../engine/types';
 
 const MAX_LOG_ENTRIES = 120;
@@ -72,7 +73,7 @@ interface CombatState {
     // Session Actions
     startSession: () => void;
     updateSession: (patch: Partial<SessionStats> | ((prev: SessionStats) => Partial<SessionStats>)) => void;
-    endSession: (wasSlain?: boolean) => void;
+    endSession: (wasSlain?: boolean, tickCount?: number, redMistSurvived?: boolean) => void;
     clearLastSession: () => void;
 }
 
@@ -213,9 +214,21 @@ export const useCombatStore = create<CombatState>()((set) => ({
         };
     }),
 
-    endSession: (wasSlain?: boolean) => set((state) => {
+    endSession: (wasSlain?: boolean, tickCount?: number, redMistSurvived?: boolean) => set((state) => {
         if (!state.sessionStats) return {};
         const lastSession = { ...state.sessionStats, endTime: Date.now(), wasSlain };
+
+        // Phase 2B: Crucible Seal Reset Logic
+        // 1. Never reset on death.
+        // 2. Reset if 50+ ticks or Red Mist survived.
+        if (!wasSlain) {
+            const duration = tickCount ?? state.currentTick;
+            if (duration >= 50 || redMistSurvived) {
+                // Bridge to playerStore
+                usePlayerStore.getState().resetCrucibleSeal();
+            }
+        }
+
         return {
             sessionStats: null,
             lastSession

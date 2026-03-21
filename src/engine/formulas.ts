@@ -24,6 +24,8 @@ import {
     STYLE_FREQ_INTENSITY,
     CRUSH_FRACTURE_RATE,
     DAMAGE_FLOOR_PERCENT,
+    MAX_SCENT_SENSITIVITY,
+    REFINEMENT_SCENT_MULT,
 } from './constants';
 
 const HEAVY_WEAKNESS_MAX_HIT_BONUS = 0.25; 
@@ -486,6 +488,12 @@ export function computeDerivedStats(
         (isHeavyWeapon ? 0.35 : 0)
     );
 
+    // --- Phase 2B: Scent Sensitivity ---
+    const totalRefinement = Object.values(equipment).reduce(
+        (sum, item) => sum + (item?.refinement ?? 0), 0
+    );
+    const scentSensitivity = Math.min(MAX_SCENT_SENSITIVITY, totalRefinement * REFINEMENT_SCENT_MULT);
+
     return {
         maxHp: calcMaxHp(skills.vitae.level),
         accuracyRating,
@@ -503,6 +511,7 @@ export function computeDerivedStats(
         siphonAmount,
         armPen,
         minDamagePct,
+        scentSensitivity,
         weaponStyle,
         weaponSubStyle: subStyle,
     };

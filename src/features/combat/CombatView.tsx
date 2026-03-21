@@ -10,6 +10,7 @@ import { SessionReport } from './SessionReport';
 import { IdleGainPanel } from '../ui/IdleGainPanel';
 import { SessionSummaryModal } from '../ui/SessionSummaryModal';
 import { NotificationContainer } from '../ui/NotificationContainer';
+import { CruciblePanel } from '../ui/CruciblePanel';
 import ZONES from '../../data/zones';
 import type { Zone, Enemy, TrainingMode } from '../../engine/types';
 import {
@@ -115,8 +116,8 @@ export function CombatView() {
     // Which zone card has its enemy roster expanded
     const [expandedZoneId, setExpandedZoneId] = useState<string | null>(null);
 
-    // 'arena' = watching the fight, 'home' = zone-select screen (combat may still run)
-    const [viewMode, setViewMode] = useState<'arena' | 'home'>('home');
+    // 'arena' = watching the fight, 'home' = zone-select screen, 'crucible' = progression
+    const [viewMode, setViewMode] = useState<'arena' | 'home' | 'crucible'>('home');
 
     // Stats modals
     const [showGains, setShowGains] = useState(false);
@@ -238,6 +239,22 @@ export function CombatView() {
                         label=""
                     />
                 </div>
+
+                {/* Phase 2B: Crucible Navigation */}
+                <div className={styles.navSection}>
+                    <button 
+                        className={`${styles.navBtn} ${viewMode === 'crucible' ? styles.active : ''}`}
+                        onClick={() => setViewMode(viewMode === 'crucible' ? 'home' : 'crucible')}
+                    >
+                        ⚒️ THE CRUCIBLE
+                    </button>
+                    <button 
+                        className={`${styles.navBtn} ${viewMode === 'home' ? styles.active : ''}`}
+                        onClick={() => setViewMode('home')}
+                    >
+                        🗺️ HUNTING GROUNDS
+                    </button>
+                </div>
             </div>
 
             {/* Center — Zone Select or Active Fight */}
@@ -255,7 +272,13 @@ export function CombatView() {
                     </div>
                 )}
 
-                {showZoneGrid && (
+                {viewMode === 'crucible' && (
+                    <div className={styles.crucibleArea}>
+                        <CruciblePanel />
+                    </div>
+                )}
+
+                {viewMode === 'home' && (
                     <div className={styles.zoneGrid}>
                         <div className={styles.zoneGridTitle}>Select a Hunting Ground</div>
                         {ZONES.map(z => {

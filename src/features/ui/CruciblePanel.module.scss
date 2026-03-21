@@ -1,0 +1,219 @@
+.root {
+    background: linear-gradient(135deg, #1a0a0a 0%, #0d0404 100%);
+    border: 1px solid #4a1a1a;
+    border-radius: 8px;
+    padding: 20px;
+    color: #f0e6d3;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+
+    &.sealed {
+        border-color: #2a1a1a;
+    }
+}
+
+.header {
+    margin-bottom: 24px;
+    border-bottom: 1px solid rgba(139, 0, 0, 0.2);
+    padding-bottom: 16px;
+
+    .titleArea {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+
+        h3 {
+            margin: 0;
+            color: #ff3355;
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 51, 85, 0.3);
+        }
+    }
+
+    .desc {
+        font-size: 0.9rem;
+        color: #9a8fa0;
+        margin: 0;
+    }
+}
+
+.sealStatus {
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+
+    &.readyText {
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        background: rgba(34, 197, 94, 0.1);
+        animation: pulse 2s infinite;
+    }
+
+    &.sealedText {
+        color: #ff3355;
+        border: 1px solid rgba(255, 51, 85, 0.3);
+        background: rgba(255, 51, 85, 0.1);
+    }
+}
+
+.crucibleGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.section {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+
+    .sectionTitle {
+        margin: 0 0 12px 0;
+        font-size: 0.85rem;
+        color: #d4af37;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+}
+
+.gearList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gearItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(139, 0, 0, 0.05);
+    padding: 8px 12px;
+    border-radius: 4px;
+
+    .gearInfo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .itemName {
+            font-size: 0.9rem;
+            color: #f0e6d3;
+        }
+
+        .refinement {
+            color: #ff3355;
+            font-weight: bold;
+            font-family: monospace;
+            background: rgba(255, 51, 85, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+    }
+}
+
+.transmuteArea {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .yieldInfo {
+        display: flex;
+        flex-direction: column;
+
+        .bonus {
+            color: #22c55e;
+            font-size: 1.1rem;
+        }
+
+        small {
+            font-size: 0.75rem;
+            color: #7a6f80;
+        }
+    }
+}
+
+.refineBtn, .transmuteBtn, .tierShiftBtn {
+    background: linear-gradient(to bottom, #4a1a1a, #2a0a0a);
+    border: 1px solid #8b0000;
+    color: #f0e6d3;
+    padding: 6px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+
+    &:hover:not(:disabled) {
+        background: #8b0000;
+        box-shadow: 0 0 10px rgba(139, 0, 0, 0.5);
+        transform: translateY(-1px);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        filter: grayscale(1);
+    }
+}
+
+.tierShiftBtn {
+    width: 100%;
+    padding: 12px;
+    font-weight: bold;
+}
+
+.hint {
+    font-size: 0.75rem;
+    color: #7a6f80;
+    margin: 8px 0 0 0;
+    text-align: center;
+}
+
+.sealOverlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(13, 4, 4, 0.6);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    pointer-events: none;
+
+    .sealMessage {
+        background: #0d0404;
+        border: 2px solid #ff3355;
+        padding: 20px 40px;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 0 30px rgba(255, 51, 85, 0.4);
+        transform: rotate(-5deg);
+
+        span {
+            color: #ff3355;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        small {
+            color: #9a8fa0;
+            margin-top: 8px;
+            font-size: 0.8rem;
+        }
+    }
+}
+
+@keyframes pulse {
+    0% { opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
+}

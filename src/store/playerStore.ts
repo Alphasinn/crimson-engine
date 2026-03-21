@@ -53,6 +53,7 @@ interface PlayerState {
     permanentArmorBonus: number;
     redMistIchorDrops: number;
     redMistDeaths: number;
+    crucibleSealed: boolean;
     // Actions
     gainXp: (skill: SkillName, amount: number) => void;
     equipItem: (item: EquipmentItem) => void;
@@ -82,6 +83,9 @@ interface PlayerState {
     sanguineFinesse: () => void;
     vileReinforcement: () => void;
     tierShift: () => void;
+    // Phase 2B Crucible
+    refineGear: (slot: keyof PlayerEquipment) => void;
+    resetCrucibleSeal: () => void;
     resetPlayer: () => void;
 }
 
@@ -112,6 +116,7 @@ export const usePlayerStore = create<PlayerState>()(
             permanentArmorBonus: 0,
             redMistIchorDrops: 0,
             redMistDeaths: 0,
+            crucibleSealed: false,
 
             gainXp: (skill: SkillName, amount: number) => {
                 set((state) => {
@@ -353,37 +358,69 @@ export const usePlayerStore = create<PlayerState>()(
             }),
 
             sanguineFinesse: () => set((state) => {
+                if (state.crucibleSealed) return state;
                 if (state.bloodShards >= 15) {
                     return { 
                         bloodShards: state.bloodShards - 15,
-                        finesseTicksRemaining: 200 // 200 Player attack ticks per spec
+                        finesseTicksRemaining: 200,
+                        crucibleSealed: true
                     };
                 }
                 return state;
             }),
 
             vileReinforcement: () => set((state) => {
+                if (state.crucibleSealed) return state;
                 if (state.bloodShards >= 30 && state.graveSteel >= 10) {
                     return { 
                         bloodShards: state.bloodShards - 30,
                         graveSteel: state.graveSteel - 10,
                         permanentArmorBonus: state.permanentArmorBonus + 5,
-                        isBraced: true
+                        isBraced: true,
+                        crucibleSealed: true
                     };
                 }
                 return state;
             }),
 
             tierShift: () => set((state) => {
+                if (state.crucibleSealed) return state;
                 if (state.bloodShards >= 200 && state.stabilizedIchor >= 3 && state.graveSteel >= 25) {
                     return {
                         bloodShards: state.bloodShards - 200,
                         stabilizedIchor: state.stabilizedIchor - 3,
-                        graveSteel: state.graveSteel - 25
+                        graveSteel: state.graveSteel - 25,
+                        crucibleSealed: true
                     };
                 }
                 return state;
             }),
+
+            refineGear: (slot) => set((state) => {
+                if (state.crucibleSealed) return state;
+                const item = state.equipment[slot];
+                if (!item) return state;
+                
+                const currentRefinement = item.refinement || 0;
+                if (currentRefinement >= 5) return state;
+
+                // Simple scaling cost for refinement (example: 25 shards + 5 steel per level)
+                const shardCost = 25 * (currentRefinement + 1);
+                const steelCost = 5 * (currentRefinement + 1);
+
+                if (state.bloodShards >= shardCost && state.graveSteel >= steelCost) {
+                    const newItem = { ...item, refinement: currentRefinement + 1 };
+                    return {
+                        bloodShards: state.bloodShards - shardCost,
+                        graveSteel: state.graveSteel - steelCost,
+                        equipment: { ...state.equipment, [slot]: newItem },
+                        crucibleSealed: true
+                    };
+                }
+                return state;
+            }),
+
+            resetCrucibleSeal: () => set({ crucibleSealed: false }),
 
             resetPlayer: () => set({ 
                 skills: DEFAULT_SKILLS, 

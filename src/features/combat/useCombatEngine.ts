@@ -146,7 +146,7 @@ export function useCombatEngine() {
             });
 
             // 4. End session and return Home
-            endSession(true); // wasSlain = true
+            endSession(true, sharedEngine.tickCount, sharedEngine.redMistSurvived); // wasSlain = true
             sharedEngine.stop();
             setRunning(false);
             setEnemy(null);
@@ -314,10 +314,14 @@ export function useCombatEngine() {
 
     /** Flee: stop the engine, clear combat state, keep the log */
     const fleeFromCombat = useCallback(() => {
+        const tickCount = sharedEngine.tickCount;
+        const redMistSurvived = sharedEngine.redMistSurvived;
+        
         sharedEngine.stop();
         setRunning(false);
+        endSession(false, tickCount, redMistSurvived);
         resetCombat();
-    }, [setRunning, resetCombat]);
+    }, [setRunning, resetCombat, endSession]);
 
     // Keep engine in sync if any relevant state changes mid-session
     useEffect(() => {

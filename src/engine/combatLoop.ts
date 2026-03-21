@@ -113,6 +113,7 @@ export class CombatEngine {
     private isBraced: boolean = false; // Set via playerStore
     private finesseTicksRemaining: number = 0;
     private famineRestTicks: number = 0;
+    private redMistOccurred: boolean = false;
     private permanentArmorBonus: number = 0;
     private bloodShards: number = 0; // Local copy for Famine Rest
 
@@ -147,6 +148,7 @@ export class CombatEngine {
         this.permanentArmorBonus = meta?.permanentArmorBonus ?? 0;
         this.bloodShards = meta?.bloodShards ?? 0;
         this.finesseTicksRemaining = meta?.finesseTicksRemaining ?? 0;
+        this.redMistOccurred = false;
         this.enemyIndex = 0;
         this.currentTick = 0;
         this.recomputeDerived();
@@ -208,6 +210,8 @@ export class CombatEngine {
     }
 
     get running(): boolean { return this.isRunning; }
+    get redMistSurvived(): boolean { return this.redMistOccurred && this.isRunning; }
+    get tickCount(): number { return this.currentTick; }
 
     // ---------------------------------------------------------------------------
     // Internal Mechanics
@@ -260,13 +264,14 @@ export class CombatEngine {
         
         if (this.isRedMistActive) {
             this.redMistTicks++;
+            this.redMistOccurred = true;
             if (!wasRedMist) this.log('xp_gain' as any, "The Red Mist descends... (+20% Dmg, +10% Ichor)");
         }
 
-        // --- Phase 2A: Scent of Fear Buildup ---
         const ticksSinceDamage = this.currentTick - this.lastDamageTick;
         if (ticksSinceDamage > 0 && ticksSinceDamage % SCENT_BUILD_INTERVAL === 0) {
-            this.scentIntensity = Math.min(SCENT_ACCURACY_CAP, this.scentIntensity + SCENT_INCREMENT);
+            const scentPenaltyMultiplier = 1 + this.derived.scentSensitivity;
+            this.scentIntensity = Math.min(SCENT_ACCURACY_CAP, this.scentIntensity + (SCENT_INCREMENT * scentPenaltyMultiplier));
         }
 
         // --- Phase 2A: Famine Rest ---
