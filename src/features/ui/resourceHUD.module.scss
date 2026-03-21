@@ -1,0 +1,52 @@
+.hudContainer {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin: 0 32px;
+    padding: 6px 16px;
+    background: rgba(18, 11, 22, 0.4);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.resourceItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: help;
+    transition: transform 0.2s ease;
+
+    &:hover {
+        transform: translateY(-1px);
+    }
+}
+
+.resourceIcon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.statStack {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.bankedValue {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: #f0e6d3;
+    text-shadow: 0 0 8px rgba(240, 230, 211, 0.3);
+}
+
+.unbankedValue {
+    font-size: 11px;
+    font-weight: 600;
+    color: #ff4d4d;
+    letter-spacing: 0.5px;
+}

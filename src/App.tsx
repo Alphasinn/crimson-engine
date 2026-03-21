@@ -1,5 +1,6 @@
 import { CombatView } from './features/combat/CombatView';
 import { CharacterPanel } from './features/character/CharacterPanel';
+import { ResourceHUD } from './features/ui/ResourceHUD';
 import './styles/main.scss';
 import iconMagic from './assets/icons/blood_magic.png';
 import styles from './App.module.scss';
@@ -13,6 +14,10 @@ function App() {
           <img src={iconMagic} alt="Blood" className={styles.logoBlood} />
           <span className={styles.logoTitle}>Crimson Engine</span>
         </div>
+        
+        {/* Resource HUD (Phase 2B) */}
+        <ResourceHUD />
+
         <div className={styles.headerSub}>Vampire Idle Combat System — v0.1</div>
       </header>
 

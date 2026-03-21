@@ -79,6 +79,22 @@ export const SessionSummaryModal: React.FC<Props> = ({ active, onClose }) => {
                         <div className={styles.statLabel}><img src={iconHp} alt="" className={styles.miniIcon} /> XP Gained</div>
                         <div className={styles.statValue}>{data.xpGained.toLocaleString()}</div>
                     </div>
+                    {(data.bloodShardsGained > 0 || data.cursedIchorGained > 0 || data.graveSteelGained > 0) && (
+                        <>
+                            <div className={styles.statCard}>
+                                <div className={styles.statLabel}>💎 Shards</div>
+                                <div className={styles.statValue}>+{data.bloodShardsGained}</div>
+                            </div>
+                            <div className={styles.statCard}>
+                                <div className={styles.statLabel}>💧 Ichor</div>
+                                <div className={styles.statValue}>+{data.cursedIchorGained}</div>
+                            </div>
+                            <div className={styles.statCard}>
+                                <div className={styles.statLabel}>🔩 Grave-Steel</div>
+                                <div className={styles.statValue}>+{data.graveSteelGained}</div>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 <div className={styles.lootSection}>

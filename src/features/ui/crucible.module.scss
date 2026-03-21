@@ -1,0 +1,114 @@
+.container {
+    padding: 24px;
+    background: rgba(18, 11, 22, 0.4);
+    border-radius: 16px;
+    border: 1px solid rgba(212, 175, 55, 0.1);
+    backdrop-filter: blur(10px);
+    height: 100%;
+    overflow-y: auto;
+}
+
+.header {
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 28px;
+    color: #d4af37;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.info {
+    color: #9a8fa0;
+    font-size: 14px;
+    margin-top: 8px;
+}
+
+.upgradeGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background: rgba(30, 20, 35, 0.6);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.2s ease;
+
+    &:hover {
+        border-color: rgba(212, 175, 55, 0.4);
+        background: rgba(40, 25, 45, 0.6);
+        transform: translateY(-2px);
+    }
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cardIcon {
+    font-size: 24px;
+}
+
+.cardTitle {
+    font-weight: 700;
+    font-size: 18px;
+    color: #f0e6d3;
+}
+
+.cardDesc {
+    font-size: 13px;
+    color: #9a8fa0;
+    line-height: 1.4;
+    flex-grow: 1;
+}
+
+.costRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #f0e6d3;
+    font-weight: 600;
+}
+
+.miniIcon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
+.upgradeBtn {
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, #c41e3a 0%, #80152a 100%);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) {
+        filter: brightness(1.2);
+        box-shadow: 0 4px 12px rgba(196, 30, 58, 0.3);
+    }
+
+    &:disabled {
+        background: #3a323d;
+        color: #666;
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+}
