@@ -260,6 +260,9 @@ export interface SessionStats {
     xpGained: number;
     lootCount: number;
     lootItems: LootDrop[];
+    bloodShardsGained: number;
+    cursedIchorGained: number;
+    graveSteelGained: number;
     wasSlain?: boolean;
     lastScentIntensity?: number;
 }

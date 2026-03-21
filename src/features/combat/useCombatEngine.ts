@@ -197,6 +197,12 @@ export function useCombatEngine() {
                 const steel = loot.itemId === 'grave_steel' ? loot.quantity : 0;
                 
                 usePlayerStore.getState().addUnbankedLoot(shards, steel, ichor, isRedMist);
+                
+                updateSession(prev => ({
+                    bloodShardsGained: prev.bloodShardsGained + shards,
+                    cursedIchorGained: prev.cursedIchorGained + ichor,
+                    graveSteelGained: prev.graveSteelGained + steel
+                }));
 
                 // Phase 2A: Pause on rare drops
                 if (ichor > 0 || steel > 0) {

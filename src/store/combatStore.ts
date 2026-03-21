@@ -201,7 +201,10 @@ export const useCombatStore = create<CombatState>()((set) => ({
             kills: 0,
             xpGained: 0,
             lootCount: 0,
-            lootItems: []
+            lootItems: [],
+            bloodShardsGained: 0,
+            cursedIchorGained: 0,
+            graveSteelGained: 0
         },
         lastSession: null
     }),

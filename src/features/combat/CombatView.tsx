@@ -1,6 +1,7 @@
 import { useCallback, useState, useRef, useEffect, useMemo } from 'react';
 import { useCombatStore } from '../../store/combatStore';
 import { usePlayerStore } from '../../store/playerStore';
+import { useNotificationStore } from '../../store/notificationStore';
 import { useCombatEngine } from './useCombatEngine';
 import { EquipmentPanel } from '../character/EquipmentPanel';
 import { ConsumablePanel } from '../character/ConsumablePanel';
@@ -64,6 +65,7 @@ export function CombatView() {
         autoEatEnabled, autoEatThreshold, toggleAutoEat, setAutoEatThreshold,
         unlockedUpgrades, currentVitae
     } = usePlayerStore();
+    const addNotification = useNotificationStore((s) => s.addNotification);
     const { startCombatWithEnemy, fleeFromCombat } = useCombatEngine();
 
     // Derived combat stats for Hit% and Max Hit display
@@ -123,6 +125,12 @@ export function CombatView() {
     const [showGains, setShowGains] = useState(false);
     const [showHuntingGains, setShowHuntingGains] = useState(false);
 
+    // Automatically show the summary modal when a session ends
+    useEffect(() => {
+        if (lastSession && !isRunning) {
+            setShowHuntingGains(true);
+        }
+    }, [lastSession, isRunning]);
 
     const handleZoneClick = useCallback((z: Zone) => {
         setExpandedZoneId(prev => prev === z.id ? null : z.id);
@@ -137,19 +145,39 @@ export function CombatView() {
         }
     }, [startCombatWithEnemy]);
 
-    // Flee — stop combat entirely, go back to zone roster
+    // Flee — stop combat entirely, go back to zone roster and show what we got
     const handleFlee = useCallback(() => {
-        const zoneId = lastZoneIdRef.current;
+        const stats = useCombatStore.getState().sessionStats;
+        
         fleeFromCombat();
         setViewMode('home');
-        if (zoneId) setExpandedZoneId(zoneId);
-    }, [fleeFromCombat]);
+        
+        // Show a detailed summary toast as requested
+        if (stats) {
+            const resourceSummary = [
+                stats.bloodShardsGained > 0 && `${stats.bloodShardsGained} Shards`,
+                stats.cursedIchorGained > 0 && `${stats.cursedIchorGained} Ichor`,
+                stats.graveSteelGained > 0 && `${stats.graveSteelGained} Steel`
+            ].filter(Boolean).join(', ');
+
+            const msg = resourceSummary 
+                ? `Gained ${resourceSummary} over ${stats.kills} kills.`
+                : `Gained ${stats.kills} kills.`;
+
+            addNotification({
+                type: 'loot',
+                label: 'Fled to Safety!',
+                amount: msg,
+                icon: '🏃'
+            });
+        }
+    }, [fleeFromCombat, addNotification]);
 
     // Home — keep combat running, return to zone grid
     const handleHome = useCallback(() => {
         setViewMode('home');
-        setExpandedZoneId(null);
     }, []);
+
 
     const hpColor = (pct: number) => pct > 0.5 ? '#22c55e' : pct > 0.25 ? '#eab308' : '#ef4444';
     const playerHpPct = playerMaxHp > 0 ? playerHp / playerMaxHp : 0;
@@ -429,7 +457,7 @@ export function CombatView() {
             <NotificationContainer />
 
             {showGains && <IdleGainPanel onClose={() => setShowGains(false)} />}
-            {(lastSession || showHuntingGains) && (
+            {showHuntingGains && lastSession && (
                 <SessionSummaryModal 
                     active={showHuntingGains} 
                     onClose={() => setShowHuntingGains(false)} 
