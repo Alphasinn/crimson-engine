@@ -1,0 +1,69 @@
+.hud {
+    display: flex;
+    justify-content: center;
+    padding: 12px 24px;
+    background: rgba(10, 5, 15, 0.95);
+    border-bottom: 2px solid rgba(196, 30, 58, 0.4);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+}
+
+.resourceGroup {
+    display: flex;
+    gap: 40px;
+    align-items: center;
+}
+
+.resource {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: default;
+    transition: transform 0.2s;
+
+    &:hover {
+        transform: scale(1.05);
+    }
+}
+
+.value {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: #f5f0e1;
+    text-shadow: 0 0 12px rgba(245, 240, 225, 0.2);
+}
+
+.unbanked {
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #ff4466;
+    background: rgba(60, 0, 15, 0.7);
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-left: 8px;
+    border: 1px solid rgba(255, 68, 102, 0.3);
+    animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.8; }
+    50% { opacity: 1; text-shadow: 0 0 10px rgba(255, 51, 85, 0.5); }
+    100% { opacity: 0.8; }
+}
+
+.iconShard { color: #c41e3a; font-size: 1.4rem; }
+.iconSteel { color: #9a8fa0; font-size: 1.2rem; }
+.iconIchor { color: #a855f7; font-size: 1.3rem; }
+.iconStabilized { color: #f0cc55; font-size: 1.3rem; }
+
+.resourceIcon {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+    
+    // No more masking or blending needed!
+    // Added a soft shadow to let the icons "pop" against the dark background.
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.15));
+}

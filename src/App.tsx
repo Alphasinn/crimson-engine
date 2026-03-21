@@ -1,5 +1,6 @@
 import { CombatView } from './features/combat/CombatView';
 import { CharacterPanel } from './features/character/CharacterPanel';
+import { ResourceHUD } from './features/ui/ResourceHUD';
 import './styles/main.scss';
 import iconMagic from './assets/icons/blood_magic.png';
 import styles from './App.module.scss';
@@ -15,6 +16,9 @@ function App() {
         </div>
         <div className={styles.headerSub}>Vampire Idle Combat System — v0.1</div>
       </header>
+
+      {/* Persistent Resource HUD */}
+      <ResourceHUD />
 
       {/* Main Layout */}
       <main className={styles.main}>
