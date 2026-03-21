@@ -1,0 +1,98 @@
+.root {
+    padding: 24px;
+    color: #e5e7eb;
+}
+
+.header {
+    margin-bottom: 32px;
+}
+
+.titleInfo h2 {
+    font-size: 1.5rem;
+    color: #c41e3a;
+    margin-bottom: 8px;
+    font-family: serif;
+}
+
+.titleInfo p {
+    color: #9ca3af;
+    font-size: 0.9rem;
+}
+
+.skillsSection {
+    background: rgba(15, 15, 20, 0.8);
+    border: 1px solid rgba(200, 30, 50, 0.2);
+    border-radius: 8px;
+    padding: 20px;
+    
+    h3 {
+        font-size: 1.2rem;
+        color: #fff;
+        margin-bottom: 24px;
+        font-family: serif;
+    }
+}
+
+.skillsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 32px 16px;
+    justify-items: center;
+}
+
+.skillCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: default;
+
+    &:hover .skillIcon {
+        transform: scale(1.1);
+    }
+}
+
+.skillLabel {
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    text-align: center;
+    min-height: 24px;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.skillIcon {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    transition: transform 0.2s ease;
+    filter: drop-shadow(0 0 6px rgba(0,0,0,0.5));
+}
+
+.levelWrap {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+    gap: 4px;
+}
+
+.skillLevel {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.1rem;
+    color: #fff;
+    font-weight: bold;
+}
+
+.minibarContainer {
+    width: 60px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.minibarFill {
+    height: 100%;
+    transition: width 0.2s ease-out;
+}

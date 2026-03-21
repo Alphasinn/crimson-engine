@@ -1,11 +1,30 @@
+import { useState } from 'react';
 import { CombatView } from './features/combat/CombatView';
-import { CharacterPanel } from './features/character/CharacterPanel';
+import { InventoryView } from './features/inventory/InventoryView';
+import { SanctumView } from './features/sanctum/SanctumView';
+import { ProfileView } from './features/character/ProfileView';
+
 import { ResourceHUD } from './features/ui/ResourceHUD';
 import './styles/main.scss';
 import iconMagic from './assets/icons/blood_magic.png';
+import iconAttack from './assets/icons/attack.png';
 import styles from './App.module.scss';
 
+type Tab = 'combat' | 'sanctum' | 'profile' | 'inventory';
+
 function App() {
+  const [activeTab, setActiveTab] = useState<Tab>('combat');
+
+  const renderActiveView = () => {
+    switch (activeTab) {
+      case 'combat': return <CombatView />;
+      case 'sanctum': return <SanctumView />;
+      case 'profile': return <ProfileView />;
+      case 'inventory': return <InventoryView />;
+      default: return <CombatView />;
+    }
+  };
+
   return (
     <div className={styles.app}>
       {/* Header */}
@@ -22,14 +41,42 @@ function App() {
 
       {/* Main Layout */}
       <main className={styles.main}>
-        {/* Left: Character Skills */}
-        <aside className={styles.sidebar}>
-          <CharacterPanel />
-        </aside>
+        {/* Left Side Navigation (Idle Clans Style) */}
+        <nav className={styles.sideNav}>
+          <button 
+            className={`${styles.navBtn} ${activeTab === 'combat' ? styles.active : ''}`}
+            onClick={() => setActiveTab('combat')}
+          >
+            <img src={iconAttack} alt="" className={styles.navIcon} />
+            <span>Combat</span>
+          </button>
+          
+          <button 
+            className={`${styles.navBtn} ${activeTab === 'sanctum' ? styles.active : ''}`}
+            onClick={() => setActiveTab('sanctum')}
+          >
+            <img src={iconMagic} alt="" className={styles.navIcon} />
+            <span>Sanctum</span>
+          </button>
 
-        {/* Center + Right: Combat */}
+          <button 
+            className={`${styles.navBtn} ${activeTab === 'profile' ? styles.active : ''}`}
+            onClick={() => setActiveTab('profile')}
+          >
+            <span>Profile</span>
+          </button>
+
+          <button 
+            className={`${styles.navBtn} ${activeTab === 'inventory' ? styles.active : ''}`}
+            onClick={() => setActiveTab('inventory')}
+          >
+            <span>Inventory</span>
+          </button>
+        </nav>
+
+        {/* Dynamic Center Content */}
         <section className={styles.content}>
-          <CombatView />
+          {renderActiveView()}
         </section>
       </main>
     </div>

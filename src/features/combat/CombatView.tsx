@@ -3,7 +3,7 @@ import { useCombatStore } from '../../store/combatStore';
 import { usePlayerStore } from '../../store/playerStore';
 import { useNotificationStore } from '../../store/notificationStore';
 import { useCombatEngine } from './useCombatEngine';
-import { EquipmentPanel } from '../character/EquipmentPanel';
+import { CharacterPanel } from '../character/CharacterPanel';
 import { ConsumablePanel } from '../character/ConsumablePanel';
 import { DamageSplats } from './DamageSplats';
 import { EnemyRoster } from './EnemyRoster';
@@ -58,7 +58,7 @@ export function CombatView() {
     const {
         selectedZone, activeEnemy, isRunning,
         playerHp, playerMaxHp, enemyHp, enemyMaxHp,
-        playerMeter, enemyMeter, lastSession
+        enemyMeter, lastSession
     } = useCombatStore();
     const { 
         trainingMode, setTrainingMode, equipment, 
@@ -180,7 +180,6 @@ export function CombatView() {
 
 
     const hpColor = (pct: number) => pct > 0.5 ? '#22c55e' : pct > 0.25 ? '#eab308' : '#ef4444';
-    const playerHpPct = playerMaxHp > 0 ? playerHp / playerMaxHp : 0;
 
     // Show zone grid when: no active combat, OR player navigated home
     const showZoneGrid = viewMode === 'home' || (!isRunning && !activeEnemy);
@@ -340,25 +339,8 @@ export function CombatView() {
 
                 {showArena && activeEnemy && (
                     <div className={styles.fightArena}>
-                        <div style={{ position: 'relative' }}>
-                            <EquipmentPanel 
-                                hpProps={{
-                                    current: playerHp,
-                                    max: playerMaxHp,
-                                    label: (
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <img src={iconHp} alt="Vitae" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
-                                            Vitae
-                                        </span>
-                                    ),
-                                    color: hpColor(playerHpPct)
-                                }}
-                                meterProps={{
-                                    value: playerMeter,
-                                    label: "",
-                                    color: "#ff4d00"
-                                }}
-                            />
+                        <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', minWidth: '280px', maxWidth: '320px' }}>
+                            <CharacterPanel />
                             <div style={{ position: 'absolute', top: '35%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none', zIndex: 50 }}>
                                 <DamageSplats isPlayer={true} />
                             </div>
