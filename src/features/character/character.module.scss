@@ -1,0 +1,95 @@
+// character.module.scss
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.panel {
+    @include glass-card;
+    @include flex-col;
+    gap: $space-4;
+    padding: $space-5;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.title {
+    font-family: $font-heading;
+    font-size: $font-size-lg;
+    color: $color-gold;
+    letter-spacing: 0.06em;
+    padding-bottom: $space-3;
+    border-bottom: 1px solid $color-border;
+}
+
+.skillList {
+    @include flex-col;
+    gap: $space-3;
+}
+
+.skillRow {
+    display: flex;
+    align-items: flex-start;
+    gap: $space-3;
+    padding: $space-3;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: $radius-md;
+    border: 1px solid $color-border;
+    transition: border-color $transition-normal;
+
+    &:hover {
+        border-color: $color-border-accent;
+    }
+}
+
+.skillIcon {
+    font-size: 24px;
+    width: 36px;
+    flex-shrink: 0;
+    text-align: center;
+    margin-top: 2px;
+
+    .skillIconImg {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+        filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.4));
+    }
+}
+
+.skillInfo {
+    @include flex-col;
+    gap: 4px;
+    flex: 1;
+}
+
+.skillTop {
+    @include flex-between;
+}
+
+.skillName {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+}
+
+.skillLevel {
+    font-family: $font-mono;
+    font-size: $font-size-md;
+    font-weight: $font-weight-bold;
+}
+
+.xpTrack {
+    @include progress-bar-base($xp-bar-height, rgba(255, 255, 255, 0.05));
+    border: 1px solid $color-border;
+}
+
+.xpFill {
+    height: 100%;
+    border-radius: $radius-full;
+    transition: width 0.4s ease;
+}
+
+.xpText {
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+    font-family: $font-mono;
+}

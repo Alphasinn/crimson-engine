@@ -1,0 +1,109 @@
+// =============================================================================
+// CRIMSON ENGINE — Global SCSS Entry
+// =============================================================================
+
+@use 'variables' as *;
+@use 'mixins' as *;
+@use 'animations';
+
+// --- Google Fonts ---
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+// --- Reset ---
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: $font-body;
+    font-size: $font-size-md;
+    background: $color-bg-deep;
+    color: $color-text-primary;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+// --- Scrollbar ---
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: $color-bg-deep;
+}
+
+::-webkit-scrollbar-thumb {
+    background: $color-crimson-dark;
+    border-radius: $radius-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: $color-crimson;
+}
+
+// --- Typography globals ---
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    @include heading-style;
+}
+
+a {
+    color: $color-crimson;
+    text-decoration: none;
+    transition: color $transition-fast;
+}
+
+a:hover {
+    color: $color-blood-light;
+}
+
+// --- Utility classes ---
+.crimson-text {
+    color: $color-crimson;
+}
+
+.gold-text {
+    color: $color-gold;
+}
+
+.vitae-text {
+    color: $color-vitae;
+}
+
+.muted-text {
+    color: $color-text-secondary;
+}
+
+.mono {
+    font-family: $font-mono;
+}
+
+.fade-in {
+    animation: fadeInUp 0.4s ease both;
+}
+
+.elite-glow {
+    box-shadow: 0 0 16px rgba(212, 175, 55, 0.5);
+    border-color: $color-gold !important;
+}

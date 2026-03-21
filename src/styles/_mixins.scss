@@ -1,0 +1,148 @@
+// =============================================================================
+// CRIMSON ENGINE — SCSS Mixins
+// =============================================================================
+
+@use 'variables' as *;
+
+// --- Responsive Breakpoints ---
+@mixin mobile {
+    @media (max-width: #{$bp-mobile}) {
+        @content;
+    }
+}
+
+@mixin tablet {
+    @media (max-width: #{$bp-tablet}) {
+        @content;
+    }
+}
+
+@mixin desktop {
+    @media (min-width: #{$bp-desktop}) {
+        @content;
+    }
+}
+
+// --- Glassmorphism Card ---
+@mixin glass-card($border-color: $color-border) {
+    background: $color-bg-card;
+    border: 1px solid $border-color;
+    border-radius: $radius-lg;
+    box-shadow: $shadow-card;
+    backdrop-filter: blur(12px);
+}
+
+@mixin glass-card-hover {
+    transition: background $transition-normal, border-color $transition-normal, box-shadow $transition-normal;
+
+    &:hover {
+        background: $color-bg-card-hover;
+        border-color: $color-border-accent;
+        box-shadow: $shadow-card, $glow-crimson;
+    }
+}
+
+// --- Crimson Glow Border ---
+@mixin crimson-border {
+    border: 1px solid $color-border-accent;
+    box-shadow: inset 0 0 30px $color-crimson-subtle, $glow-crimson;
+}
+
+// --- Progress Bar Base ---
+@mixin progress-bar-base($height, $bg: $color-bg-elevated) {
+    width: 100%;
+    height: $height;
+    background: $bg;
+    border-radius: $radius-full;
+    overflow: hidden;
+    position: relative;
+}
+
+@mixin progress-bar-fill($color) {
+    height: 100%;
+    border-radius: $radius-full;
+    background: $color;
+    transition: width $transition-normal;
+}
+
+// --- Flex Utilities ---
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@mixin flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+@mixin flex-col {
+    display: flex;
+    flex-direction: column;
+}
+
+// --- Text Truncate ---
+@mixin truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// --- Crimson Heading ---
+@mixin heading-style {
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 20px $color-crimson-glow;
+}
+
+// --- Stat Value Display ---
+@mixin stat-value {
+    font-family: $font-mono;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-gold;
+}
+
+// --- Pulsing Glow Animation ---
+@mixin pulse-glow($color) {
+    animation: pulse-glow 2s ease-in-out infinite;
+
+    @keyframes pulse-glow {
+
+        0%,
+        100% {
+            box-shadow: 0 0 8px rgba($color, 0.3);
+        }
+
+        50% {
+            box-shadow: 0 0 20px rgba($color, 0.7);
+        }
+    }
+}
+
+// --- Skill Color Mixin ---
+@mixin skill-color($skill) {
+    @if $skill =='fang' {
+        color: $color-fang-mastery;
+        border-color: $color-fang-mastery;
+    }
+
+    @else if $skill =='shadow' {
+        color: $color-shadow-archery;
+        border-color: $color-shadow-archery;
+    }
+
+    @else if $skill =='blood' {
+        color: $color-blood-sorcery;
+        border-color: $color-blood-sorcery;
+    }
+
+    @else if $skill =='vitae' {
+        color: $color-vitae;
+        border-color: $color-vitae;
+    }
+}

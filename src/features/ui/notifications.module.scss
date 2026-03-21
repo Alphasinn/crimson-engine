@@ -1,0 +1,97 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.container {
+    position: fixed;
+    bottom: 24%; // Positioned above the consumable panel but below the center area
+    left: 50%;
+    transform: translateX(-50%);
+    @include flex-col;
+    align-items: center;
+    gap: $space-2;
+    pointer-events: none;
+    z-index: 1000;
+    width: 400px;
+}
+
+.toast {
+    background: rgba($color-bg-card, 0.9);
+    border: 1px solid $color-border-accent;
+    border-radius: $radius-md;
+    padding: $space-2 $space-4;
+    @include flex-center;
+    gap: $space-3;
+    box-shadow: $shadow-elevated, 0 0 15px rgba(139, 0, 0, 0.2);
+    animation: toastFloatUp 2.8s ease-out forwards;
+    backdrop-filter: blur(4px);
+    white-space: nowrap;
+
+    &.type-xp {
+        border-color: rgba($color-xp, 0.4);
+        .amount { color: $color-xp; }
+    }
+
+    &.type-loot {
+        border-color: rgba($color-gold, 0.4);
+        .amount { color: $color-gold; }
+    }
+}
+
+.iconWrap {
+    width: 24px;
+    height: 24px;
+    @include flex-center;
+    font-size: 1.2rem;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+}
+
+.amount {
+    font-family: $font-mono;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-lg;
+    color: $color-text-primary;
+}
+
+.label {
+    font-size: $font-size-md;
+    color: $color-text-secondary;
+    letter-spacing: 0.02em;
+}
+
+.xpGrid {
+    display: flex;
+    gap: $space-4;
+    align-items: center;
+}
+
+.xpItem {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+}
+
+:global {
+    @keyframes toastFloatUp {
+        0% {
+            opacity: 0;
+            transform: translateY(100px) scale(0.8);
+        }
+        20% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        80% {
+            opacity: 1;
+            transform: translateY(-20px) scale(1);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-60px) scale(0.9);
+        }
+    }
+}

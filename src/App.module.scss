@@ -1,0 +1,83 @@
+// App.module.scss
+@use './styles/variables' as *;
+@use './styles/mixins' as *;
+
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: $color-bg-deep;
+    overflow: hidden;
+
+    // Subtle red-tinted noise texture
+    &::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background:
+            radial-gradient(ellipse at 20% 10%, rgba(139, 0, 0, 0.12) 0%, transparent 60%),
+            radial-gradient(ellipse at 80% 90%, rgba(100, 0, 30, 0.10) 0%, transparent 60%);
+        pointer-events: none;
+        z-index: 0;
+    }
+}
+
+.header {
+    @include flex-between;
+    padding: $space-3 $space-6;
+    background: rgba(8, 8, 16, 0.9);
+    border-bottom: 1px solid $color-border-accent;
+    position: relative;
+    z-index: 10;
+    flex-shrink: 0;
+    backdrop-filter: blur(8px);
+}
+
+.headerLogo {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+}
+
+.logoBlood {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 8px rgba(196, 30, 58, 0.8));
+}
+
+.logoTitle {
+    font-family: $font-heading;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+    letter-spacing: 0.08em;
+    text-shadow: $glow-crimson;
+}
+
+.headerSub {
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+    font-family: $font-mono;
+    letter-spacing: 0.06em;
+}
+
+.main {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: $space-4;
+    flex: 1;
+    padding: $space-4;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+}
+
+.sidebar {
+    overflow-y: auto;
+}
+
+.content {
+    overflow: hidden;
+    min-width: 0;
+}

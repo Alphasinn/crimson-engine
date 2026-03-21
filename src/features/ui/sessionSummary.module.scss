@@ -1,0 +1,190 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 2000; // Above everything
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal {
+    background: linear-gradient(135deg, rgba(30, 5, 5, 0.98) 0%, rgba(15, 0, 0, 1) 100%);
+    border: 2px solid rgba(196, 30, 58, 0.4);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 1), 0 0 20px rgba(196, 30, 58, 0.2);
+    border-radius: 16px;
+    padding: 32px;
+    width: 500px;
+    max-width: 90vw;
+    text-align: center;
+    animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, #c41e3a, transparent);
+    }
+}
+
+.title {
+    font-family: 'Cinzel', serif; // Assuming a gothic/vampire font is available or fall back
+    font-size: 2rem;
+    color: #ff4d4d;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+}
+
+.subtitle {
+    font-size: 0.8rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    margin-bottom: 32px;
+}
+
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.statCard {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 16px 8px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .statLabel {
+        font-size: 0.65rem;
+        color: #888;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+
+    .statValue {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #fff;
+    }
+}
+
+.lootSection {
+    margin-bottom: 32px;
+    text-align: left;
+}
+
+.lootHeader {
+    font-size: 0.75rem;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 4px;
+}
+
+.lootGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-height: 120px;
+    overflow-y: auto;
+    padding-right: 8px;
+
+    &::-webkit-scrollbar {
+        width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+    }
+}
+
+.lootItem {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+
+    .lootIcon {
+        font-size: 1rem;
+    }
+
+    .lootQty {
+        color: #ffcc00; // Gold for quantities
+        font-weight: 600;
+    }
+}
+
+.noLoot {
+    color: #555;
+    font-style: italic;
+    font-size: 0.85rem;
+}
+
+.okBtn {
+    width: 100%;
+    padding: 16px;
+    background: rgba(196, 30, 58, 0.2);
+    border: 1px solid rgba(196, 30, 58, 0.5);
+    border-radius: 8px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+
+    &:hover {
+        background: rgba(196, 30, 58, 0.4);
+        border-color: #c41e3a;
+        box-shadow: 0 0 15px rgba(196, 30, 58, 0.3);
+        transform: translateY(-2px);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+.miniIcon {
+    width: 12px;
+    height: 12px;
+    object-fit: contain;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
