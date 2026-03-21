@@ -261,6 +261,7 @@ export interface SessionStats {
     lootCount: number;
     lootItems: LootDrop[];
     wasSlain?: boolean;
+    lastScentIntensity?: number;
 }
 
 // --- Inventory Item (stub for future expansion) ---

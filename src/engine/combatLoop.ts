@@ -103,7 +103,7 @@ export class CombatEngine {
     private callbacks: CombatCallbacks;
 
     // Phase 2A State
-    private scentIntensity: number = 0.0;
+    private _scentIntensity: number = 0.0;
     private lastDamageTick: number = 0;
     private siphonsThisHunt: number = 0;
     private redMistTicks: number = 0;
@@ -211,6 +211,7 @@ export class CombatEngine {
 
     get running(): boolean { return this.isRunning; }
     get redMistSurvived(): boolean { return this.redMistOccurred && this.isRunning; }
+    get scentIntensity(): number { return this._scentIntensity; }
     get tickCount(): number { return this.currentTick; }
 
     // ---------------------------------------------------------------------------
@@ -271,7 +272,7 @@ export class CombatEngine {
         const ticksSinceDamage = this.currentTick - this.lastDamageTick;
         if (ticksSinceDamage > 0 && ticksSinceDamage % SCENT_BUILD_INTERVAL === 0) {
             const scentPenaltyMultiplier = 1 + this.derived.scentSensitivity;
-            this.scentIntensity = Math.min(SCENT_ACCURACY_CAP, this.scentIntensity + (SCENT_INCREMENT * scentPenaltyMultiplier));
+            this._scentIntensity = Math.min(SCENT_ACCURACY_CAP, this._scentIntensity + (SCENT_INCREMENT * scentPenaltyMultiplier));
         }
 
         // --- Phase 2A: Famine Rest ---
@@ -457,7 +458,7 @@ export class CombatEngine {
         if (!this.enemy) return;
  
         const enemyAccuracy = this.enemy.accuracy;
-        const totalEnemyAccuracy = enemyAccuracy * (1 + this.scentIntensity);
+        const totalEnemyAccuracy = enemyAccuracy * (1 + this._scentIntensity);
         
         const hitChance = calcHitChance(
             totalEnemyAccuracy,
@@ -486,7 +487,7 @@ export class CombatEngine {
                 damage = Math.min(mitigated, this.playerHp); // Cap damage to current player HP
                 this.playerHp -= damage;
                 this.lastDamageTick = this.currentTick;
-                this.scentIntensity = 0; // Reset scent on damage
+                this._scentIntensity = 0; // Reset scent on damage
                 this.log('enemy_hit', `${this.enemy.name} hits you for ${damage} damage.`, damage);
 
                 // --- Blood Siphon (v1.2 Sorcery Set Bonus) ---
@@ -581,7 +582,7 @@ export class CombatEngine {
         this.callbacks.onTrySiphon(cost, (success: boolean) => {
             if (success) {
                 this.siphonsThisHunt++;
-                this.scentIntensity *= 0.5; // Reduce scent per spec
+                this._scentIntensity *= 0.5; // Reduce scent per spec
                 this.log('siphon', `Siphoned Blood Shards (+${Math.floor(this.playerMaxHp * SIPHON_HEAL_PCT)} HP). Cost: ${cost} Shards.`);
             }
         });

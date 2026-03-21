@@ -430,14 +430,19 @@ export function computeDerivedStats(
     const rangedMaxHit = calcMaxHit(calcBaseMaxHit(skills.shadowArchery.level), powerMod, 0);
     const magicMaxHit = calcMaxHit(calcBaseMaxHit(skills.bloodSorcery.level), weapon?.powerModifier ?? 1.0, 0);
 
+    // --- Phase 2B: Path Specializations ---
+    const t2Items = Object.values(equipment).filter(item => item && item.tier === 'T2');
+    const sanguineCount = t2Items.filter(item => item?.specPath === 'sanguine').length;
+    const vileCount = t2Items.filter(item => item?.specPath === 'vile').length;
+
     // --- Defense ---
     const drPercent = Math.min(
         MAX_DAMAGE_REDUCTION,
-        Object.values(equipment).reduce((sum, item) => sum + (item?.drPercent ?? 0), 0)
+        Object.values(equipment).reduce((sum, item) => sum + (item?.drPercent ?? 0), 0) + (vileCount * 0.05)
     );
     const blockChance = Math.min(
         MAX_BLOCK_CHANCE,
-        Object.values(equipment).reduce((sum, item) => sum + (item?.blockChance ?? 0), 0)
+        Object.values(equipment).reduce((sum, item) => sum + (item?.blockChance ?? 0), 0) + (vileCount * 0.05)
     );
     const flatArmor = Object.values(equipment).reduce(
         (sum, item) => sum + (item?.flatArmor ?? 0), 0
@@ -449,6 +454,10 @@ export function computeDerivedStats(
     const pctReductions = Object.values(equipment)
         .map(item => item?.attackIntervalPct ?? 0)
         .filter(v => v > 0);
+    
+    // Sanguine Path: +5% Speed per item
+    if (sanguineCount > 0) pctReductions.push(sanguineCount * 0.05);
+
     const attackInterval = calcAttackInterval(
         weapon ? (2.0 - weaponInterval) : baseInterval,
         pctReductions,
@@ -459,6 +468,8 @@ export function computeDerivedStats(
     let lifestealPercent = Object.values(equipment).reduce(
         (sum, item) => sum + (item?.lifestealPercent ?? 0), 0
     );
+    // Sanguine Path: +2% Lifesteal per item
+    lifestealPercent += (sanguineCount * 0.02);
     
     // Phase 2A: Sanguine Finesse Lifesteal Doubling (if HP < 50%)
     if (meta?.isFinesseActive && meta?.isLowHp) {

@@ -174,11 +174,65 @@
     text-align: center;
 }
 
+.shiftItem {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+
+    .pathMarker {
+        font-size: 10px;
+        color: #4ade80;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 2px;
+    }
+}
+
+.shiftActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.sanguineBtn {
+    @extend .refineBtn;
+    background: rgba(139, 0, 0, 0.2);
+    border: 1px solid #8b0000;
+    color: #ff3355;
+    padding: 8px;
+    font-size: 11px;
+    font-weight: bold;
+
+    &:hover:not(:disabled) {
+        background: rgba(139, 0, 0, 0.4);
+        box-shadow: 0 0 10px rgba(255, 51, 85, 0.3);
+    }
+}
+
+.vileBtn {
+    @extend .refineBtn;
+    background: rgba(40, 40, 60, 0.2);
+    border: 1px solid #483d8b;
+    color: #9370db;
+    padding: 8px;
+    font-size: 11px;
+    font-weight: bold;
+
+    &:hover:not(:disabled) {
+        background: rgba(40, 40, 60, 0.4);
+        box-shadow: 0 0 10px rgba(147, 112, 219, 0.3);
+    }
+}
+
 .sealOverlay {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(13, 4, 4, 0.6);
-    backdrop-filter: blur(2px);
+    background: rgba(13, 4, 4, 0.8);
+    backdrop-filter: blur(3px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -188,26 +242,26 @@
     .sealMessage {
         background: #0d0404;
         border: 2px solid #ff3355;
-        padding: 20px 40px;
+        padding: 24px 48px;
         border-radius: 8px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        box-shadow: 0 0 30px rgba(255, 51, 85, 0.4);
-        transform: rotate(-5deg);
+        box-shadow: 0 0 40px rgba(255, 51, 85, 0.5);
+        transform: rotate(-3deg);
 
         span {
             color: #ff3355;
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
         }
 
         small {
             color: #9a8fa0;
-            margin-top: 8px;
-            font-size: 0.8rem;
+            margin-top: 10px;
+            font-size: 0.85rem;
         }
     }
 }

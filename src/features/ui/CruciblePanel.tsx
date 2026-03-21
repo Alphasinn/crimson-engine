@@ -11,15 +11,22 @@ export const CruciblePanel: React.FC = () => {
     
     const { isRunning, lastSession } = useCombatStore();
 
+
     // Risk yield calculation (v1.1 design: 1 + ScentIntensity of last hunt)
-    // For the UI, we'll show the potential yield based on the CURRENT hunt if running,
-    // or the LAST hunt if home.
-    const lastScent = lastSession?.wasSlain ? 0 : 0.20; // Stub: need to track lastScent in sessionStats
+    const lastScent = lastSession && !lastSession.wasSlain ? (lastSession.lastScentIntensity ?? 0) : 0;
     const potentialYieldBonus = Math.round(lastScent * 100);
 
     const handleRefine = (slot: any) => {
         if (!crucibleSealed) refineGear(slot);
     };
+
+    const handleTierShift = (slot: any, path: 'sanguine' | 'vile') => {
+        if (!crucibleSealed) {
+            tierShift(slot, path);
+        }
+    };
+
+    const shiftableItems = Object.entries(equipment).filter(([_, item]) => (item.refinement ?? 0) >= 5 && item.tier === 'T1');
 
     return (
         <div className={`${styles.root} ${crucibleSealed ? styles.sealed : ''}`}>
@@ -79,14 +86,36 @@ export const CruciblePanel: React.FC = () => {
                 {/* Tier-Shift Section */}
                 <div className={styles.section}>
                     <h4 className={styles.sectionTitle}>Altar of Flesh (Tier-Shift)</h4>
-                    <button 
-                        className={styles.tierShiftBtn}
-                        onClick={() => !crucibleSealed && tierShift()}
-                        disabled={crucibleSealed || isRunning}
-                    >
-                        Prototype Tier-Shift
-                    </button>
-                    <p className={styles.hint}>Requires +5 gear & Catalyst</p>
+                    {shiftableItems.length === 0 ? (
+                        <p className={styles.hint}>No +5 T1 gear equipped</p>
+                    ) : (
+                        <div className={styles.gearList}>
+                            {shiftableItems.map(([slot, item]) => (
+                                <div key={slot} className={styles.shiftItem}>
+                                    <div className={styles.gearInfo}>
+                                        <span className={styles.itemName}>{item.name}</span>
+                                        <span className={styles.pathMarker}>Ready to Shift</span>
+                                    </div>
+                                    <div className={styles.shiftActions}>
+                                        <button 
+                                            className={styles.sanguineBtn}
+                                            onClick={() => handleTierShift(slot, 'sanguine')}
+                                            disabled={crucibleSealed || isRunning}
+                                        >
+                                            Sanguine
+                                        </button>
+                                        <button 
+                                            className={styles.vileBtn}
+                                            onClick={() => handleTierShift(slot, 'vile')}
+                                            disabled={crucibleSealed || isRunning}
+                                        >
+                                            Vile
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 

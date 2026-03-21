@@ -5,6 +5,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useCombatStore } from './combatStore';
 import type { PlayerSkills, PlayerEquipment, EquipmentItem, CombatStyle, InventoryItem, SkillName, TrainingMode, LootHistoryItem, UpgradeId } from '../engine/types';
 import { getLevelFromXp, getXpForLevel } from '../engine/xpTable';
 import {
@@ -82,7 +83,7 @@ interface PlayerState {
     // Distill Actions
     sanguineFinesse: () => void;
     vileReinforcement: () => void;
-    tierShift: () => void;
+    tierShift: (slot: keyof PlayerEquipment, path: 'sanguine' | 'vile') => void;
     // Phase 2B Crucible
     refineGear: (slot: keyof PlayerEquipment) => void;
     resetCrucibleSeal: () => void;
@@ -348,10 +349,13 @@ export const usePlayerStore = create<PlayerState>()(
 
             stabilizeIchor: () => set((state) => {
                 if (state.bloodShards >= 125 && state.cursedIchor >= 1) {
+                    const lastRisk = useCombatStore.getState().lastSession?.lastScentIntensity ?? 0;
+                    const yieldMult = 1 + lastRisk;
+                    
                     return {
                         bloodShards: state.bloodShards - 125,
                         cursedIchor: state.cursedIchor - 1,
-                        stabilizedIchor: state.stabilizedIchor + 1
+                        stabilizedIchor: state.stabilizedIchor + yieldMult
                     };
                 }
                 return state;
@@ -383,13 +387,24 @@ export const usePlayerStore = create<PlayerState>()(
                 return state;
             }),
 
-            tierShift: () => set((state) => {
+            tierShift: (slot, path) => set((state) => {
                 if (state.crucibleSealed) return state;
+                const item = state.equipment[slot];
+                if (!item || (item.refinement ?? 0) < 5) return state;
+
                 if (state.bloodShards >= 200 && state.stabilizedIchor >= 3 && state.graveSteel >= 25) {
+                    const newItem: EquipmentItem = {
+                        ...item,
+                        tier: 'T2',
+                        refinement: 0,
+                        specPath: path
+                    };
+
                     return {
                         bloodShards: state.bloodShards - 200,
                         stabilizedIchor: state.stabilizedIchor - 3,
                         graveSteel: state.graveSteel - 25,
+                        equipment: { ...state.equipment, [slot]: newItem },
                         crucibleSealed: true
                     };
                 }

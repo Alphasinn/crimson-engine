@@ -73,7 +73,7 @@ interface CombatState {
     // Session Actions
     startSession: () => void;
     updateSession: (patch: Partial<SessionStats> | ((prev: SessionStats) => Partial<SessionStats>)) => void;
-    endSession: (wasSlain?: boolean, tickCount?: number, redMistSurvived?: boolean) => void;
+    endSession: (wasSlain?: boolean, tickCount?: number, redMistSurvived?: boolean, lastScentIntensity?: number) => void;
     clearLastSession: () => void;
 }
 
@@ -214,9 +214,14 @@ export const useCombatStore = create<CombatState>()((set) => ({
         };
     }),
 
-    endSession: (wasSlain?: boolean, tickCount?: number, redMistSurvived?: boolean) => set((state) => {
+    endSession: (wasSlain?: boolean, tickCount?: number, redMistSurvived?: boolean, lastScentIntensity?: number) => set((state) => {
         if (!state.sessionStats) return {};
-        const lastSession = { ...state.sessionStats, endTime: Date.now(), wasSlain };
+        const lastSession = { 
+            ...state.sessionStats, 
+            endTime: Date.now(), 
+            wasSlain,
+            lastScentIntensity: lastScentIntensity ?? 0
+        };
 
         // Phase 2B: Crucible Seal Reset Logic
         // 1. Never reset on death.

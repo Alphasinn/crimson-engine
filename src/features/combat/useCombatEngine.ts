@@ -146,7 +146,7 @@ export function useCombatEngine() {
             });
 
             // 4. End session and return Home
-            endSession(true, sharedEngine.tickCount, sharedEngine.redMistSurvived); // wasSlain = true
+            endSession(true, sharedEngine.tickCount, sharedEngine.redMistSurvived, sharedEngine.scentIntensity); // wasSlain = true
             sharedEngine.stop();
             setRunning(false);
             setEnemy(null);
@@ -316,10 +316,11 @@ export function useCombatEngine() {
     const fleeFromCombat = useCallback(() => {
         const tickCount = sharedEngine.tickCount;
         const redMistSurvived = sharedEngine.redMistSurvived;
+        const lastScentIntensity = sharedEngine.scentIntensity;
         
         sharedEngine.stop();
         setRunning(false);
-        endSession(false, tickCount, redMistSurvived);
+        endSession(false, tickCount, redMistSurvived, lastScentIntensity);
         resetCombat();
     }, [setRunning, resetCombat, endSession]);
 
