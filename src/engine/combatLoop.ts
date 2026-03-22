@@ -18,6 +18,8 @@ import {
     calcStyleBonus,
     calcHeavyWeaknessMult,
     applyMultiplicativeCompression,
+    calcScentScalingDmg,
+    calcScentScalingHp,
 } from './formulas';
 import {
     MC_POWER_DEFAULT,
@@ -27,10 +29,15 @@ import {
     SIPHON_COST_EXPONENT,
     SCENT_BUILD_INTERVAL,
     SCENT_INCREMENT,
-    SCENT_ACCURACY_CAP,
-    RED_MIST_THRESHOLD,
-    RED_MIST_DMG_BONUS,
     RED_MIST_ICHOR_MOD,
+    BOSS_SCENT_THRESHOLD,
+    SCENT_REDUCTION_BOSS,
+    EVENT_THRESHOLD_BLOODLUST,
+    EVENT_THRESHOLD_CURSE,
+    EVENT_THRESHOLD_FANGS,
+    RED_MIST_THRESHOLD,
+    SCENT_ACCURACY_CAP,
+    RED_MIST_DMG_BONUS,
 } from './constants';
 import { rollLootEntry } from './lootRoller';
 import type {
@@ -54,20 +61,22 @@ export interface AttackResult {
     hit: boolean;
     blocked: boolean;
     damage: number;
+    isCritical: boolean;
 }
 
 export interface CombatCallbacks {
     onPlayerAttack: (result: AttackResult, enemy: Enemy) => void;
     onEnemyAttack: (result: AttackResult) => void;
-    onEnemyDeath: (enemy: Enemy, xpGains: Partial<PlayerSkills>, loot: LootTableEntry | null) => void;
+    onEnemyDeath: (enemy: Enemy, sessionStats: any, loot: LootTableEntry | null) => void;
     onPlayerDeath: (isBraced: boolean, isRedMist: boolean) => void;
     onRespawn: (enemy: Enemy) => void;
-    onTick: (playerMeter: number, enemyMeter: number, playerHp: number, enemyHp: number, tick: number, activeCombat: any) => void;
+    onTick: (activeCombat: any) => void;
     onAutoEat: (healAmount: number) => void;
     onHitXp: (gains: Partial<PlayerSkills>) => void;
     onLog: (event: CombatEvent) => void;
     onLoot: (item: { itemId: string, itemName: string, quantity: number }, isRedMist: boolean) => void;
     onTrySiphon: (cost: number, callback: (success: boolean) => void) => void;
+    getEnemyData: (id: string) => Enemy | null;
     // Distill Actions
     sanguineFinesse: () => void;
     vileReinforcement: () => void;
@@ -91,6 +100,7 @@ export class CombatEngine {
 
     private currentTick: number = 0;
     private intervalId: ReturnType<typeof setInterval> | null = null;
+    private respawnTimeoutId: ReturnType<typeof setTimeout> | null = null;
     private isRunning: boolean = false;
 
     private skills: PlayerSkills = {} as PlayerSkills;
@@ -103,7 +113,7 @@ export class CombatEngine {
     private callbacks: CombatCallbacks;
 
     // Phase 2A State
-    private scentIntensity: number = 0.0;
+    private _scentIntensity: number = 0.0;
     private lastDamageTick: number = 0;
     private siphonsThisHunt: number = 0;
     private redMistTicks: number = 0;
@@ -113,8 +123,14 @@ export class CombatEngine {
     private isBraced: boolean = false; // Set via playerStore
     private finesseTicksRemaining: number = 0;
     private famineRestTicks: number = 0;
+    private redMistOccurred: boolean = false;
     private permanentArmorBonus: number = 0;
     private bloodShards: number = 0; // Local copy for Famine Rest
+    // Phase 2C State
+    private isBossPending: boolean = false;
+    private hasSpawnedBoss: boolean = false;
+    private activeEvent: string | null = null;
+    private prevScent: number = 0;
 
     constructor(callbacks: CombatCallbacks) {
         this.callbacks = callbacks;
@@ -147,6 +163,11 @@ export class CombatEngine {
         this.permanentArmorBonus = meta?.permanentArmorBonus ?? 0;
         this.bloodShards = meta?.bloodShards ?? 0;
         this.finesseTicksRemaining = meta?.finesseTicksRemaining ?? 0;
+        this.redMistOccurred = false;
+        this.isBossPending = false;
+        this.hasSpawnedBoss = false;
+        this.activeEvent = null;
+        this.prevScent = 0;
         this.enemyIndex = 0;
         this.currentTick = 0;
         this.recomputeDerived();
@@ -164,6 +185,10 @@ export class CombatEngine {
         if (this.intervalId !== null) {
             clearInterval(this.intervalId);
             this.intervalId = null;
+        }
+        if (this.respawnTimeoutId !== null) {
+            clearTimeout(this.respawnTimeoutId);
+            this.respawnTimeoutId = null;
         }
         this.isRunning = false;
     }
@@ -208,6 +233,9 @@ export class CombatEngine {
     }
 
     get running(): boolean { return this.isRunning; }
+    get redMistSurvived(): boolean { return this.redMistOccurred && this.isRunning; }
+    get scentIntensity(): number { return this._scentIntensity; }
+    get tickCount(): number { return this.currentTick; }
 
     // ---------------------------------------------------------------------------
     // Internal Mechanics
@@ -260,14 +288,20 @@ export class CombatEngine {
         
         if (this.isRedMistActive) {
             this.redMistTicks++;
+            this.redMistOccurred = true;
             if (!wasRedMist) this.log('xp_gain' as any, "The Red Mist descends... (+20% Dmg, +10% Ichor)");
         }
 
-        // --- Phase 2A: Scent of Fear Buildup ---
         const ticksSinceDamage = this.currentTick - this.lastDamageTick;
         if (ticksSinceDamage > 0 && ticksSinceDamage % SCENT_BUILD_INTERVAL === 0) {
-            this.scentIntensity = Math.min(SCENT_ACCURACY_CAP, this.scentIntensity + SCENT_INCREMENT);
+            const scentPenaltyMultiplier = 1 + this.derived.scentSensitivity;
+            this._scentIntensity = Math.min(SCENT_ACCURACY_CAP, this._scentIntensity + (SCENT_INCREMENT * scentPenaltyMultiplier));
         }
+
+        // --- Phase 2C: Threshold Crossings & Events ---
+        this.updateActiveEvent();
+        this.checkForBossTrigger();
+        this.prevScent = this._scentIntensity;
 
         // --- Phase 2A: Famine Rest ---
         if (hpRatio < 0.30 && this.bloodShards < 5) {
@@ -298,7 +332,14 @@ export class CombatEngine {
 
         // --- Fill attack meters ---
         const playerFill = calcMeterFillPerTick(this.derived.attackInterval, TICK_MS);
-        const enemyFill = calcMeterFillPerTick(this.enemy.attackInterval, TICK_MS);
+        let enemyInterval = this.enemy.attackInterval;
+        
+        // --- Phase 2C: Razor Fangs (Enemy Attack Speed +10%) ---
+        if (this.activeEvent === 'Razor Fangs') {
+            enemyInterval *= 0.90;
+        }
+
+        const enemyFill = calcMeterFillPerTick(enemyInterval, TICK_MS);
 
         this.playerMeter += playerFill;
         this.enemyMeter += enemyFill;
@@ -324,23 +365,22 @@ export class CombatEngine {
         }
 
         // --- Report state each tick ---
-        this.callbacks.onTick(
-            Math.min(this.playerMeter, 1),
-            Math.min(this.enemyMeter, 1),
-            this.playerHp,
-            this.enemyHp,
-            this.currentTick,
-            {
-                scentIntensity: this.scentIntensity,
-                isRedMistActive: this.isRedMistActive,
-                redMistTicks: this.redMistTicks,
-                redMistIchorDrops: this.redMistIchorDrops,
-                redMistDeaths: this.redMistDeaths,
-                siphonsThisHunt: this.siphonsThisHunt,
-                finesseTicksRemaining: this.finesseTicksRemaining,
-                isBraced: this.isBraced
-            }
-        );
+        this.callbacks.onTick({
+            playerHp: this.playerHp,
+            enemyHp: this.enemyHp,
+            playerMeter: this.playerMeter,
+            enemyMeter: this.enemyMeter,
+            scentIntensity: this._scentIntensity,
+            activeEvent: this.activeEvent || undefined,
+            currentTick: this.currentTick,
+            isRedMistActive: this.isRedMistActive,
+            redMistTicks: this.redMistTicks,
+            redMistIchorDrops: this.redMistIchorDrops,
+            redMistDeaths: this.redMistDeaths,
+            siphonsThisHunt: this.siphonsThisHunt,
+            finesseTicksRemaining: this.finesseTicksRemaining,
+            isBraced: this.isBraced
+        });
 
         // Notify UI of Phase 2A metrics if they changed meaningfully or periodically
         // (Implementation detail: usually handled by onTick if Payload is updated)
@@ -368,6 +408,7 @@ export class CombatEngine {
         const hit = Math.random() <= hitChance;
         let damage = 0;
         let blocked = false;
+        let crit = false;
 
         if (hit) {
             const maxHit = this.derived.weaponStyle === 'melee'
@@ -403,8 +444,14 @@ export class CombatEngine {
             
             const preMitigation = Math.floor(raw * finalMult);
             
-            // Phase 2A: Red Mist Bonus
+            // --- Phase 2C: Critical Strikes ---
             let finalDmg = preMitigation;
+            crit = Math.random() < this.derived.critChance;
+            if (crit) {
+                finalDmg = Math.floor(finalDmg * this.derived.critMultiplier);
+            }
+
+            // Phase 2A: Red Mist Bonus
             if (this.isRedMistActive) {
                 finalDmg = Math.floor(finalDmg * RED_MIST_DMG_BONUS);
             }
@@ -413,7 +460,7 @@ export class CombatEngine {
             const enemyFlatArmor = (this.enemy.stats as any).flatArmor ?? 0;
             const enemyDr = (this.enemy.stats as any).drPercent ?? 0;
             const mitigated = applyMitigation(
-                preMitigation, 
+                finalDmg, 
                 enemyFlatArmor, 
                 enemyDr, 
                 this.derived.armPen,
@@ -425,7 +472,10 @@ export class CombatEngine {
             damage = damageOutcome;
 
             this.enemyHp -= damage;
-            this.log('hit', `You hit ${this.enemy.name} for ${damage} damage.`, damage);
+            const logMsg = crit 
+                ? `CRITICAL! You hit ${this.enemy.name} for ${damage} damage.`
+                : `You hit ${this.enemy.name} for ${damage} damage.`;
+            this.log('hit', logMsg, damage);
 
             // --- Per-hit XP (Idle Clans model) ---
             const xpGains = calcHitXpGains(damage, this.trainingMode);
@@ -440,7 +490,7 @@ export class CombatEngine {
             this.log('miss', `You missed ${this.enemy.name}.`);
         }
 
-        this.callbacks.onPlayerAttack({ hit, blocked, damage }, this.enemy);
+        this.callbacks.onPlayerAttack({ hit, blocked, damage, isCritical: crit }, this.enemy);
 
         // --- Enemy death ---
         if (this.enemyHp <= 0) {
@@ -451,8 +501,15 @@ export class CombatEngine {
     private resolveEnemyAttack(): void {
         if (!this.enemy) return;
  
-        const enemyAccuracy = this.enemy.accuracy;
-        const totalEnemyAccuracy = enemyAccuracy * (1 + this.scentIntensity);
+        let enemyAccuracy = this.enemy.accuracy;
+        
+        // --- Phase 2C: Bloodlust (Enemy Accuracy +10%) ---
+        if (this.activeEvent === 'Bloodlust' || this.activeEvent === 'Hemophilic Curse' || this.activeEvent === 'Razor Fangs') {
+             // In Phase 2C, Scent Scaling is always on. Bloodlust is an extra modifier.
+             if (this.activeEvent === 'Bloodlust') enemyAccuracy *= 1.10;
+        }
+
+        const totalEnemyAccuracy = enemyAccuracy * (1 + this._scentIntensity);
         
         const hitChance = calcHitChance(
             totalEnemyAccuracy,
@@ -468,10 +525,18 @@ export class CombatEngine {
             // Check block first
             blocked = rollBlock(this.derived.blockChance);
             if (!blocked) {
-                const enemyMaxHit = this.enemy.maxHit;
+                // --- Phase 2C: Scent-Based Damage Scaling ---
+                const enemyMaxHit = calcScentScalingDmg(this.enemy.maxHit, this._scentIntensity);
                 const raw = rollDamage(enemyMaxHit);
+
+                // --- Phase 2C: Hemophilic Curse (Income Damage +15%) ---
+                let incoming = raw;
+                if (this.activeEvent === 'Hemophilic Curse') {
+                    incoming = Math.floor(incoming * 1.15);
+                }
+
                 const mitigated = applyMitigation(
-                    raw, 
+                    incoming, 
                     this.derived.flatArmor, 
                     this.derived.damageReduction,
                     0, // Player doesn't have ARMPEN yet
@@ -481,7 +546,7 @@ export class CombatEngine {
                 damage = Math.min(mitigated, this.playerHp); // Cap damage to current player HP
                 this.playerHp -= damage;
                 this.lastDamageTick = this.currentTick;
-                this.scentIntensity = 0; // Reset scent on damage
+                this._scentIntensity *= 0.5; // Partial decay on damage (Option B)
                 this.log('enemy_hit', `${this.enemy.name} hits you for ${damage} damage.`, damage);
 
                 // --- Blood Siphon (v1.2 Sorcery Set Bonus) ---
@@ -499,7 +564,7 @@ export class CombatEngine {
             this.log('enemy_miss', `${this.enemy.name} missed you.`);
         }
 
-        this.callbacks.onEnemyAttack({ hit, blocked, damage });
+        this.callbacks.onEnemyAttack({ hit, blocked, damage, isCritical: false });
 
         // --- Player death ---
         if (this.playerHp <= 0) {
@@ -531,16 +596,33 @@ export class CombatEngine {
             this.log('loot', `Looted: ${loot.itemName}`);
         }
 
-        this.callbacks.onEnemyDeath(enemy, {}, loot);
+        this.callbacks.onEnemyDeath(enemy, {
+            killedEnemyId: this.enemy.id,
+            isBoss: this.enemy.isElite 
+        }, loot);
+
+        // Phase 2C: Boss Resolution (Partial Scent Reset)
+        if (this.enemy.isElite) {
+            this._scentIntensity = Math.max(0, this._scentIntensity - SCENT_REDUCTION_BOSS);
+        }
 
         // Respawn next enemy after delay
         const respawnMs = (this.zone?.respawnBase ?? 2) * 1000;
         this.stop();
-        setTimeout(() => {
+        this.respawnTimeoutId = setTimeout(() => {
+            this.respawnTimeoutId = null;
             if (!this.zone) return;
-            this.enemyIndex = (this.enemyIndex + 1) % this.zone.enemyPool.length;
-            // Reset enemy HP and meters for the new fight
-            this.spawnNextEnemy();
+
+            // Phase 2B/2C: Deterministic Boss Spawning
+            if (this.isBossPending && !this.hasSpawnedBoss) {
+                // Find boss ID for current zone (next step) or force elite flag
+                this.isBossPending = false;
+                this.hasSpawnedBoss = true;
+                this.spawnBoss(); // Helper (to be implemented)
+            } else {
+                this.enemyIndex = (this.enemyIndex + 1) % this.zone.enemyPool.length;
+                this.spawnNextEnemy();
+            }
             this.isRunning = true;
             this.intervalId = setInterval(() => this.tick(), TICK_MS);
         }, respawnMs);
@@ -576,7 +658,7 @@ export class CombatEngine {
         this.callbacks.onTrySiphon(cost, (success: boolean) => {
             if (success) {
                 this.siphonsThisHunt++;
-                this.scentIntensity *= 0.5; // Reduce scent per spec
+                this._scentIntensity *= 0.5; // Reduce scent per spec
                 this.log('siphon', `Siphoned Blood Shards (+${Math.floor(this.playerMaxHp * SIPHON_HEAL_PCT)} HP). Cost: ${cost} Shards.`);
             }
         });
@@ -591,5 +673,52 @@ export class CombatEngine {
             value,
         };
         this.callbacks.onLog(event);
+    }
+
+    private updateActiveEvent() {
+        const scent = this._scentIntensity;
+        let newEvent: string | null = null;
+
+        if (scent >= EVENT_THRESHOLD_FANGS) newEvent = 'Razor Fangs';
+        else if (scent >= EVENT_THRESHOLD_CURSE) newEvent = 'Hemophilic Curse';
+        else if (scent >= EVENT_THRESHOLD_BLOODLUST) newEvent = 'Bloodlust';
+
+        if (newEvent !== this.activeEvent) {
+            this.activeEvent = newEvent;
+            if (newEvent) {
+                this.log('respawn', `${newEvent} has been triggered by the Scent of Fear!`);
+            }
+        }
+    }
+
+    private checkForBossTrigger() {
+        if (this.prevScent < BOSS_SCENT_THRESHOLD && this._scentIntensity >= BOSS_SCENT_THRESHOLD && !this.hasSpawnedBoss) {
+            this.isBossPending = true;
+            this.log('respawn', "A powerful presence is drawn to your scent... The hunt is escalating!");
+        }
+    }
+
+    private spawnBoss() {
+        if (!this.zone) return;
+        const bossId = this.zone.enemyPool[this.zone.enemyPool.length - 1];
+        this.enemy = this.callbacks.getEnemyData(bossId);
+        
+        if (this.enemy) {
+            this.enemy = { 
+                ...this.enemy, 
+                isElite: true, 
+                name: `[BOSS] ${this.enemy.name}`,
+                stats: {
+                    ...this.enemy.stats,
+                    hp: calcScentScalingHp(this.enemy.stats.hp, this._scentIntensity),
+                    attack: calcScentScalingDmg(this.enemy.stats.attack, this._scentIntensity),
+                    strength: calcScentScalingDmg(this.enemy.stats.strength, this._scentIntensity),
+                }
+            };
+            this.enemyHp = this.enemy.stats.hp;
+            this.enemyMeter = 0;
+            this.log('respawn', `The ${this.enemy.name} has emerged!`);
+            this.callbacks.onRespawn(this.enemy);
+        }
     }
 }

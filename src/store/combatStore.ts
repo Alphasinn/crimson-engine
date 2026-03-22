@@ -5,6 +5,7 @@
 // =============================================================================
 
 import { create } from 'zustand';
+import { usePlayerStore } from './playerStore';
 import type { Zone, Enemy, CombatEvent, PlayerSkills, StatWindowEntry, SessionStats } from '../engine/types';
 
 const MAX_LOG_ENTRIES = 120;
@@ -15,6 +16,7 @@ export interface DamageSplat {
     amount: number;
     isPlayer: boolean;
     type: 'hit' | 'miss' | 'block' | 'heal';
+    isCritical?: boolean;
     timestamp: number;
 }
 
@@ -38,6 +40,11 @@ interface CombatState {
     isRunning: boolean;
     isDead: boolean;
     currentTick: number;
+    // Phase 2C Status
+    activeEvent: string | null;
+    isBossPending: boolean;
+    scentIntensity: number;
+    lastEnemyCritStamp: number;
 
     // Event Log
     log: CombatEvent[];
@@ -64,6 +71,7 @@ interface CombatState {
     resetCombat: () => void;
     fleeCombat: () => void;
     initPlayer: (maxHp: number) => void;
+    updateCombatState: (updates: any) => void;
 
     // Stats Actions
     recordStat: (type: StatWindowEntry['type'], value: number) => void;
@@ -72,7 +80,7 @@ interface CombatState {
     // Session Actions
     startSession: () => void;
     updateSession: (patch: Partial<SessionStats> | ((prev: SessionStats) => Partial<SessionStats>)) => void;
-    endSession: (wasSlain?: boolean) => void;
+    endSession: (wasSlain?: boolean, tickCount?: number, redMistSurvived?: boolean, lastScentIntensity?: number) => void;
     clearLastSession: () => void;
 }
 
@@ -92,6 +100,10 @@ export const useCombatStore = create<CombatState>()((set) => ({
     isRunning: false,
     isDead: false,
     currentTick: 0,
+    activeEvent: null,
+    isBossPending: false,
+    scentIntensity: 0,
+    lastEnemyCritStamp: 0,
     log: [],
     splats: [],
     statsWindow: [],
@@ -155,6 +167,10 @@ export const useCombatStore = create<CombatState>()((set) => ({
             isRunning: false,
             isDead: false,
             currentTick: 0,
+            activeEvent: null,
+            isBossPending: false,
+            scentIntensity: 0,
+            lastEnemyCritStamp: 0,
             log: [],
             splats: [],
             statsWindow: [],
@@ -200,7 +216,11 @@ export const useCombatStore = create<CombatState>()((set) => ({
             kills: 0,
             xpGained: 0,
             lootCount: 0,
-            lootItems: []
+            lootItems: [],
+            bloodShardsGained: 0,
+            cursedIchorGained: 0,
+            graveSteelGained: 0,
+            bossesSlain: 0
         },
         lastSession: null
     }),
@@ -213,9 +233,26 @@ export const useCombatStore = create<CombatState>()((set) => ({
         };
     }),
 
-    endSession: (wasSlain?: boolean) => set((state) => {
+    endSession: (wasSlain?: boolean, tickCount?: number, redMistSurvived?: boolean, lastScentIntensity?: number) => set((state) => {
         if (!state.sessionStats) return {};
-        const lastSession = { ...state.sessionStats, endTime: Date.now(), wasSlain };
+        const lastSession = { 
+            ...state.sessionStats, 
+            endTime: Date.now(), 
+            wasSlain,
+            lastScentIntensity: lastScentIntensity ?? 0
+        };
+
+        // Phase 2B: Crucible Seal Reset Logic
+        // 1. Never reset on death.
+        // 2. Reset if 50+ ticks or Red Mist survived.
+        if (!wasSlain) {
+            const duration = tickCount ?? state.currentTick;
+            if (duration >= 50 || redMistSurvived) {
+                // Bridge to playerStore
+                usePlayerStore.getState().resetCrucibleSeal();
+            }
+        }
+
         return {
             sessionStats: null,
             lastSession
@@ -223,4 +260,8 @@ export const useCombatStore = create<CombatState>()((set) => ({
     }),
 
     clearLastSession: () => set({ lastSession: null }),
+
+    updateCombatState: (updates) => set(() => ({
+        ...updates
+    })),
 }));

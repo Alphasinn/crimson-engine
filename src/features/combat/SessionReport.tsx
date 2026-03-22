@@ -49,14 +49,14 @@ export function SessionReport({ onOpenCombatGains, onOpenHuntingGains }: Props) 
                 <button 
                     className={styles.reportBtn}
                     onClick={onOpenCombatGains}
-                    disabled={!isRunning}
+                    disabled={!isRunning && !useCombatStore.getState().lastSession}
                 >
                     <span>📊</span> Combat Gains
                 </button>
                 <button 
                     className={styles.reportBtn}
                     onClick={onOpenHuntingGains}
-                    disabled={!isRunning}
+                    disabled={!isRunning && !useCombatStore.getState().lastSession}
                 >
                     <span>📜</span> Hunting Gains
                 </button>

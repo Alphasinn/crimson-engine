@@ -24,6 +24,9 @@ import {
     STYLE_FREQ_INTENSITY,
     CRUSH_FRACTURE_RATE,
     DAMAGE_FLOOR_PERCENT,
+    MAX_SCENT_SENSITIVITY,
+    REFINEMENT_SCENT_MULT,
+    CRIT_MULTIPLIER_DEFAULT,
 } from './constants';
 
 const HEAVY_WEAKNESS_MAX_HIT_BONUS = 0.25; 
@@ -209,6 +212,41 @@ export function applyWeaknessMod(
     if (playerKey === enemyWeakness) mod = WEAKNESS_DAMAGE_MOD;
     if (playerKey === enemyResistance) mod = RESISTANCE_DAMAGE_MOD;
     return Math.floor(rawDamage * mod);
+}
+
+// =============================================================================
+// PHASE 2C: SCENT SCALING & CRITICAL STRIKES
+// =============================================================================
+
+/**
+ * Enemy damage scales up to 2x based on Scent Intensity (0.0 to 1.0).
+ * Damage = Base × (1 + Scent)
+ */
+export function calcScentScalingDmg(base: number, scent: number): number {
+    return Math.floor(base * (1 + scent));
+}
+
+/**
+ * Enemy HP scales up to 1.5x based on Scent Intensity (0.0 to 1.0).
+ * HP = Base × (1 + Scent × 0.5)
+ */
+export function calcScentScalingHp(base: number, scent: number): number {
+    return Math.floor(base * (1 + (scent * 0.5)));
+}
+
+/**
+ * Calculate critical hit chance based on Agility level.
+ * Scaling: ~24% chance at Level 120 (base 0.002 per level).
+ */
+export function calcCritChance(agilityLevel: number): number {
+    return agilityLevel * 0.002;
+}
+
+/**
+ * Flat critical multiplier as defined in constants.
+ */
+export function calcCritMultiplier(_agilityLevel: number): number {
+    return CRIT_MULTIPLIER_DEFAULT;
 }
 
 /**
@@ -428,14 +466,19 @@ export function computeDerivedStats(
     const rangedMaxHit = calcMaxHit(calcBaseMaxHit(skills.shadowArchery.level), powerMod, 0);
     const magicMaxHit = calcMaxHit(calcBaseMaxHit(skills.bloodSorcery.level), weapon?.powerModifier ?? 1.0, 0);
 
+    // --- Phase 2B: Path Specializations ---
+    const t2Items = Object.values(equipment).filter(item => item && item.tier === 'T2');
+    const sanguineCount = t2Items.filter(item => item?.specPath === 'sanguine').length;
+    const vileCount = t2Items.filter(item => item?.specPath === 'vile').length;
+
     // --- Defense ---
     const drPercent = Math.min(
         MAX_DAMAGE_REDUCTION,
-        Object.values(equipment).reduce((sum, item) => sum + (item?.drPercent ?? 0), 0)
+        Object.values(equipment).reduce((sum, item) => sum + (item?.drPercent ?? 0), 0) + (vileCount * 0.05)
     );
     const blockChance = Math.min(
         MAX_BLOCK_CHANCE,
-        Object.values(equipment).reduce((sum, item) => sum + (item?.blockChance ?? 0), 0)
+        Object.values(equipment).reduce((sum, item) => sum + (item?.blockChance ?? 0), 0) + (vileCount * 0.05)
     );
     const flatArmor = Object.values(equipment).reduce(
         (sum, item) => sum + (item?.flatArmor ?? 0), 0
@@ -447,6 +490,10 @@ export function computeDerivedStats(
     const pctReductions = Object.values(equipment)
         .map(item => item?.attackIntervalPct ?? 0)
         .filter(v => v > 0);
+    
+    // Sanguine Path: +5% Speed per item
+    if (sanguineCount > 0) pctReductions.push(sanguineCount * 0.05);
+
     const attackInterval = calcAttackInterval(
         weapon ? (2.0 - weaponInterval) : baseInterval,
         pctReductions,
@@ -457,6 +504,8 @@ export function computeDerivedStats(
     let lifestealPercent = Object.values(equipment).reduce(
         (sum, item) => sum + (item?.lifestealPercent ?? 0), 0
     );
+    // Sanguine Path: +2% Lifesteal per item
+    lifestealPercent += (sanguineCount * 0.02);
     
     // Phase 2A: Sanguine Finesse Lifesteal Doubling (if HP < 50%)
     if (meta?.isFinesseActive && meta?.isLowHp) {
@@ -486,6 +535,12 @@ export function computeDerivedStats(
         (isHeavyWeapon ? 0.35 : 0)
     );
 
+    // --- Phase 2B: Scent Sensitivity ---
+    const totalRefinement = Object.values(equipment).reduce(
+        (sum, item) => sum + (item?.refinement ?? 0), 0
+    );
+    const scentSensitivity = Math.min(MAX_SCENT_SENSITIVITY, totalRefinement * REFINEMENT_SCENT_MULT);
+
     return {
         maxHp: calcMaxHp(skills.vitae.level),
         accuracyRating,
@@ -503,7 +558,11 @@ export function computeDerivedStats(
         siphonAmount,
         armPen,
         minDamagePct,
+        scentSensitivity,
         weaponStyle,
         weaponSubStyle: subStyle,
+        // Phase 2C: Scent refinement
+        critChance: calcCritChance(skills.fangMastery.level), // Agility = Fang Mastery currently
+        critMultiplier: calcCritMultiplier(skills.fangMastery.level),
     };
 }

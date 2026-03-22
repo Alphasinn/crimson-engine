@@ -93,3 +93,70 @@
     color: $color-text-muted;
     font-family: $font-mono;
 }
+
+// --- Compact Variant for Sidebar ---
+.compactPanel {
+    padding: $space-2 0;
+    @include flex-col;
+    gap: $space-2;
+}
+
+.compactSkillList {
+    @include flex-col;
+    gap: 4px;
+}
+
+.compactSkillRow {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    padding: 2px $space-3;
+    border-radius: $radius-sm;
+    transition: background 0.2s;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.03);
+    }
+}
+
+.miniIcon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    opacity: 0.8;
+}
+
+.compactSkillInfo {
+    flex: 1;
+    @include flex-col;
+    gap: 1px;
+}
+
+.compactSkillTop {
+    @include flex-between;
+    font-size: 10px;
+    line-height: 1;
+}
+
+.miniName {
+    color: $color-text-secondary;
+    font-weight: 500;
+}
+
+.miniLevel {
+    font-family: $font-mono;
+    font-weight: 700;
+}
+
+.miniXpTrack {
+    height: 2px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: $radius-full;
+    width: 100%;
+    margin-top: 2px;
+}
+
+.miniXpFill {
+    height: 100%;
+    border-radius: $radius-full;
+}

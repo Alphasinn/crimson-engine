@@ -1,128 +1,142 @@
 import React from 'react';
 import { usePlayerStore } from '../../store/playerStore';
 import { useCombatStore } from '../../store/combatStore';
-import styles from './crucible.module.scss';
-import iconShard from '../../assets/icons/blood_shard.png';
-import iconSteel from '../../assets/icons/grave_steel.png';
-import iconIchor from '../../assets/icons/cursed_ichor.png';
+import { useCombatEngine } from '../combat/useCombatEngine';
+import styles from './CruciblePanel.module.scss';
 
 export const CruciblePanel: React.FC = () => {
     const { 
-        bloodShards, graveSteel, cursedIchor, stabilizedIchor, 
-        currentVitae, skills,
-        siphon, stabilizeIchor, sanguineFinesse, vileReinforcement, tierShift 
+        equipment, cursedIchor,
+        crucibleSealed, refineGear, stabilizeIchor, tierShift 
     } = usePlayerStore();
-    const { isRunning, playerMaxHp } = useCombatStore();
+    
+    const { isRunning, lastSession } = useCombatStore();
+    const { fleeFromCombat } = useCombatEngine();
+
+
+    // Risk yield calculation (v1.1 design: 1 + ScentIntensity of last hunt)
+    const lastScent = lastSession && !lastSession.wasSlain ? (lastSession.lastScentIntensity ?? 0) : 0;
+    const potentialYieldBonus = Math.round(lastScent * 100);
+
+    const handleRefine = (slot: any) => {
+        if (crucibleSealed) return;
+        if (isRunning) fleeFromCombat();
+        refineGear(slot);
+    };
+
+    const handleTierShift = (slot: any, path: 'sanguine' | 'vile') => {
+        if (crucibleSealed) return;
+        if (isRunning) fleeFromCombat();
+        tierShift(slot, path);
+    };
+
+    const handleStabilize = () => {
+        if (crucibleSealed) return;
+        if (isRunning) fleeFromCombat();
+        stabilizeIchor();
+    };
+
+    const shiftableItems = Object.entries(equipment).filter(([_, item]) => (item.refinement ?? 0) >= 5 && item.tier === 'T1');
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h2 className={styles.title}>The Blood Crucible</h2>
-                <div className={styles.info}>Transmute raw essence into vampiric power.</div>
-            </div>
+        <div className={`${styles.root} ${crucibleSealed ? styles.sealed : ''}`}>
+            <header className={styles.header}>
+                <div className={styles.titleArea}>
+                    <h3>THE CRUCIBLE</h3>
+                    <div className={`${styles.sealStatus} ${crucibleSealed ? styles.sealedText : styles.readyText}`}>
+                        {crucibleSealed ? '🔒 SEALED' : '✨ READY'}
+                    </div>
+                </div>
+                <p className={styles.desc}>
+                    Distill essence into power. One action per cycle.
+                </p>
+            </header>
 
-            <div className={styles.upgradeGrid}>
-                {/* Siphon Vitae */}
-                <div className={styles.card}>
-                    <div className={styles.cardHeader}>
-                        <span className={styles.cardIcon}>💉</span>
-                        <div className={styles.cardTitle}>Siphon Vitae</div>
+            <div className={styles.crucibleGrid}>
+                {/* Refinement Section */}
+                <div className={styles.section}>
+                    <h4 className={styles.sectionTitle}>Altar of Steel (Refine)</h4>
+                    <div className={styles.gearList}>
+                        {Object.entries(equipment).map(([slot, item]) => (
+                            <div key={slot} className={styles.gearItem}>
+                                <div className={styles.gearInfo}>
+                                    <span className={styles.itemName}>{item.name}</span>
+                                    <span className={styles.refinement}>+{item.refinement}</span>
+                                </div>
+                                <button 
+                                    className={styles.refineBtn}
+                                    onClick={() => handleRefine(slot)}
+                                    disabled={crucibleSealed || item.refinement >= 5}
+                                >
+                                    {item.refinement >= 5 ? 'MAX' : 'Refine'}
+                                </button>
+                            </div>
+                        ))}
                     </div>
-                    <div className={styles.cardDesc}>Heal 20% of Max HP instantly.</div>
-                    <div className={styles.costRow}>
-                        <img src={iconShard} alt="" className={styles.miniIcon} />
-                        <span>10 Shards</span>
-                    </div>
-                    <button 
-                        className={styles.upgradeBtn}
-                        onClick={() => siphon(playerMaxHp, 10)}
-                        disabled={bloodShards < 10 || currentVitae >= playerMaxHp}
-                    >
-                        Consume
-                    </button>
                 </div>
 
-                {/* Sanguine Finesse */}
-                <div className={styles.card}>
-                    <div className={styles.cardHeader}>
-                        <span className={styles.cardIcon}>⚡</span>
-                        <div className={styles.cardTitle}>Sanguine Finesse</div>
+                {/* Transmutation Section */}
+                <div className={styles.section}>
+                    <h4 className={styles.sectionTitle}>Altar of Ichor (Transmute)</h4>
+                    <div className={styles.transmuteArea}>
+                        <div className={styles.yieldInfo}>
+                            <span>Yield Bonus: <strong className={styles.bonus}>+{potentialYieldBonus}%</strong></span>
+                            <small>Based on escape intensity</small>
+                        </div>
+                        <button 
+                            className={styles.transmuteBtn}
+                            onClick={handleStabilize}
+                            disabled={crucibleSealed || cursedIchor <= 0}
+                        >
+                            Stabilize Ichor
+                        </button>
                     </div>
-                    <div className={styles.cardDesc}>+20% Attack Speed for 200 ticks.</div>
-                    <div className={styles.costRow}>
-                        <img src={iconShard} alt="" className={styles.miniIcon} />
-                        <span>15 Shards</span>
-                    </div>
-                    <button 
-                        className={styles.upgradeBtn}
-                        onClick={sanguineFinesse}
-                        disabled={bloodShards < 15}
-                    >
-                        Activate
-                    </button>
                 </div>
 
-                {/* Vile Reinforcement */}
-                <div className={styles.card}>
-                    <div className={styles.cardHeader}>
-                        <span className={styles.cardIcon}>🛡️</span>
-                        <div className={styles.cardTitle}>Vile Reinforcement</div>
-                    </div>
-                    <div className={styles.cardDesc}>+5 Armor & 50% Shard preservation on death.</div>
-                    <div className={styles.costRow}>
-                        <img src={iconShard} alt="" className={styles.miniIcon} /> 30
-                        <img src={iconSteel} alt="" className={styles.miniIcon} /> 10
-                    </div>
-                    <button 
-                        className={styles.upgradeBtn}
-                        onClick={vileReinforcement}
-                        disabled={bloodShards < 30 || graveSteel < 10}
-                    >
-                        Brace
-                    </button>
-                </div>
-
-                {/* Ichor Stabilization */}
-                <div className={styles.card}>
-                    <div className={styles.cardHeader}>
-                        <span className={styles.cardIcon}>🧪</span>
-                        <div className={styles.cardTitle}>Stabilize Ichor</div>
-                    </div>
-                    <div className={styles.cardDesc}>Transmute raw Ichor into Stabilized Ichor.</div>
-                    <div className={styles.costRow}>
-                        <img src={iconShard} alt="" className={styles.miniIcon} /> 125
-                        <img src={iconIchor} alt="" className={styles.miniIcon} /> 1
-                    </div>
-                    <button 
-                        className={styles.upgradeBtn}
-                        onClick={stabilizeIchor}
-                        disabled={bloodShards < 125 || cursedIchor < 1}
-                    >
-                        Distill
-                    </button>
-                </div>
-
-                {/* Tier Shift */}
-                <div className={styles.card}>
-                    <div className={styles.cardHeader}>
-                        <span className={styles.cardIcon}>🔺</span>
-                        <div className={styles.cardTitle}>Tier Shift</div>
-                    </div>
-                    <div className={styles.cardDesc}>Evolve to Tier II. (Unlock higher zones)</div>
-                    <div className={styles.costRow}>
-                        <img src={iconShard} alt="" className={styles.miniIcon} /> 200
-                        <img src={iconIchor} alt="" className={styles.miniIcon} /> 3
-                        <img src={iconSteel} alt="" className={styles.miniIcon} /> 25
-                    </div>
-                    <button 
-                        className={styles.upgradeBtn}
-                        onClick={tierShift}
-                        disabled={bloodShards < 200 || stabilizedIchor < 3 || graveSteel < 25}
-                    >
-                        Evolve
-                    </button>
+                {/* Tier-Shift Section */}
+                <div className={styles.section}>
+                    <h4 className={styles.sectionTitle}>Altar of Flesh (Tier-Shift)</h4>
+                    {shiftableItems.length === 0 ? (
+                        <p className={styles.hint}>No +5 T1 gear equipped</p>
+                    ) : (
+                        <div className={styles.gearList}>
+                            {shiftableItems.map(([slot, item]) => (
+                                <div key={slot} className={styles.shiftItem}>
+                                    <div className={styles.gearInfo}>
+                                        <span className={styles.itemName}>{item.name}</span>
+                                        <span className={styles.pathMarker}>Ready to Shift</span>
+                                    </div>
+                                    <div className={styles.shiftActions}>
+                                        <button 
+                                            className={styles.sanguineBtn}
+                                            onClick={() => handleTierShift(slot, 'sanguine')}
+                                            disabled={crucibleSealed}
+                                        >
+                                            Sanguine
+                                        </button>
+                                        <button 
+                                            className={styles.vileBtn}
+                                            onClick={() => handleTierShift(slot, 'vile')}
+                                            disabled={crucibleSealed}
+                                        >
+                                            Vile
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
+
+            {crucibleSealed && (
+                <div className={styles.sealOverlay}>
+                    <div className={styles.sealMessage}>
+                        <span>Crucible is Sealed</span>
+                        <small>Survive a full Hunt (50+ ticks) to reset</small>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

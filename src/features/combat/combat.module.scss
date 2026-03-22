@@ -1,13 +1,39 @@
-// combat.module.scss
 @use '../../styles/variables' as *;
 @use '../../styles/mixins' as *;
 
 .root {
-    display: grid;
-    grid-template-columns: 280px 1fr 320px;
-    gap: $space-4;
     height: 100%;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+.arenaContainer {
+    display: flex; // Back to flex for cleaner behavior with sidebar
+    height: 100%;
+    background: $color-bg-deep;
+    color: $color-text-primary;
+    overflow: hidden;
+}
+
+// LeftNav is gone
+
+.navTitle {
+    font-family: $font-heading;
+    font-size: 13px;
+    color: $color-gold;
+    margin-bottom: $space-4;
+    letter-spacing: 0.1em;
+}
+
+.centerPanel {
+    flex: 1;
+    overflow-y: auto;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .rightSidebar {
@@ -32,15 +58,16 @@
     gap: $space-4;
     padding: $space-5;
     overflow-y: auto;
+    position: relative;
 }
 
 .panelTitle {
     @include heading-style;
-    font-size: $font-size-xl;
+    font-size: $font-size-2xl;
     color: $color-crimson;
     text-align: center;
     padding-bottom: $space-3;
-    border-bottom: 1px solid $color-border-accent;
+    border-bottom: 2px solid $color-border-accent;
 }
 
 // --- Style Buttons ---
@@ -188,12 +215,12 @@
     padding: $space-3 $space-4;
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: $radius-md;
-    margin-top: $space-1;
+    border-radius: 12px;
+    position: relative;
     transition: all $transition-normal;
 
     &.locked {
-        opacity: 0.5;
+        opacity: 0.35;
         filter: grayscale(1);
         cursor: not-allowed;
         background: rgba(10, 10, 10, 0.2);
@@ -416,9 +443,542 @@
         box-shadow: 0 0 15px rgba(196, 30, 58, 0.6), 0 0 5px $color-gold;
     }
 
-    &:active {
-        transform: translateY(0);
+    &:hover {
+        background: rgba(196, 30, 58, 0.25);
+        color: white;
+        border-color: $color-crimson;
     }
+}
+
+// --- Phase 2C: Scent of Fear Refinement ---
+.arenaHeader {
+    position: absolute;
+    top: -20px;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    z-index: 120;
+    pointer-events: none;
+}
+
+.activeEventBanner {
+    background: rgba(196, 30, 58, 0.9);
+    border: 1px solid $color-gold;
+    border-radius: $radius-full;
+    padding: $space-1 $space-4;
+    color: white;
+    font-family: $font-heading;
+    font-size: $font-size-sm;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    box-shadow: 0 0 15px rgba(196, 30, 58, 0.6);
+    animation: bannerSlideDown 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28), bannerPulse 2s infinite;
+    pointer-events: auto;
+}
+
+.fightArena {
+    @include flex-col;
+    padding: $space-2 $space-10; // More horizontal breathing room at edges
+    gap: $space-4;
+    max-width: none; // Unbound for full edge-to-edge tactical feel
+    width: 100%;
+    height: 100%;
+    min-width: 0; // Allow shrinking horizontally
+}
+
+.arenaStatusHeader {
+    @include glass-card;
+    padding: $space-3 $space-5;
+    @include flex-col;
+    gap: $space-2;
+    width: 100%;
+}
+
+.combatantsRow {
+    display: flex;
+    justify-content: space-between; // Pin to far left and far right
+    align-items: center;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+}
+
+.bottomBarArea {
+    @include flex-col;
+    gap: $space-2;
+    width: 100%;
+    padding-top: $space-2;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    box-sizing: border-box;
+    overflow: hidden; // Suppress persistent scrollbar
+}
+
+.miniStyleRow {
+    @include flex-center;
+    gap: $space-3;
+    padding: $space-4 $space-2;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: $radius-lg;
+    margin-bottom: $space-4;
+}
+
+.miniStyleBtn {
+    @include button-base(rgba(255, 255, 255, 0.05));
+    padding: $space-2 $space-4;
+    font-size: 11px;
+    color: $color-text-secondary;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-width: 80px;
+    text-transform: uppercase;
+    font-family: $font-heading;
+    letter-spacing: 0.05em;
+
+    &.active {
+        background: rgba(196, 30, 58, 0.2);
+        color: $color-crimson;
+        border-color: rgba(196, 30, 58, 0.5);
+        box-shadow: 0 0 10px rgba(196, 30, 58, 0.2);
+    }
+
+    &:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+}
+
+.arenaButtons {
+    margin-top: auto;
+    display: flex;
+    flex-direction: row; // Side-by-side
+    gap: $space-3;
+    padding: $space-6 $space-2;
+    width: 100%;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.fleeBtn {
+    @include button-base($color-crimson);
+    padding: $space-3;
+    font-size: $font-size-sm;
+    text-transform: uppercase;
+    font-family: $font-heading;
+    letter-spacing: 0.1em;
+    flex: 1; // Equal width
+    box-shadow: 0 4px 15px rgba(196, 30, 58, 0.3);
+    
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(196, 30, 58, 0.4);
+    }
+}
+
+.homeBtn {
+    @include button-base(rgba(255, 255, 255, 0.05));
+    padding: $space-2;
+    font-size: $font-size-xs;
+    text-transform: uppercase;
+    font-family: $font-heading;
+    letter-spacing: 0.1em;
+    flex: 1; // Equal width
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    
+    &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+}
+
+.playerCardArea {
+    @include glass-card;
+    padding: $space-5;
+    @include flex-col;
+    gap: $space-5;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+
+    &:hover {
+        border-color: rgba(212, 175, 55, 0.1);
+    }
+}
+
+.playerCardHeader {
+    font-family: $font-heading;
+    font-size: $font-size-md;
+    color: $color-gold;
+    text-align: center;
+    letter-spacing: 0.1em;
+    padding-bottom: $space-3;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.playerStatsArea {
+    @include flex-col;
+    gap: $space-4;
+}
+
+.vitaeRow {
+    @include flex-col;
+    gap: $space-1;
+}
+
+.vitaeLabel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.vitaeLabelText {
+    font-size: 10px;
+    font-family: $font-mono;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: $color-blood-light;
+    font-weight: $font-weight-bold;
+}
+
+.vitaeValue {
+    font-family: $font-mono;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 600;
+}
+
+.miniStyleRow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+}
+
+.miniStyleBtn {
+    @include flex-col;
+    @include flex-center;
+    padding: $space-2;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: $radius-sm;
+    color: $color-text-secondary;
+    font-size: 9px;
+    font-family: $font-heading;
+    transition: all 0.2s;
+    cursor: pointer;
+
+    img {
+        width: 14px;
+        height: 14px;
+        margin-bottom: 2px;
+        opacity: 0.6;
+    }
+
+    &.active {
+        background: rgba(196, 30, 58, 0.15);
+        border-color: $color-crimson;
+        color: #fff;
+        img { opacity: 1; filter: drop-shadow(0 0 5px $color-crimson); }
+    }
+
+    &:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.08);
+    }
+}
+
+.arenaStatGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $space-3;
+}
+
+.arenaStatBox {
+    background: rgba(0, 0, 0, 0.2);
+    padding: $space-2 $space-3;
+    border-radius: $radius-sm;
+    @include flex-between;
+}
+
+.arenaStatLabel { font-size: 10px; color: $color-text-muted; }
+.arenaStatValue { font-family: $font-mono; font-size: 12px; font-weight: 700; color: #fff; }
+
+.miniAutoEat {
+    @include flex-between;
+    padding: $space-2 $space-3;
+    background: rgba(34, 197, 94, 0.05);
+    border-radius: $radius-sm;
+    font-size: 10px;
+    color: $color-text-secondary;
+}
+
+.miniEatToggle {
+    width: 24px;
+    height: 12px;
+    background: #333;
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 8px;
+        height: 8px;
+        background: #666;
+        border-radius: 50%;
+        transition: 0.2s;
+    }
+
+    &.active {
+        background: #15803d;
+        &::after { left: 14px; background: #fff; }
+    }
+}
+
+.playerSplatAnchor {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    pointer-events: none;
+    z-index: 50;
+}
+
+.enemySplatOverlay {
+    position: absolute;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.enemyCardCrit {
+    animation: criticalFlashCard 0.4s ease-out;
+}
+
+@keyframes criticalFlashCard {
+    0% { transform: scale(1); background-color: rgba(255, 0, 0, 0); box-shadow: 0 0 0px transparent; }
+    20% { transform: scale(1.02); background-color: rgba(255, 0, 0, 0.4); box-shadow: 0 0 30px #ff0000; }
+    40% { transform: translateX(-4px); }
+    60% { transform: translateX(4px); }
+    100% { transform: scale(1); background-color: rgba(255, 0, 0, 0); box-shadow: 0 0 0px transparent; }
+}
+
+.bossPendingTag {
+    display: none; // Retired in favor of Scent Bar warning
+}
+
+.scentBossWarning {
+    margin-left: $space-2;
+    color: $color-gold;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    animation: flashGold 1s infinite alternate;
+}
+
+.activeScourge {
+    margin-top: $space-2;
+    padding: $space-2 $space-3;
+    background: rgba(196, 30, 58, 0.1);
+    border: 1px solid rgba(196, 30, 58, 0.3);
+    border-radius: $radius-sm;
+    animation: scourgeReveal 0.3s ease-out;
+}
+
+.scourgeHeader {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.15em;
+    margin-bottom: 2px;
+}
+
+.scourge {
+    filter: drop-shadow(0 0 10px rgba(255, 51, 85, 0.5));
+}
+
+.sidebarScourgeInfo {
+    @include flex-col;
+    gap: $space-1;
+    margin-top: $space-2;
+    padding: $space-2 $space-3;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(196, 30, 58, 0.3);
+    border-radius: $radius-sm;
+    font-size: 10px;
+    color: $color-text-secondary;
+}
+
+.sidebarScourgeInfoRow {
+    @include flex-between;
+    gap: $space-2;
+}
+
+.sidebarScourgeInfoLabel {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 9px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.sidebarScourgeInfoValue {
+    font-family: $font-mono;
+    color: $color-blood-light;
+    font-weight: 700;
+}
+
+.scourgeName {
+    font-family: $font-heading;
+    font-size: 11px;
+    color: $color-blood-light;
+    text-transform: uppercase;
+}
+
+.scourgeDesc {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
+    margin-top: 1px;
+}
+
+@keyframes scourgeReveal {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+// --- Scent Bar ---
+.scentArea {
+    margin-top: $space-3;
+    @include flex-col;
+    gap: 4px;
+    position: relative;
+}
+
+.scentLabel {
+    @include flex-between;
+    font-size: 11px;
+    color: rgba(168, 85, 247, 0.8); // Purple-ish
+    font-family: $font-heading;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.scentValue {
+    color: white;
+    font-family: $font-mono;
+}
+
+.scentTrack {
+    height: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    border-radius: $radius-full;
+    width: 100%;
+    overflow: hidden;
+}
+
+.scentFill {
+    height: 100%;
+    background: linear-gradient(90deg, #6b21a8, #c41e3a);
+    box-shadow: 0 0 8px rgba(196, 30, 58, 0.4);
+    transition: width 0.3s ease;
+}
+
+.scentMilestones {
+    position: absolute;
+    top: 15px;
+    left: 0;
+    right: 0;
+    height: 8px;
+    pointer-events: none;
+}
+
+.milestone {
+    position: absolute;
+    width: 2px;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    top: 0;
+    pointer-events: auto;
+    cursor: help;
+    transition: background 0.2s;
+
+    &:hover {
+        background: $color-gold;
+        box-shadow: 0 0 8px $color-gold;
+    }
+}
+
+.milestoneBoss {
+    position: absolute;
+    width: 2px;
+    height: 100%;
+    background: $color-gold;
+    top: 0;
+    box-shadow: 0 0 4px $color-gold;
+    pointer-events: auto;
+    cursor: help;
+
+    &:hover {
+        box-shadow: 0 0 12px $color-gold;
+        width: 4px;
+        margin-left: -1px;
+    }
+}
+
+// --- Critical Splats ---
+.splatCritical {
+    @include heading-style;
+    font-size: $font-size-3xl !important;
+    color: #ff3355 !important;
+    text-shadow: 
+        0 0 15px #ff0000, 
+        0 0 30px #8b0000,
+        0 0 40px rgba(255, 255, 255, 0.8) !important;
+    filter: drop-shadow(0 0 10px #ff0000);
+    animation: criticalPopEnhanced 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards !important;
+    z-index: 200;
+}
+
+@keyframes criticalPopEnhanced {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5) translateY(0) rotate(-10deg); }
+    15% { opacity: 1; transform: translate(-50%, -50%) scale(1.8) translateY(-40px) rotate(5deg); }
+    30% { transform: translate(-50%, -50%) scale(1.4) translateY(-35px) rotate(-5deg); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1) translateY(-120px) rotate(2deg); }
+}
+
+.critLabel {
+    display: block;
+    font-size: 9px;
+    color: $color-gold;
+    margin-bottom: -4px;
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 4px black;
+}
+
+@keyframes vampiricSplat {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+    100% { opacity: 0; transform: translate(calc(-50% + 15px), calc(-50% - 140px)) scale(0.8); }
+}
+
+@keyframes criticalPop {
+    0% { transform: scale(0.5) translateY(0); opacity: 0; }
+    30% { transform: scale(1.4) translateY(-20px); opacity: 1; }
+    100% { transform: scale(1) translateY(-40px); opacity: 0; }
+}
+
+@keyframes bannerSlideDown {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes bannerPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(196, 30, 58, 0.6); }
+    50% { transform: scale(1.03); box-shadow: 0 0 25px rgba(196, 30, 58, 0.9); }
+}
+
+@keyframes flashGold {
+    from { opacity: 0.4; }
+    to { opacity: 1; text-shadow: 0 0 15px $color-gold; }
 }
 
 .persistentHpArea {
@@ -812,6 +1372,495 @@
 }
 
 // --- Combat-in-progress banner (shown on zone grid while fighting) ---
+.zoneNavHeader {
+    display: flex;
+    justify-content: center; /* Center the navigation tabs */
+    align-items: center;
+    padding: $space-4 $space-12;
+    background: rgba(0, 0, 0, 0.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    min-height: 120px;
+    position: relative;
+    overflow: hidden;
+}
+
+.prepSpacer {
+    flex: 1; /* Occupy the left space where the HUD is */
+}
+
+.selectionLayout {
+    display: flex;
+    height: 100%;
+    flex: 1;
+    gap: $space-4;
+    padding: $space-2;
+    background: rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    min-height: 0;
+}
+
+.prepArea {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    background: rgba(10, 10, 15, 0.98);
+    backdrop-filter: blur(20px);
+}
+
+.combatLayout {
+    display: flex;
+    flex: 1; /* Stretch to fill prepArea */
+    min-width: 0; // Allow shrinking horizontally
+    min-height: 0;
+    gap: $space-4;
+    overflow: hidden;
+    margin: 0; /* No margin needed now that parent padding is gone */
+}
+
+.combatLeftSidebar {
+    width: 400px;
+    height: 100%;
+    @include flex-col;
+    gap: $space-4;
+    padding: $space-6 $space-5 0 $space-5;
+    background: rgba(10, 10, 15, 0.98);
+    border-right: 1px solid rgba($color-border-accent, 0.3);
+    backdrop-filter: blur(20px);
+    z-index: 10;
+    flex-shrink: 1; // Allow shrinking on small screens
+    overflow: hidden;
+    border-radius: 0;
+}
+
+.combatRightSidebar {
+    width: 400px;
+    height: 100%;
+    @include flex-col;
+    gap: $space-4;
+    padding: $space-6 $space-5 0 $space-5;
+    background: rgba(10, 10, 15, 0.98);
+    border-left: 1px solid rgba($color-border-accent, 0.3);
+    backdrop-filter: blur(20px);
+    z-index: 10;
+    flex-shrink: 1; // Allow shrinking on small screens
+    overflow: hidden;
+    border-radius: 0;
+}
+
+.prepSidebar {
+    width: 350px;
+    height: 100%;
+    @include flex-col;
+    gap: $space-4;
+    padding: $space-6 $space-4;
+    background: rgba(15, 15, 20, 0.95);
+    border: 1px solid rgba($color-border-accent, 0.3);
+    border-radius: $radius-lg;
+    backdrop-filter: blur(16px);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+    flex-shrink: 0;
+
+    .sidebarHeader {
+        font-family: $font-heading;
+        font-size: $font-size-xl;
+        color: $color-blood-light;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: $space-2;
+        padding-bottom: $space-2;
+        border-bottom: 2px solid rgba($color-crimson, 0.2);
+        display: flex;
+        align-items: center;
+        gap: $space-2;
+    }
+}
+
+.fightArena {
+    height: 100%;
+    @include flex-col;
+    gap: $space-4;
+    padding: $space-8;
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden; /* Suppress internal horizontal scrollbar caused by overflow-y: auto */
+    padding-top: $space-2; /* Minimal top padding, HUD is absolute */
+}
+
+.arenaEventBanner {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    padding: $space-2 $space-4;
+    background: rgba($color-crimson, 0.1);
+    border: 1px solid $color-border-accent;
+    border-radius: $radius-md;
+    margin-bottom: $space-2;
+    align-self: center;
+    
+    .eventLabel {
+        color: $color-text-secondary;
+        font-size: 10px;
+        letter-spacing: 1px;
+    }
+    
+    .eventName {
+        color: $color-blood-light;
+        font-weight: $font-weight-bold;
+        font-size: 12px;
+    }
+}
+
+.prepArea {
+    @include flex-col;
+    gap: $space-4;
+    flex: 1;
+
+    // Inside the sidebar or HUD, specific styling
+    .homeHud & {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        backdrop-filter: none;
+    }
+}
+
+.miniScentArea {
+    margin-top: $space-4;
+    padding-top: $space-4;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    @include flex-col;
+    gap: 8px;
+}
+
+.miniScentLabel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    font-family: $font-mono;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+// Scourge Info in Sidebar
+.activeScourgeInfo {
+    margin-top: $space-3;
+    padding: $space-3;
+    background: rgba(139, 0, 0, 0.1);
+    border: 1px solid rgba(196, 30, 58, 0.4);
+    border-radius: $radius-md;
+    animation: flashSoft 4s infinite;
+}
+
+.scourgeHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $space-1;
+}
+
+.scourgeLabel {
+    font-size: 10px;
+    font-family: $font-mono;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.scourgeName {
+    font-size: $font-size-sm;
+    font-family: $font-heading;
+    color: $color-blood-light;
+    font-weight: $font-weight-bold;
+    text-shadow: 0 0 8px rgba(255, 51, 85, 0.4);
+}
+
+.scourgeDesc {
+    font-size: 11px;
+    color: $color-text-secondary;
+    font-style: italic;
+    line-height: 1.2;
+}
+
+@keyframes flashSoft {
+    0% { border-color: rgba(196, 30, 58, 0.4); }
+    50% { border-color: rgba(196, 30, 58, 0.8); box-shadow: 0 0 10px rgba(196, 30, 58, 0.1); }
+    100% { border-color: rgba(196, 30, 58, 0.4); }
+}
+
+.miniScentTitle {
+    color: $color-text-secondary;
+}
+
+.miniScentBossWarning {
+    color: $color-blood-light;
+    font-weight: $font-weight-bold;
+    animation: pulse 2s infinite;
+}
+
+.miniScentValue {
+    color: $color-gold;
+}
+
+.miniScentTrack {
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 1px;
+    overflow: hidden;
+}
+
+.miniScentFill {
+    height: 100%;
+    background: linear-gradient(to right, $color-crimson, $color-blood-light);
+    border-radius: 1px;
+    transition: width 0.3s ease;
+}
+
+.prepSkills {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $space-3 $space-6;
+}
+
+.miniSkillBar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.skillBarIcon {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
+}
+
+.miniSkillContent {
+    flex: 1;
+    @include flex-col;
+    gap: 2px;
+}
+
+.miniSkillInfo {
+    @include flex-between;
+    font-size: 11px;
+    font-family: $font-mono;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.miniSkillName { color: $color-text-secondary; font-weight: 600; }
+.miniSkillLevel { color: $color-gold; font-weight: bold; font-size: 12px; }
+
+.miniSkillProgress {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.miniSkillFill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.autoEatControl {
+    @include flex-col;
+    gap: $space-3;
+    min-width: 140px;
+}
+
+.autoEatToggleRow {
+    @include flex-between;
+    align-items: center;
+}
+
+.toggleLabel {
+    @include flex-center;
+    gap: $space-2;
+    cursor: pointer;
+}
+
+.toggleLabel input {
+    cursor: pointer;
+    accent-color: $color-crimson;
+}
+
+.toggleText {
+    font-family: $font-heading;
+    font-size: 10px;
+    color: $color-text-primary;
+    letter-spacing: 1px;
+}
+
+.thresholdValue {
+    font-family: $font-mono;
+    font-size: 11px;
+    color: $color-gold;
+}
+
+.prepSlider {
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    
+    &::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: $color-gold;
+        cursor: pointer;
+        box-shadow: 0 0 5px rgba($color-gold, 0.5);
+    }
+}
+
+.zoneTabsArea {
+    flex: 1;
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+}
+
+.zoneTab {
+    padding: 0 $space-8;
+    height: 100%;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all $transition-normal;
+    @include flex-center;
+    white-space: nowrap;
+
+    .tabName {
+        font-family: $font-heading;
+        font-size: 14px;
+        color: $color-text-muted;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.03);
+        .tabName { color: $color-text-primary; }
+    }
+
+    &.active {
+        border-bottom-color: $color-crimson;
+        background: rgba(196, 30, 58, 0.05);
+        .tabName { 
+            color: $color-gold;
+            text-shadow: 0 0 10px rgba($color-gold, 0.4);
+        }
+    }
+}
+
+.zoneDisplayArea {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.immersiveZonePanel {
+    min-height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+    display: flex;
+}
+
+.panelOverlay {
+    flex: 1;
+    background: linear-gradient(to bottom, 
+        rgba(8, 8, 16, 0.7) 0%, 
+        rgba(8, 8, 16, 0.85) 40%,
+        rgba(8, 8, 16, 1) 100%
+    );
+    padding: $space-10 $space-12;
+    @include flex-col;
+    gap: $space-10;
+}
+
+.zoneInfoBlock {
+    @include flex-col;
+    gap: $space-4;
+    max-width: 800px;
+    animation: slideInLeft 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.panelTitle {
+    font-family: $font-heading;
+    font-size: $font-size-3xl;
+    color: $color-gold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.panelMeta {
+    @include flex-center;
+    justify-content: flex-start;
+    gap: $space-4;
+    font-family: $font-mono;
+    font-size: 11px;
+    color: $color-text-secondary;
+    letter-spacing: 2px;
+}
+
+.separator { color: rgba(255, 255, 255, 0.2); }
+
+.panelDesc {
+    color: $color-text-primary;
+    font-size: $font-size-lg;
+    line-height: 1.6;
+    font-style: italic;
+    opacity: 0.9;
+}
+
+.rosterBlock {
+    @include flex-col;
+    gap: $space-6;
+    animation: fadeIn 0.8s ease;
+}
+
+.rosterHeader {
+    font-family: $font-heading;
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: $space-2;
+    display: inline-block;
+}
+
+.noZoneSelected {
+    height: 100%;
+    @include flex-center;
+    @include flex-col;
+    gap: $space-4;
+    color: $color-text-muted;
+    opacity: 0.6;
+}
+
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 .combatBanner {
     display: flex;
     align-items: center;
@@ -854,37 +1903,90 @@
     }
 }
 
+.rightSidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.3);
+    border-left: 1px solid $color-border;
+    @include flex-col;
+    padding: $space-4;
+    overflow-y: hidden;
+}
+
+.sidebarSection {
+    @include flex-col;
+    padding: $space-3 $space-4;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+    &:last-child {
+        border-bottom: none;
+    }
+}
+
+.sidebarTitle {
+    font-family: $font-heading;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: $color-gold;
+    margin-bottom: $space-2;
+    opacity: 0.8;
+}
+
 // --- Combat Log ---
 .logWrap {
-    @include glass-card;
+    flex: 1;
     @include flex-col;
     overflow: hidden;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: $radius-md;
+    box-shadow: $shadow-card;
+    width: 100%;
 }
 
 .logHeader {
+    display: flex;
+    align-items: center;
+    padding: $space-2 $space-4;
+    background: rgba($color-crimson, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     font-family: $font-heading;
-    font-size: $font-size-md;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
     color: $color-gold;
-    padding: $space-4 $space-5;
-    border-bottom: 1px solid $color-border;
-    letter-spacing: 0.06em;
 }
 
 .logBody {
-    flex: 1;
+    flex: 1;         /* Grow to fill all available space in the sidebar */
+    min-height: 0;   /* Allow flex child to shrink below content size */
     overflow-y: auto;
-    padding: $space-3 $space-4;
+    padding: $space-2 $space-4;
     @include flex-col;
     gap: 2px;
+    
+    &::-webkit-scrollbar {
+        width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: $radius-full;
+    }
 }
 
 .logEntry {
-    font-size: $font-size-xs;
+    font-size: 11px;
     font-family: $font-mono;
     padding: 2px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
     animation: fadeIn 0.2s ease;
-    line-height: 1.5;
+    line-height: 1.4;
+    
+    &:last-child {
+        border-bottom: none;
+    }
 }
 
 // --- Floating Damage Splats ---
@@ -900,6 +2002,9 @@
 
 .splat {
     position: absolute;
+    left: 0;
+    top: 0;
+    transform: translate(-50%, -50%);
     font-family: $font-heading;
     font-weight: $font-weight-bold;
     font-size: $font-size-3xl;
@@ -985,5 +2090,55 @@
             transform: translate(-20px, -100px);
         }
     }
+}
+
+// --- Phase 2B: Navigation & Crucible Hub ---
+
+.navSection {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.navBtn {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(139, 0, 0, 0.2);
+    color: #9a8fa0;
+    padding: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: left;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+
+    &:hover {
+        background: rgba(139, 0, 0, 0.1);
+        color: #f0e6d3;
+        border-color: rgba(139, 0, 0, 0.4);
+    }
+
+    &.active {
+        background: rgba(139, 0, 0, 0.2);
+        color: #ff3355;
+        border-color: #8b0000;
+        box-shadow: 0 0 10px rgba(139, 0, 0, 0.2);
+    }
+}
+
+.crucibleArea {
+    animation: fadeIn 0.4s ease-out;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 

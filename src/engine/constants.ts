@@ -117,3 +117,24 @@ export const RED_MIST_THRESHOLD = 0.30;
 export const RED_MIST_DMG_BONUS = 1.20;
 /** Additive drop rate bonus for Cursed Ichor during Red Mist */
 export const RED_MIST_ICHOR_MOD = 0.10;
+
+// --- Phase 2B Progression ---
+/** Maximum additive Scent accumulation penalty from gear (50%) */
+export const MAX_SCENT_SENSITIVITY = 0.50;
+/** Scent accumulation penalty per refinement level (2% multiplicative or additive) */
+export const REFINEMENT_SCENT_MULT = 0.02;
+
+// --- Phase 2C: Scent of Fear Refinement ---
+/** Scent threshold required to trigger a Boss spawn (once per hunt) */
+export const BOSS_SCENT_THRESHOLD = 0.20;
+/** Scent reduction awarded upon defeating a Zone Boss */
+export const SCENT_REDUCTION_BOSS = 0.10;
+/** Default damage multiplier for critical hits */
+export const CRIT_MULTIPLIER_DEFAULT = 1.5;
+
+/** Scent threshold for 'Bloodlust' event (Enemy Accuracy +10%) */
+export const EVENT_THRESHOLD_BLOODLUST = 0.05;
+/** Scent threshold for 'Hemophilic Curse' event (Player Damage Taken +15%) */
+export const EVENT_THRESHOLD_CURSE = 0.10;
+/** Scent threshold for 'Razor Fangs' event (Enemy Attack Speed +10%) */
+export const EVENT_THRESHOLD_FANGS = 0.15;
