@@ -26,6 +26,7 @@ import {
     DAMAGE_FLOOR_PERCENT,
     MAX_SCENT_SENSITIVITY,
     REFINEMENT_SCENT_MULT,
+    CRIT_MULTIPLIER_DEFAULT,
 } from './constants';
 
 const HEAVY_WEAKNESS_MAX_HIT_BONUS = 0.25; 
@@ -211,6 +212,41 @@ export function applyWeaknessMod(
     if (playerKey === enemyWeakness) mod = WEAKNESS_DAMAGE_MOD;
     if (playerKey === enemyResistance) mod = RESISTANCE_DAMAGE_MOD;
     return Math.floor(rawDamage * mod);
+}
+
+// =============================================================================
+// PHASE 2C: SCENT SCALING & CRITICAL STRIKES
+// =============================================================================
+
+/**
+ * Enemy damage scales up to 2x based on Scent Intensity (0.0 to 1.0).
+ * Damage = Base × (1 + Scent)
+ */
+export function calcScentScalingDmg(base: number, scent: number): number {
+    return Math.floor(base * (1 + scent));
+}
+
+/**
+ * Enemy HP scales up to 1.5x based on Scent Intensity (0.0 to 1.0).
+ * HP = Base × (1 + Scent × 0.5)
+ */
+export function calcScentScalingHp(base: number, scent: number): number {
+    return Math.floor(base * (1 + (scent * 0.5)));
+}
+
+/**
+ * Calculate critical hit chance based on Agility level.
+ * Scaling: ~24% chance at Level 120 (base 0.002 per level).
+ */
+export function calcCritChance(agilityLevel: number): number {
+    return agilityLevel * 0.002;
+}
+
+/**
+ * Flat critical multiplier as defined in constants.
+ */
+export function calcCritMultiplier(_agilityLevel: number): number {
+    return CRIT_MULTIPLIER_DEFAULT;
 }
 
 /**
@@ -525,5 +561,8 @@ export function computeDerivedStats(
         scentSensitivity,
         weaponStyle,
         weaponSubStyle: subStyle,
+        // Phase 2C: Scent refinement
+        critChance: calcCritChance(skills.fangMastery.level), // Agility = Fang Mastery currently
+        critMultiplier: calcCritMultiplier(skills.fangMastery.level),
     };
 }

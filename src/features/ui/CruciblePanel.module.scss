@@ -1,11 +1,13 @@
 .root {
+    max-width: 650px;
+    margin: 20px auto;
     background: linear-gradient(135deg, #1a0a0a 0%, #0d0404 100%);
     border: 1px solid #4a1a1a;
     border-radius: 8px;
-    padding: 20px;
+    padding: 24px;
     color: #f0e6d3;
     position: relative;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
     overflow: hidden;
 
     &.sealed {

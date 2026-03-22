@@ -27,15 +27,17 @@ const sharedEngine = new CombatEngine({
     onTrySiphon: () => {},
     sanguineFinesse: () => {},
     vileReinforcement: () => {},
+    getEnemyData: () => null,
 });
 
 export function useCombatEngine() {
     const {
-        setEnemy, setRunning, setDead, tickUpdate, addLogEvent, resetCombat, initPlayer, addSplat, removeSplat,
-        recordStat, pruneStats, setZone,
-        startSession, updateSession, endSession
+        setEnemy, setRunning, setDead, tickUpdate, resetCombat, initPlayer,
+        pruneStats, setZone, startSession, endSession,
+        addSplat, removeSplat, addLogEvent,
+        updateSession, recordStat, updateCombatState 
     } = useCombatStore();
-    const { 
+    const {
         skills, equipment, trainingMode, food, gainXp, addLootLog,
         autoEatEnabled, autoEatThreshold,
         currentVitae, setVitae,
@@ -46,29 +48,38 @@ export function useCombatEngine() {
 
     /** Build shared callbacks — extracted to avoid duplication */
     const buildCallbacks = useMemo<CombatCallbacks>(() => ({
-        onPlayerAttack: (result, _enemy) => {
-            const id = `splat-${Date.now()}-${Math.random()}`;
+        onPlayerAttack: (result) => {
+            const splatType = result.blocked ? 'block' : (!result.hit ? 'miss' : 'hit');
+            const id = `player-splat-${Date.now()}-${Math.random()}`;
             addSplat({
                 id,
                 amount: result.damage,
-                isPlayer: false, // Applies to the enemy's unit visual
-                type: result.hit ? 'hit' : 'miss',
+                isPlayer: false, // Enemy receiving damage
+                type: splatType,
+                isCritical: result.isCritical,
                 timestamp: Date.now()
             });
             setTimeout(() => removeSplat(id), 2000);
+
+            if (result.isCritical) {
+                updateCombatState({ lastEnemyCritStamp: Date.now() });
+            }
+            if (result.damage > 0) recordStat('xp', Math.floor(result.damage * 0.4));
         },
         onEnemyAttack: (result) => {
-            const id = `splat-${Date.now()}-${Math.random()}`;
+            const splatType = result.blocked ? 'block' : (!result.hit ? 'miss' : 'hit');
+            const id = `enemy-splat-${Date.now()}-${Math.random()}`;
             addSplat({
                 id,
                 amount: result.damage,
-                isPlayer: true, // Applies to the player's unit visual
-                type: result.blocked ? 'block' : result.hit ? 'hit' : 'miss',
+                isPlayer: true, // Player receiving damage
+                type: splatType,
+                isCritical: result.isCritical,
                 timestamp: Date.now()
             });
             setTimeout(() => removeSplat(id), 2000);
         },
-        onEnemyDeath: (_enemy, _xpGains, loot) => {
+        onEnemyDeath: (_, sessionStats, loot) => {
             // XP is now per-hit; only handle loot here
             if (loot) {
                 addLootLog(loot);
@@ -98,7 +109,10 @@ export function useCombatEngine() {
                 }));
             }
             recordStat('kill', 1);
-            updateSession(prev => ({ kills: prev.kills + 1 }));
+            updateSession(prev => ({ 
+                kills: prev.kills + 1,
+                bossesSlain: prev.bossesSlain + (sessionStats.isBoss ? 1 : 0)
+            }));
         },
         onHitXp: (gains) => {
             // Award XP per successful hit
@@ -157,18 +171,25 @@ export function useCombatEngine() {
             setEnemy(enemy);
             setRunning(true);
         },
-        onTick: (playerMeter, enemyMeter, playerHp, enemyHp, tick, activeCombat) => {
-            tickUpdate(playerMeter, enemyMeter, playerHp, enemyHp, tick);
+        onTick: (activeCombat) => {
+            const { playerMeter, enemyMeter, playerHp, enemyHp, currentTick } = activeCombat;
+            tickUpdate(playerMeter, enemyMeter, playerHp, enemyHp, currentTick);
             setVitae(playerHp); // Sync to persistent store
             
-            // Sync Phase 2A transient status back to store if needed for UI
+            // Sync Phase 2A/2C status back to store if needed for UI
             if (activeCombat) {
                 if (activeCombat.finesseTicksRemaining !== undefined) {
                     setFinesseTicks(activeCombat.finesseTicksRemaining);
                 }
+                // Phase 2C: Update the store's knowledge of events and boss status
+                useCombatStore.getState().updateCombatState({
+                    scentIntensity: activeCombat.scentIntensity,
+                    activeEvent: activeCombat.activeEvent,
+                    isBossPending: activeCombat.isBossPending
+                });
             }
 
-            if (tick % 50 === 0) pruneStats();
+            if (currentTick % 50 === 0) pruneStats();
         },
         onAutoEat: (healed) => {
             // Find the first available food to consume in the store
@@ -248,6 +269,12 @@ export function useCombatEngine() {
         },
         sanguineFinesse: () => usePlayerStore.getState().sanguineFinesse(),
         vileReinforcement: () => usePlayerStore.getState().vileReinforcement(),
+        getEnemyData: (id) => {
+            const currentZone = useCombatStore.getState().selectedZone;
+            if (!currentZone) return null;
+            const enemies = getEnemiesForZone(currentZone.id);
+            return enemies.find(e => e.id === id) || null;
+        },
     }), [
         gainXp, skills, setDead, setRunning, setEnemy, tickUpdate, 
         addLogEvent, addLootLog, addSplat, removeSplat, 
@@ -326,6 +353,8 @@ export function useCombatEngine() {
         
         sharedEngine.stop();
         setRunning(false);
+        // Bank unbanked resources securely on Flee
+        usePlayerStore.getState().withdraw();
         endSession(false, tickCount, redMistSurvived, lastScentIntensity);
         resetCombat();
     }, [setRunning, resetCombat, endSession]);

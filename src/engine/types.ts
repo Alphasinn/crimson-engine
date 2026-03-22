@@ -204,6 +204,10 @@ export interface ActiveCombat {
     siphonsThisHunt: number;  // For scaling cost
     finesseTicksRemaining: number;
     isBraced: boolean;
+    // Phase 2C: Scent refinement
+    activeEvent?: string; // e.g. 'Bloodlust', 'Hemophilic Curse'
+    isBossPending?: boolean;
+    hasSpawnedBoss?: boolean;
 }
 
 // --- Derived Player Stats (computed each frame, not stored) ---
@@ -227,6 +231,9 @@ export interface DerivedStats {
     scentSensitivity: number;    // Phase 2B: 0.0 to 0.50
     weaponStyle: CombatStyle;   // derived from equipped weapon, not training mode
     weaponSubStyle: Weakness;
+    // Phase 2C: Scent refinement
+    critChance: number;      // 0.0 to 1.0
+    critMultiplier: number;  // Multiplier, e.g. 1.5
 }
 
 // --- Stats Tracking ---
@@ -265,6 +272,7 @@ export interface SessionStats {
     graveSteelGained: number;
     wasSlain?: boolean;
     lastScentIntensity?: number;
+    bossesSlain: number;
 }
 
 // --- Inventory Item (stub for future expansion) ---

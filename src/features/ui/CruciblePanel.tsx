@@ -1,6 +1,7 @@
 import React from 'react';
 import { usePlayerStore } from '../../store/playerStore';
 import { useCombatStore } from '../../store/combatStore';
+import { useCombatEngine } from '../combat/useCombatEngine';
 import styles from './CruciblePanel.module.scss';
 
 export const CruciblePanel: React.FC = () => {
@@ -10,6 +11,7 @@ export const CruciblePanel: React.FC = () => {
     } = usePlayerStore();
     
     const { isRunning, lastSession } = useCombatStore();
+    const { fleeFromCombat } = useCombatEngine();
 
 
     // Risk yield calculation (v1.1 design: 1 + ScentIntensity of last hunt)
@@ -17,13 +19,21 @@ export const CruciblePanel: React.FC = () => {
     const potentialYieldBonus = Math.round(lastScent * 100);
 
     const handleRefine = (slot: any) => {
-        if (!crucibleSealed) refineGear(slot);
+        if (crucibleSealed) return;
+        if (isRunning) fleeFromCombat();
+        refineGear(slot);
     };
 
     const handleTierShift = (slot: any, path: 'sanguine' | 'vile') => {
-        if (!crucibleSealed) {
-            tierShift(slot, path);
-        }
+        if (crucibleSealed) return;
+        if (isRunning) fleeFromCombat();
+        tierShift(slot, path);
+    };
+
+    const handleStabilize = () => {
+        if (crucibleSealed) return;
+        if (isRunning) fleeFromCombat();
+        stabilizeIchor();
     };
 
     const shiftableItems = Object.entries(equipment).filter(([_, item]) => (item.refinement ?? 0) >= 5 && item.tier === 'T1');
@@ -56,7 +66,7 @@ export const CruciblePanel: React.FC = () => {
                                 <button 
                                     className={styles.refineBtn}
                                     onClick={() => handleRefine(slot)}
-                                    disabled={crucibleSealed || item.refinement >= 5 || isRunning}
+                                    disabled={crucibleSealed || item.refinement >= 5}
                                 >
                                     {item.refinement >= 5 ? 'MAX' : 'Refine'}
                                 </button>
@@ -75,8 +85,8 @@ export const CruciblePanel: React.FC = () => {
                         </div>
                         <button 
                             className={styles.transmuteBtn}
-                            onClick={() => !crucibleSealed && stabilizeIchor()}
-                            disabled={crucibleSealed || cursedIchor <= 0 || isRunning}
+                            onClick={handleStabilize}
+                            disabled={crucibleSealed || cursedIchor <= 0}
                         >
                             Stabilize Ichor
                         </button>
@@ -100,14 +110,14 @@ export const CruciblePanel: React.FC = () => {
                                         <button 
                                             className={styles.sanguineBtn}
                                             onClick={() => handleTierShift(slot, 'sanguine')}
-                                            disabled={crucibleSealed || isRunning}
+                                            disabled={crucibleSealed}
                                         >
                                             Sanguine
                                         </button>
                                         <button 
                                             className={styles.vileBtn}
                                             onClick={() => handleTierShift(slot, 'vile')}
-                                            disabled={crucibleSealed || isRunning}
+                                            disabled={crucibleSealed}
                                         >
                                             Vile
                                         </button>

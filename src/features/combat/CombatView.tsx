@@ -1,25 +1,26 @@
 import { useCallback, useState, useRef, useEffect, useMemo } from 'react';
 import { useCombatStore } from '../../store/combatStore';
 import { usePlayerStore } from '../../store/playerStore';
-import { useNotificationStore } from '../../store/notificationStore';
 import { useCombatEngine } from './useCombatEngine';
-import { CharacterPanel } from '../character/CharacterPanel';
+import { EquipmentPanel } from '../character/EquipmentPanel';
 import { ConsumablePanel } from '../character/ConsumablePanel';
 import { DamageSplats } from './DamageSplats';
-import { EnemyRoster } from './EnemyRoster';
-import { SessionReport } from './SessionReport';
 import { IdleGainPanel } from '../ui/IdleGainPanel';
 import { SessionSummaryModal } from '../ui/SessionSummaryModal';
+import { EnemyRoster } from './EnemyRoster';
+import { SessionReport } from './SessionReport';
 import { NotificationContainer } from '../ui/NotificationContainer';
-import { CruciblePanel } from '../ui/CruciblePanel';
 import ZONES from '../../data/zones';
 import type { Zone, Enemy, TrainingMode } from '../../engine/types';
+
 import {
     computeDerivedStats,
     calcHitChance,
     calcStyleBonus,
 } from '../../engine/formulas';
 import styles from './combat.module.scss';
+
+// Skill Icons for Preparation Hub
 import iconAttack from '../../assets/icons/attack.png';
 import iconStrength from '../../assets/icons/strength.png';
 import iconDefense from '../../assets/icons/defense.png';
@@ -27,6 +28,24 @@ import iconArchery from '../../assets/icons/archery.png';
 import iconMagic from '../../assets/icons/blood_magic.png';
 import iconHp from '../../assets/icons/hp.png';
 import iconAll from '../../assets/icons/all.png';
+
+const SKILL_ICONS: Record<string, string> = {
+    fangMastery: iconAttack,
+    predatorForce: iconStrength,
+    obsidianWard: iconDefense,
+    shadowArchery: iconArchery,
+    bloodSorcery: iconMagic,
+    vitae: iconHp
+};
+
+const SKILL_LABELS: Record<string, string> = {
+    fangMastery: 'FANG MASTERY',
+    predatorForce: 'PREDATOR FORCE',
+    obsidianWard: 'OBSIDIAN WARD',
+    shadowArchery: 'SHADOW ARCHERY',
+    bloodSorcery: 'BLOOD SORCERY',
+    vitae: 'VITAE'
+};
 
 import { HpBar } from '../ui/HpBar';
 import { AttackMeter } from '../ui/AttackMeter';
@@ -57,23 +76,25 @@ function CombatLog() {
 export function CombatView() {
     const {
         selectedZone, activeEnemy, isRunning,
-        playerHp, playerMaxHp, enemyHp, enemyMaxHp,
-        enemyMeter, lastSession
+        enemyHp, enemyMaxHp,
+        enemyMeter, playerMeter,
+        activeEvent, isBossPending, scentIntensity,
+        lastEnemyCritStamp
     } = useCombatStore();
     const { 
         trainingMode, setTrainingMode, equipment, 
-        autoEatEnabled, autoEatThreshold, toggleAutoEat, setAutoEatThreshold,
-        unlockedUpgrades, currentVitae
+        autoEatEnabled, autoEatThreshold, toggleAutoEat,
+        unlockedUpgrades, currentVitae, skills,
+        setAutoEatThreshold,
     } = usePlayerStore();
-    const addNotification = useNotificationStore((s) => s.addNotification);
     const { startCombatWithEnemy, fleeFromCombat } = useCombatEngine();
 
-    // Derived combat stats for Hit% and Max Hit display
-    const { skills } = usePlayerStore();
     const derived = useMemo(
         () => computeDerivedStats(skills, equipment),
         [skills, equipment]
     );
+
+    // Derived combat stats for Hit% and Max Hit display
 
     // Training mode options per weapon type — icon + name only
     type ModeConfig = { mode: TrainingMode; label: React.ReactNode };
@@ -109,6 +130,27 @@ export function CombatView() {
 
     // Track last active zone in a ref so it survives the flee state reset
     const lastZoneIdRef = useRef<string | null>(null);
+    
+    // Track critical flash
+    const [isCritFlashing, setIsCritFlashing] = useState(false);
+    
+    const getScourgeDescription = (eventName: string | null) => {
+        switch (eventName) {
+            case 'Bloodlust': return 'Enemy Accuracy +10%';
+            case 'Hemophilic Curse': return 'Vampire Damage Taken +15%';
+            case 'Razor Fangs': return 'Enemy Attack Speed +10%';
+            default: return '';
+        }
+    };
+
+    useEffect(() => {
+        if (lastEnemyCritStamp > 0) {
+            setIsCritFlashing(true);
+            const timer = setTimeout(() => setIsCritFlashing(false), 400);
+            return () => clearTimeout(timer);
+        }
+    }, [lastEnemyCritStamp]);
+
     useEffect(() => {
         if (selectedZone?.id) lastZoneIdRef.current = selectedZone.id;
     }, [selectedZone]);
@@ -118,19 +160,13 @@ export function CombatView() {
     // Which zone card has its enemy roster expanded
     const [expandedZoneId, setExpandedZoneId] = useState<string | null>(null);
 
-    // 'arena' = watching the fight, 'home' = zone-select screen, 'crucible' = progression
-    const [viewMode, setViewMode] = useState<'arena' | 'home' | 'crucible'>('home');
+    // 'arena' = watching the fight, 'home' = zone-select screen
+    const [viewMode, setViewMode] = useState<'arena' | 'home'>('home');
 
     // Stats modals
     const [showGains, setShowGains] = useState(false);
     const [showHuntingGains, setShowHuntingGains] = useState(false);
 
-    // Automatically show the summary modal when a session ends
-    useEffect(() => {
-        if (lastSession && !isRunning) {
-            setShowHuntingGains(true);
-        }
-    }, [lastSession, isRunning]);
 
     const handleZoneClick = useCallback((z: Zone) => {
         setExpandedZoneId(prev => prev === z.id ? null : z.id);
@@ -138,7 +174,7 @@ export function CombatView() {
 
     const handleEnemySelect = useCallback((zone: Zone, enemy: Enemy) => {
         setExpandedZoneId(null);
-        const fullZone = ZONES.find(z => z.id === zone.id);
+        const fullZone = ZONES.find((z: Zone) => z.id === zone.id);
         if (fullZone) {
             startCombatWithEnemy(fullZone, enemy);
             setViewMode('arena');
@@ -147,31 +183,10 @@ export function CombatView() {
 
     // Flee — stop combat entirely, go back to zone roster and show what we got
     const handleFlee = useCallback(() => {
-        const stats = useCombatStore.getState().sessionStats;
-        
         fleeFromCombat();
         setViewMode('home');
-        
-        // Show a detailed summary toast as requested
-        if (stats) {
-            const resourceSummary = [
-                stats.bloodShardsGained > 0 && `${stats.bloodShardsGained} Shards`,
-                stats.cursedIchorGained > 0 && `${stats.cursedIchorGained} Ichor`,
-                stats.graveSteelGained > 0 && `${stats.graveSteelGained} Steel`
-            ].filter(Boolean).join(', ');
-
-            const msg = resourceSummary 
-                ? `Gained ${resourceSummary} over ${stats.kills} kills.`
-                : `Gained ${stats.kills} kills.`;
-
-            addNotification({
-                type: 'loot',
-                label: 'Fled to Safety!',
-                amount: msg,
-                icon: '🏃'
-            });
-        }
-    }, [fleeFromCombat, addNotification]);
+        setShowHuntingGains(true);
+    }, [fleeFromCombat]);
 
     // Home — keep combat running, return to zone grid
     const handleHome = useCallback(() => {
@@ -181,267 +196,341 @@ export function CombatView() {
 
     const hpColor = (pct: number) => pct > 0.5 ? '#22c55e' : pct > 0.25 ? '#eab308' : '#ef4444';
 
-    // Show zone grid when: no active combat, OR player navigated home
-    const showZoneGrid = viewMode === 'home' || (!isRunning && !activeEnemy);
-    // Show fight arena when actively watching combat
-    const showArena = !showZoneGrid && (isRunning || !!activeEnemy);
-
-    return (
-        <div className={styles.root}>
-            {/* Left panel — Player */}
-            <div className={styles.playerPanel}>
-                <div className={styles.panelTitle}>🧛 Your Vampire</div>
-
-                {/* Training Mode Selector */}
-                <div className={styles.trainingLabel}>Training</div>
-                <div className={styles.styleRow}>
-                    {modeOptions.map(({ mode, label }) => (
-                        <button
-                            key={mode}
-                            className={`${styles.styleBtn} ${trainingMode === mode ? styles.active : ''}`}
-                            onClick={() => setTrainingMode(mode)}
-                        >
-                            {label}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Player Hit% and Max Hit */}
-                <div className={styles.combatStatRow}>
-                    <span className={styles.combatStatLabel}>Hit %</span>
-                    <span className={styles.combatStatValue}>
-                        {activeEnemy
-                            ? `${Math.round(calcHitChance(
-                                derived.accuracyRating,
-                                activeEnemy.stats.defense * 4,
-                                calcStyleBonus(derived.weaponStyle, activeEnemy.weakness, activeEnemy.resistance)
-                            ) * 100)}%`
-                            : '—'}
-                    </span>
-                </div>
-                <div className={styles.combatStatRow}>
-                    <span className={styles.combatStatLabel}>Max Hit</span>
-                    <span className={styles.combatStatValue}>{playerMaxHitDisplay}</span>
-                </div>
-
-                {/* Auto-Eat Control (Unlockable / Red Box placement) */}
-                <div className={`${styles.autoEatControl} ${!unlockedUpgrades.includes('auto_eat') ? styles.locked : ''}`}>
-                    <div className={styles.autoEatHeader}>
-                        <span className={styles.autoEatLabel}>Auto-Eat</span>
-                        <div 
-                            className={`${styles.autoEatToggle} ${autoEatEnabled ? styles.active : ''}`}
-                            onClick={() => unlockedUpgrades.includes('auto_eat') && toggleAutoEat()}
-                        />
+    // --- Render Helpers ---
+    const renderPrepArea = () => (
+        <div className={`
+            ${styles.prepArea} 
+            ${!unlockedUpgrades.includes('auto_eat') ? styles.locked : ''}
+            ${showZoneGrid ? styles.homeHud : ''}
+        `}>
+            <div className={styles.prepSkills}>
+                {Object.entries(skills).map(([name, data]) => (
+                    <div key={name} className={styles.miniSkillBar}>
+                        <img src={SKILL_ICONS[name]} alt={name} className={styles.skillBarIcon} />
+                        <div className={styles.miniSkillContent}>
+                            <div className={styles.miniSkillInfo}>
+                                <span className={styles.miniSkillName}>{SKILL_LABELS[name]}</span>
+                                <span className={styles.miniSkillLevel}>{data.level}</span>
+                            </div>
+                            <div className={styles.miniSkillProgress}>
+                                <div 
+                                    className={styles.miniSkillFill} 
+                                    style={{ width: `${(data.xp % 1000) / 10}%`, backgroundColor: name === 'vitae' ? '#4caf50' : '#c41e3a' }} 
+                                />
+                            </div>
+                        </div>
                     </div>
-                    <div className={styles.autoEatSliderArea}>
-                        <div className={styles.sliderValue}>{Math.round(autoEatThreshold * 100)}% HP</div>
+                ))}
+            </div>
+
+            <div className={`${styles.autoEatControl} ${!unlockedUpgrades.includes('auto_eat') ? styles.locked : ''}`}>
+                <div className={styles.autoEatToggleRow}>
+                    <label className={styles.toggleLabel}>
                         <input 
-                            type="range" 
-                            min="10" 
-                            max="90" 
-                            step="5"
-                            value={autoEatThreshold * 100}
-                            onChange={(e) => unlockedUpgrades.includes('auto_eat') && setAutoEatThreshold(Number(e.target.value) / 100)}
-                            className={styles.customSlider}
+                            type="checkbox" 
+                            checked={autoEatEnabled}
+                            onChange={() => toggleAutoEat()}
                             disabled={!unlockedUpgrades.includes('auto_eat')}
                         />
-                    </div>
-                    {!unlockedUpgrades.includes('auto_eat') && (
-                        <div className={styles.lockedText}>Upgrade Required</div>
-                    )}
+                        <span className={styles.toggleText}>AUTO-VITA {autoEatEnabled ? 'ON' : 'OFF'}</span>
+                    </label>
+                    <span className={styles.thresholdValue}>{Math.round(autoEatThreshold * 100)}%</span>
                 </div>
+                <input 
+                    type="range" 
+                    min="0.1" 
+                    max="0.9" 
+                    step="0.05"
+                    value={autoEatThreshold}
+                    onChange={(e) => setAutoEatThreshold(parseFloat(e.target.value))}
+                    className={styles.prepSlider}
+                    disabled={!unlockedUpgrades.includes('auto_eat')}
+                />
+                {!unlockedUpgrades.includes('auto_eat') && (
+                    <div className={styles.lockedOverlay}>LOCKED</div>
+                )}
+            </div>
 
-
-                {/* Persistent Vitae Bar */}
-                <div className={styles.persistentHpArea}>
-                    <div className={styles.persistentHpLabel}>
-                        <img src={iconHp} alt="" className={styles.statIcon} style={{ width: 18, height: 18, objectFit: 'contain' }} />
-                        <span>Vitae</span>
-                        <span className={styles.hpNumbers}>{Math.floor(currentVitae)} / {derived.maxHp}</span>
-                    </div>
-                    <HpBar 
-                        current={currentVitae} 
-                        max={derived.maxHp} 
-                        color={hpColor(currentVitae / derived.maxHp)}
-                        label=""
+            {/* Scent of Fear — Dynamic tactical info */}
+            <div className={styles.miniScentArea}>
+                <div className={styles.miniScentLabel}>
+                    <span className={styles.miniScentTitle}>Scent of Fear</span>
+                    {isBossPending && <span className={styles.miniScentBossWarning}>BOSS!</span>}
+                    <span className={styles.miniScentValue}>{Math.floor(scentIntensity * 100)}%</span>
+                </div>
+                <div className={styles.miniScentTrack}>
+                    <div 
+                        className={styles.miniScentFill} 
+                        style={{ width: `${Math.min(100, (scentIntensity / 0.20) * 100)}%` }}
                     />
                 </div>
 
-                {/* Phase 2B: Crucible Navigation */}
-                <div className={styles.navSection}>
-                    <button 
-                        className={`${styles.navBtn} ${viewMode === 'crucible' ? styles.active : ''}`}
-                        onClick={() => setViewMode(viewMode === 'crucible' ? 'home' : 'crucible')}
-                    >
-                        ⚒️ THE CRUCIBLE
-                    </button>
-                    <button 
-                        className={`${styles.navBtn} ${viewMode === 'home' ? styles.active : ''}`}
-                        onClick={() => setViewMode('home')}
-                    >
-                        🗺️ HUNTING GROUNDS
-                    </button>
-                </div>
+                {activeEvent && (
+                    <div className={styles.activeScourgeInfo}>
+                        <div className={styles.scourgeHeader}>
+                            <span className={styles.scourgeLabel}>ACTIVE SCOURGE:</span>
+                            <span className={styles.scourgeName}>{activeEvent}</span>
+                        </div>
+                        <div className={styles.scourgeDesc}>
+                            {getScourgeDescription(activeEvent)}
+                        </div>
+                    </div>
+                )}
             </div>
+        </div>
+    );
 
-            {/* Center — Zone Select or Active Fight */}
+    const showZoneGrid = viewMode === 'home' || (!isRunning && !activeEnemy);
+    // Show fight arena when actively watching combat
+
+    return (
+        <div className={styles.root}>
+
+            {/* Center — Active Fight or Hunting Grounds */}
+            {/* Center — Selection Hub or Active Fight */}
             <div className={styles.centerPanel}>
+                {showZoneGrid ? (
+                    /* Selection Mode: Dual Panel Management */
+                    <div className={styles.selectionLayout}>
+                        {/* Left: Preparation Sidebar (Static) */}
+                        <div className={styles.prepSidebar}>
+                            <h2 className={styles.sidebarHeader}>🧛 Preparation Hub</h2>
+                            {renderPrepArea()}
+                        </div>
 
-                {/* Combat-in-progress banner shown on zone grid while fighting */}
-                {showZoneGrid && isRunning && activeEnemy && (
-                    <div className={styles.combatBanner}>
-                        <span className={styles.combatBannerText}>
-                            ⚔ In combat with <strong>{activeEnemy.name}</strong>
-                        </span>
-                        <button className={styles.returnBtn} onClick={() => setViewMode('arena')}>
-                            ▶ Return to Arena
-                        </button>
-                    </div>
-                )}
-
-                {viewMode === 'crucible' && (
-                    <div className={styles.crucibleArea}>
-                        <CruciblePanel />
-                    </div>
-                )}
-
-                {viewMode === 'home' && (
-                    <div className={styles.zoneGrid}>
-                        <div className={styles.zoneGridTitle}>Select a Hunting Ground</div>
-                        {ZONES.map(z => {
-                            const isLocked = false;
-                            const isExpanded = expandedZoneId === z.id;
-                            return (
-                                <div
-                                    key={z.id}
-                                    className={`${styles.zoneCard} ${isLocked ? styles.locked : ''} ${isExpanded ? styles.expanded : ''}`}
-                                    onClick={() => !isLocked && handleZoneClick(z)}
-                                >
-                                    <div className={styles.zoneCardHeader}>
-                                        <div className={styles.zoneCardName}>{z.name}</div>
-                                        <div className={styles.zoneCardChevron}>{isExpanded ? '▲' : '▼'}</div>
-                                    </div>
-                                    <div className={styles.zoneCardLevel}>Lv {z.recommendedLevelMin}–{z.recommendedLevelMax}</div>
-                                    <div className={styles.zoneCardTier}>{z.dropTier}</div>
-                                    <div className={styles.zoneCardDesc}>{z.description}</div>
-
-                                    {isExpanded && (
-                                        <EnemyRoster
-                                            zone={z}
-                                            onSelect={(enemy) => handleEnemySelect(z, enemy)}
-                                        />
-                                    )}
+                        {/* Right: Zone Navigation & Roster */}
+                        <div className={styles.zoneTabSystem}>
+                            <div className={styles.zoneNavHeader}>
+                                <div className={styles.zoneTabsArea}>
+                                    {ZONES.map((z: Zone) => {
+                                        const isActive = expandedZoneId === z.id;
+                                        return (
+                                            <div 
+                                                key={z.id} 
+                                                className={`${styles.zoneTab} ${isActive ? styles.active : ''}`}
+                                                onClick={() => handleZoneClick(z)}
+                                            >
+                                                <span className={styles.tabName}>{z.name}</span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                            );
-                        })}
-                    </div>
-                )}
+                            </div>
 
-                {showArena && activeEnemy && (
-                    <div className={styles.fightArena}>
-                        <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', minWidth: '280px', maxWidth: '320px' }}>
-                            <CharacterPanel />
-                            <div style={{ position: 'absolute', top: '35%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none', zIndex: 50 }}>
-                                <DamageSplats isPlayer={true} />
+                            <div className={styles.zoneDisplayArea}>
+                                {expandedZoneId ? (() => {
+                                    const selectedZone = ZONES.find((z: Zone) => z.id === expandedZoneId);
+                                    if (!selectedZone) return null;
+                                    
+                                    const bgMap: Record<string, string> = {
+                                        'forgotten_hamlet': 'forgotten_hamlet.png',
+                                        'grimwood_forest': 'grimwood_forest.png',
+                                        'blackthorn_city': 'blackthorn_city.png',
+                                        'catacombs': 'catacombs.png',
+                                        'crimson_highlands': 'crimson_highlands.png',
+                                        'night_citadel': 'night_citadel.png'
+                                    };
+                                    const bgImage = bgMap[selectedZone.id] || 'forgotten_hamlet.png';
+
+                                    return (
+                                        <div 
+                                            className={styles.immersiveZonePanel}
+                                            style={{ backgroundImage: `url(/assets/zones/${bgImage})` }}
+                                        >
+                                            <div className={styles.panelOverlay}>
+                                                <div className={styles.zoneInfoBlock}>
+                                                    <h1 className={styles.panelTitle}>{selectedZone.name}</h1>
+                                                    <div className={styles.panelMeta}>
+                                                        <span>LEVEL RANGE: {selectedZone.recommendedLevelMin}–{selectedZone.recommendedLevelMax}</span>
+                                                        <span className={styles.separator}>•</span>
+                                                        <span>DROP TIER: {selectedZone.dropTier}</span>
+                                                    </div>
+                                                    <p className={styles.panelDesc}>{selectedZone.description}</p>
+                                                </div>
+
+                                                <div className={styles.rosterBlock}>
+                                                    <EnemyRoster
+                                                        zone={selectedZone}
+                                                        onSelect={(enemy) => handleEnemySelect(selectedZone, enemy)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })() : (
+                                    <div className={styles.noZoneSelected}>
+                                        <div className={styles.greetingTitle}>Welcome, Noble Vampire</div>
+                                        <div className={styles.greetingText}>Select a hunting ground above to begin your harvest.</div>
+                                    </div>
+                                )}
                             </div>
                         </div>
-                        <div className={`${styles.enemyCard} ${activeEnemy.isElite ? styles.eliteCard : ''}`} style={{ position: 'relative' }}>
-                            <div className={styles.enemyName}>
-                                {activeEnemy.isElite ? '⚔️ ' : ''}{activeEnemy.name}
-                            </div>
-                            <div className={styles.enemyZone}>{selectedZone?.name}</div>
+                    </div>
+                ) : (
+                    /* Combat Mode: Split Sidebars & Tactical Arena */
+                    <div className={styles.combatLayout}>
+                        {/* Left Side: Tactical Dashboard */}
+                        <div className={styles.combatLeftSidebar}>
+                            <h2 className={styles.sidebarHeader}>⚔️ Combat HUD</h2>
+                            {renderPrepArea()}
                             
-                            {activeEnemy.spriteUrl && (
-                                <div className={styles.enemySpriteContainer}>
-                                    <img 
-                                        src={activeEnemy.spriteUrl} 
-                                        alt={activeEnemy.name} 
-                                        className={styles.enemySprite} 
-                                    />
-                                    <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none', zIndex: 100 }}>
-                                        <DamageSplats isPlayer={false} />
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className={styles.enemyStatusArea}>
-                                <div className={styles.enemyStatsGrid}>
-                                    <span><img src={iconAttack} alt="Attack" className={styles.statIcon} /> {activeEnemy.stats.attack}</span>
-                                    <span><img src={iconStrength} alt="Strength" className={styles.statIcon} /> {activeEnemy.stats.strength}</span>
-                                    <span><img src={iconDefense} alt="Defense" className={styles.statIcon} /> {activeEnemy.stats.defense}</span>
-                                    <span><img src={iconHp} alt="HP" className={styles.statIcon} /> {activeEnemy.stats.hp}</span>
-                                    <span><img src={iconArchery} alt="Ranged" className={styles.statIcon} /> {activeEnemy.stats.ranged}</span>
-                                    <span><img src={iconMagic} alt="Magic" className={styles.statIcon} /> {activeEnemy.stats.magic}</span>
-                                </div>
-                                <div className={styles.enemyInfoColumn}>
-                                    <div className={styles.tacticalHeader}>
-                                         <span>Hit %: {Math.round(calcHitChance(
-                                             activeEnemy.accuracy,
-                                             derived.evasionRating
-                                         ) * 100)}%</span>
-                                         <span className={styles.headerSpacer}>|</span>
-                                         <span>Max Hit: {activeEnemy.maxHit}</span>
-                                     </div>
-
-                                    <div className={styles.mainInfoStack}>
-                                        <div className={styles.infoLabelText}>
-                                            Weakness: <span className={styles.goldValue}>{activeEnemy.weakness}</span>
-                                        </div>
-                                        <div className={styles.infoLabelText}>
-                                            Vitae: <span className={styles.goldValue}>{Math.max(0, enemyHp)}/{enemyMaxHp}</span>
-                                        </div>
-                                        
-                                        <div className={styles.compactHpWrap} style={{ flexShrink: 0 }}>
-                                            <HpBar
-                                                current={Math.max(0, enemyHp)}
-                                                max={enemyMaxHp}
-                                                label=""
-                                                color={hpColor(enemyMaxHp > 0 ? Math.max(0, enemyHp) / enemyMaxHp : 0)}
-                                            />
-                                        </div>
-
-                                        <div className={styles.compactMeterWrap} style={{ flexShrink: 0 }}>
-                                            <AttackMeter
-                                                value={enemyMeter}
-                                                label=""
-                                                color="#ff4d00"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className={styles.bottomBarArea}>
                             <div className={styles.arenaButtons}>
                                 <button className={styles.homeBtn} onClick={handleHome}>
                                     🏠 Home
                                 </button>
                                 <button className={styles.fleeBtn} onClick={handleFlee}>
-                                    🏃 Flee
+                                    🏃 Flee Combat
                                 </button>
                             </div>
-                            <ConsumablePanel />
+                        </div>
+
+                        {/* Center: Immersive Tactical Arena */}
+                        <div className={styles.fightArena}>
+
+                            {activeEnemy && (
+                                <div className={styles.combatantsRow}>
+                                    <div className={styles.playerCardArea}>
+                                        <div className={styles.playerCardHeader}>🧛 Your Vampire</div>
+                                        <EquipmentPanel 
+                                            hpProps={{
+                                                current: Math.max(0, currentVitae),
+                                                max: derived.maxHp,
+                                                label: "",
+                                                color: hpColor(currentVitae / derived.maxHp)
+                                            }}
+                                            meterProps={{
+                                                value: playerMeter,
+                                                label: "",
+                                                color: "#a855f7"
+                                            }}
+                                        />
+                                        <div className={styles.playerSplatAnchor}>
+                                            <DamageSplats isPlayer={true} />
+                                        </div>
+                                        
+                                        <div className={styles.playerStatsArea}>
+                                            <div className={styles.miniStyleRow}>
+                                                {modeOptions.map(({ mode, label }) => (
+                                                    <button
+                                                        key={mode}
+                                                        className={`${styles.miniStyleBtn} ${trainingMode === mode ? styles.active : ''}`}
+                                                        onClick={() => setTrainingMode(mode)}
+                                                    >
+                                                        {label}
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            <div className={styles.arenaStatGrid}>
+                                                <div className={styles.arenaStatBox}>
+                                                    <span className={styles.arenaStatLabel}>Hit %</span>
+                                                    <span className={styles.arenaStatValue}>
+                                                        {Math.round(calcHitChance(
+                                                            derived.accuracyRating,
+                                                            activeEnemy.stats.defense * 4,
+                                                            calcStyleBonus(derived.weaponStyle, activeEnemy.weakness, activeEnemy.resistance)
+                                                        ) * 100)}%
+                                                    </span>
+                                                </div>
+                                                <div className={styles.arenaStatBox}>
+                                                    <span className={styles.arenaStatLabel}>Max Hit</span>
+                                                    <span className={styles.arenaStatValue}>{playerMaxHitDisplay}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className={`${styles.enemyCard} ${activeEnemy.isElite ? styles.eliteCard : ''} ${isCritFlashing ? styles.enemyCardCrit : ''}`} style={{ position: 'relative' }}>
+                                        <div className={styles.enemySplatOverlay} style={{ top: '40%', left: '50%' }}>
+                                            <DamageSplats isPlayer={false} />
+                                        </div>
+
+                                        <div className={styles.enemyName}>
+                                            {activeEnemy.isElite ? '⚔️ ' : ''}{activeEnemy.name}
+                                        </div>
+                                        <div className={styles.enemyZone}>{selectedZone?.name}</div>
+                                        
+                                        {activeEnemy.spriteUrl && (
+                                            <div className={styles.enemySpriteContainer}>
+                                                <img 
+                                                    src={activeEnemy.spriteUrl} 
+                                                    alt={activeEnemy.name} 
+                                                    className={styles.enemySprite} 
+                                                />
+                                            </div>
+                                        )}
+
+                                        <div className={styles.enemyStatusArea}>
+                                            <div className={styles.enemyStatsGrid}>
+                                                <span><img src={iconAttack} alt="Attack" className={styles.statIcon} /> {activeEnemy.stats.attack}</span>
+                                                <span><img src={iconStrength} alt="Strength" className={styles.statIcon} /> {activeEnemy.stats.strength}</span>
+                                                <span><img src={iconDefense} alt="Defense" className={styles.statIcon} /> {activeEnemy.stats.defense}</span>
+                                                <span><img src={iconHp} alt="HP" className={styles.statIcon} /> {activeEnemy.stats.hp}</span>
+                                                <span><img src={iconArchery} alt="Ranged" className={styles.statIcon} /> {activeEnemy.stats.ranged}</span>
+                                                <span><img src={iconMagic} alt="Magic" className={styles.statIcon} /> {activeEnemy.stats.magic}</span>
+                                            </div>
+                                            <div className={styles.enemyInfoColumn}>
+                                                <div className={styles.tacticalHeader}>
+                                                    <span>Hit %: {Math.round(calcHitChance(activeEnemy.accuracy, derived.evasionRating) * 100)}%</span>
+                                                    <span className={styles.headerSpacer}>|</span>
+                                                    <span>Max Hit: {activeEnemy.maxHit}</span>
+                                                </div>
+
+                                                <div className={styles.mainInfoStack}>
+                                                    <div className={styles.infoLabelText}>
+                                                        Weakness: <span className={styles.goldValue}>{activeEnemy.weakness}</span>
+                                                    </div>
+                                                    <div className={styles.infoLabelText}>
+                                                        Vitae: <span className={styles.goldValue}>{Math.max(0, enemyHp)}/{enemyMaxHp}</span>
+                                                    </div>
+                                                    
+                                                    <div className={styles.compactHpWrap} style={{ flexShrink: 0 }}>
+                                                        <HpBar
+                                                            current={Math.max(0, enemyHp)}
+                                                            max={enemyMaxHp}
+                                                            label=""
+                                                            color={hpColor(enemyMaxHp > 0 ? Math.max(0, enemyHp) / enemyMaxHp : 0)}
+                                                        />
+                                                    </div>
+
+                                                    <div className={styles.compactMeterWrap} style={{ flexShrink: 0 }}>
+                                                        <AttackMeter
+                                                            value={enemyMeter}
+                                                            label=""
+                                                            color="#ff4d00"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className={styles.bottomBarArea}>
+                                <ConsumablePanel />
+                            </div>
+                        </div>
+
+                        {/* Right Side: Battle Records */}
+                        <div className={styles.combatRightSidebar}>
+                            <h2 className={styles.sidebarHeader}>📜 Battle Records</h2>
+                            <CombatLog />
+                            <SessionReport 
+                                onOpenCombatGains={() => {}} 
+                                onOpenHuntingGains={() => {}} 
+                            />
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Right panel — Combat Log & Session Report */}
-            <div className={styles.rightSidebar}>
-                <CombatLog />
-                <SessionReport 
-                    onOpenCombatGains={() => setShowGains(true)}
-                    onOpenHuntingGains={() => setShowHuntingGains(true)}
-                />
-            </div>
-
             <NotificationContainer />
 
             {showGains && <IdleGainPanel onClose={() => setShowGains(false)} />}
-            {showHuntingGains && lastSession && (
+            {showHuntingGains && (
                 <SessionSummaryModal 
-                    active={showHuntingGains} 
+                    active={isRunning} 
                     onClose={() => setShowHuntingGains(false)} 
                 />
             )}

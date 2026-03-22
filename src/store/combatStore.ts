@@ -16,6 +16,7 @@ export interface DamageSplat {
     amount: number;
     isPlayer: boolean;
     type: 'hit' | 'miss' | 'block' | 'heal';
+    isCritical?: boolean;
     timestamp: number;
 }
 
@@ -39,6 +40,11 @@ interface CombatState {
     isRunning: boolean;
     isDead: boolean;
     currentTick: number;
+    // Phase 2C Status
+    activeEvent: string | null;
+    isBossPending: boolean;
+    scentIntensity: number;
+    lastEnemyCritStamp: number;
 
     // Event Log
     log: CombatEvent[];
@@ -65,6 +71,7 @@ interface CombatState {
     resetCombat: () => void;
     fleeCombat: () => void;
     initPlayer: (maxHp: number) => void;
+    updateCombatState: (updates: any) => void;
 
     // Stats Actions
     recordStat: (type: StatWindowEntry['type'], value: number) => void;
@@ -93,6 +100,10 @@ export const useCombatStore = create<CombatState>()((set) => ({
     isRunning: false,
     isDead: false,
     currentTick: 0,
+    activeEvent: null,
+    isBossPending: false,
+    scentIntensity: 0,
+    lastEnemyCritStamp: 0,
     log: [],
     splats: [],
     statsWindow: [],
@@ -156,6 +167,10 @@ export const useCombatStore = create<CombatState>()((set) => ({
             isRunning: false,
             isDead: false,
             currentTick: 0,
+            activeEvent: null,
+            isBossPending: false,
+            scentIntensity: 0,
+            lastEnemyCritStamp: 0,
             log: [],
             splats: [],
             statsWindow: [],
@@ -204,7 +219,8 @@ export const useCombatStore = create<CombatState>()((set) => ({
             lootItems: [],
             bloodShardsGained: 0,
             cursedIchorGained: 0,
-            graveSteelGained: 0
+            graveSteelGained: 0,
+            bossesSlain: 0
         },
         lastSession: null
     }),
@@ -244,4 +260,8 @@ export const useCombatStore = create<CombatState>()((set) => ({
     }),
 
     clearLastSession: () => set({ lastSession: null }),
+
+    updateCombatState: (updates) => set(() => ({
+        ...updates
+    })),
 }));

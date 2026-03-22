@@ -146,3 +146,31 @@
         border-color: $color-vitae;
     }
 }
+
+// --- Button Base ---
+@mixin button-base($bg-color) {
+    background: $bg-color;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: $color-text-primary;
+    padding: $space-2 $space-4;
+    border-radius: $radius-md;
+    cursor: pointer;
+    font-family: $font-body;
+    font-size: $font-size-sm;
+    transition: all $transition-fast;
+    @include flex-center;
+
+    &:hover:not(:disabled) {
+        filter: brightness(1.2);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    &:active:not(:disabled) {
+        transform: scale(0.98);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}

@@ -1,5 +1,5 @@
 import { usePlayerStore } from '../../store/playerStore';
-import { getXpProgress, getXpToNextLevel } from '../../engine/xpTable';
+import { getXpProgress } from '../../engine/xpTable';
 import type { SkillName } from '../../engine/types';
 import styles from './character.module.scss';
 
@@ -23,33 +23,24 @@ export function CharacterPanel() {
     const { skills } = usePlayerStore();
 
     return (
-        <div className={styles.panel}>
-            <div className={styles.title}>Combat Skills</div>
-            <div className={styles.skillList}>
+        <div className={styles.compactPanel}>
+            <div className={styles.compactSkillList}>
                 {SKILL_CONFIG.map(({ key, label, iconUrl, color }) => {
                     const skill = skills[key];
                     const progress = getXpProgress(skill.xp);
-                    const toNext = getXpToNextLevel(skill.xp);
                     return (
-                        <div key={key} className={styles.skillRow}>
-                            <div className={styles.skillIcon}><img src={iconUrl} alt={label} className={styles.skillIconImg} /></div>
-                            <div className={styles.skillInfo}>
-                                <div className={styles.skillTop}>
-                                    <span className={styles.skillName}>{label}</span>
-                                    <span className={styles.skillLevel} style={{ color }}>
-                                        {skill.level}
-                                    </span>
+                        <div key={key} className={styles.compactSkillRow}>
+                            <img src={iconUrl} alt={label} className={styles.miniIcon} />
+                            <div className={styles.compactSkillInfo}>
+                                <div className={styles.compactSkillTop}>
+                                    <span className={styles.miniName}>{label}</span>
+                                    <span className={styles.miniLevel} style={{ color }}>{skill.level}</span>
                                 </div>
-                                <div className={styles.xpTrack}>
+                                <div className={styles.miniXpTrack}>
                                     <div
-                                        className={styles.xpFill}
+                                        className={styles.miniXpFill}
                                         style={{ width: `${progress * 100}%`, background: color }}
                                     />
-                                </div>
-                                <div className={styles.xpText}>
-                                    {skill.level < 120
-                                        ? `${toNext.toLocaleString()} XP to next`
-                                        : 'MAX LEVEL'}
                                 </div>
                             </div>
                         </div>

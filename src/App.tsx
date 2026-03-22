@@ -3,6 +3,7 @@ import { CombatView } from './features/combat/CombatView';
 import { InventoryView } from './features/inventory/InventoryView';
 import { SanctumView } from './features/sanctum/SanctumView';
 import { ProfileView } from './features/character/ProfileView';
+import { SanguineExchangeView } from './features/store/SanguineExchangeView';
 
 import { ResourceHUD } from './features/ui/ResourceHUD';
 import './styles/main.scss';
@@ -10,7 +11,7 @@ import iconMagic from './assets/icons/blood_magic.png';
 import iconAttack from './assets/icons/attack.png';
 import styles from './App.module.scss';
 
-type Tab = 'combat' | 'sanctum' | 'profile' | 'inventory';
+type Tab = 'combat' | 'sanctum' | 'profile' | 'inventory' | 'store';
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('combat');
@@ -21,6 +22,7 @@ function App() {
       case 'sanctum': return <SanctumView />;
       case 'profile': return <ProfileView />;
       case 'inventory': return <InventoryView />;
+      case 'store': return <SanguineExchangeView />;
       default: return <CombatView />;
     }
   };
@@ -44,22 +46,6 @@ function App() {
         {/* Left Side Navigation (Idle Clans Style) */}
         <nav className={styles.sideNav}>
           <button 
-            className={`${styles.navBtn} ${activeTab === 'combat' ? styles.active : ''}`}
-            onClick={() => setActiveTab('combat')}
-          >
-            <img src={iconAttack} alt="" className={styles.navIcon} />
-            <span>Combat</span>
-          </button>
-          
-          <button 
-            className={`${styles.navBtn} ${activeTab === 'sanctum' ? styles.active : ''}`}
-            onClick={() => setActiveTab('sanctum')}
-          >
-            <img src={iconMagic} alt="" className={styles.navIcon} />
-            <span>Sanctum</span>
-          </button>
-
-          <button 
             className={`${styles.navBtn} ${activeTab === 'profile' ? styles.active : ''}`}
             onClick={() => setActiveTab('profile')}
           >
@@ -71,6 +57,34 @@ function App() {
             onClick={() => setActiveTab('inventory')}
           >
             <span>Inventory</span>
+          </button>
+
+          <div className={styles.navDivider} />
+          
+          <button 
+            className={`${styles.navBtn} ${activeTab === 'store' ? styles.active : ''}`}
+            onClick={() => setActiveTab('store')}
+          >
+            <img src={iconMagic} alt="" className={styles.navIcon} />
+            <span>Sanguine Exchange</span>
+          </button>
+
+          <button 
+            className={`${styles.navBtn} ${activeTab === 'sanctum' ? styles.active : ''}`}
+            onClick={() => setActiveTab('sanctum')}
+          >
+            <img src={iconMagic} alt="" className={styles.navIcon} />
+            <span>Sanctum</span>
+          </button>
+
+          <div className={styles.navDivider} />
+
+          <button 
+            className={`${styles.navBtn} ${activeTab === 'combat' ? styles.active : ''}`}
+            onClick={() => setActiveTab('combat')}
+          >
+            <img src={iconAttack} alt="" className={styles.navIcon} />
+            <span>Combat</span>
           </button>
         </nav>
 

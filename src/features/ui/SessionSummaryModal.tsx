@@ -63,7 +63,7 @@ export const SessionSummaryModal: React.FC<Props> = ({ active, onClose }) => {
                     {data.wasSlain ? '☠️ SLAIN IN COMBAT' : 'Hunting Gains'}
                 </h2>
                 <div className={styles.subtitle}>
-                    {active ? 'Current Hunt' : (data.wasSlain ? 'DEFEATED' : 'Session Complete')}
+                    {active ? '🚩 Resources At Risk' : (data.wasSlain ? '⚠️ Partially Recovered' : '✅ Secured in Bank')}
                 </div>
 
                 <div className={styles.statsGrid}>
@@ -75,6 +75,12 @@ export const SessionSummaryModal: React.FC<Props> = ({ active, onClose }) => {
                         <div className={styles.statLabel}><img src={iconAttack} alt="" className={styles.miniIcon} /> Kills</div>
                         <div className={styles.statValue}>{data.kills}</div>
                     </div>
+                    {data.bossesSlain > 0 && (
+                        <div className={styles.statCard} style={{ borderColor: '#d4af37' }}>
+                            <div className={styles.statLabel} style={{ color: '#d4af37' }}>🏆 Bosses Slain</div>
+                            <div className={styles.statValue}>{data.bossesSlain}</div>
+                        </div>
+                    )}
                     <div className={styles.statCard}>
                         <div className={styles.statLabel}><img src={iconHp} alt="" className={styles.miniIcon} /> XP Gained</div>
                         <div className={styles.statValue}>{data.xpGained.toLocaleString()}</div>
