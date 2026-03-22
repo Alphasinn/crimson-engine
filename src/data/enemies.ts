@@ -28,7 +28,7 @@ const ENEMIES: Enemy[] = [
         lootTable: [
             { itemId: 'torn_cloth', itemName: 'Torn Cloth', weight: 50 },
             { itemId: 'copper_coin', itemName: 'Copper Coin', weight: 35 },
-            { itemId: 'rusted_dagger', itemName: 'Rusted Dagger', weight: 15 },
+            { itemId: 'rusted_fang', itemName: 'Rusted Fang', weight: 15 },
         ],
     },
     {
@@ -50,7 +50,7 @@ const ENEMIES: Enemy[] = [
         lootTable: [
             { itemId: 'torch_scrap', itemName: 'Torch Scrap', weight: 45 },
             { itemId: 'copper_coin', itemName: 'Copper Coin', weight: 40 },
-            { itemId: 'leather_strip', itemName: 'Leather Strip', weight: 15 },
+            { itemId: 'scout_chest', itemName: 'Scout Chest', weight: 15 },
         ],
     },
     {
@@ -72,8 +72,8 @@ const ENEMIES: Enemy[] = [
         lootTable: [
             { itemId: 'copper_coin', itemName: 'Copper Coin', weight: 40 },
             { itemId: 'militia_badge', itemName: 'Militia Badge', weight: 30 },
-            { itemId: 'leather_vest', itemName: 'Leather Vest', weight: 15 },
-            { itemId: 'broken_sword', itemName: 'Broken Sword', weight: 15 },
+            { itemId: 'rustborn_chest', itemName: 'Rustborn Chest', weight: 15 },
+            { itemId: 'frayed_cleaver', itemName: 'Frayed Cleaver', weight: 15 },
         ],
     },
     {
@@ -95,7 +95,7 @@ const ENEMIES: Enemy[] = [
         lootTable: [
             { itemId: 'crossbow_bolts', itemName: 'Crossbow Bolts', weight: 50 },
             { itemId: 'copper_coin', itemName: 'Copper Coin', weight: 35 },
-            { itemId: 'cracked_crossbow', itemName: 'Cracked Crossbow', weight: 15 },
+            { itemId: 'crank_crossbow', itemName: 'Crank Crossbow', weight: 15 },
         ],
     },
     {
@@ -118,7 +118,7 @@ const ENEMIES: Enemy[] = [
             { itemId: 'holy_water', itemName: 'Holy Water', weight: 35 },
             { itemId: 'prayer_bead', itemName: 'Prayer Bead', weight: 35 },
             { itemId: 'silver_pendant', itemName: 'Silver Pendant', weight: 20 },
-            { itemId: 'tattered_robe', itemName: 'Tattered Robe', weight: 10 },
+            { itemId: 'acolyte_chest', itemName: 'Acolyte Chest', weight: 10 },
         ],
     },
     {
@@ -139,9 +139,9 @@ const ENEMIES: Enemy[] = [
         spriteUrl: '/src/enemies/forgottenhamlet/novice_vampire_hunter.png',
         lootTable: [
             { itemId: 'hunter_journal', itemName: 'Hunter Journal', weight: 25 },
-            { itemId: 'silver_dagger', itemName: 'Silver Dagger', weight: 30 },
+            { itemId: 'bone_maul', itemName: 'Bone Maul', weight: 30 },
             { itemId: 'copper_coin', itemName: 'Copper Coin', weight: 30 },
-            { itemId: 'worn_boots', itemName: 'Worn Boots', weight: 15 },
+            { itemId: 'rustborn_boots', itemName: 'Rustborn Boots', weight: 15 },
         ],
     },
     // =========================================================================
@@ -413,7 +413,7 @@ const ENEMIES: Enemy[] = [
             { itemId: 'captain_badge', itemName: 'Captain Badge', weight: 25 },
             { itemId: 'nightsteel_sword', itemName: 'Nightsteel Sword', weight: 30 },
             { itemId: 'hunter_coat', itemName: 'Hunter Coat', weight: 25 },
-            { itemId: 'silver_dagger', itemName: 'Silver Dagger', weight: 20 },
+            { itemId: 'bone_maul', itemName: 'Bone Maul', weight: 20 },
         ],
         notes: "POSSIBLE PLACEHOLDER_STATS",
     },
