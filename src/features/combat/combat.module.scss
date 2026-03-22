@@ -619,6 +619,33 @@
     gap: $space-4;
 }
 
+.vitaeRow {
+    @include flex-col;
+    gap: $space-1;
+}
+
+.vitaeLabel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.vitaeLabelText {
+    font-size: 10px;
+    font-family: $font-mono;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: $color-blood-light;
+    font-weight: $font-weight-bold;
+}
+
+.vitaeValue {
+    font-family: $font-mono;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 600;
+}
+
 .miniStyleRow {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -1459,6 +1486,7 @@
     padding: $space-8;
     position: relative;
     overflow-y: auto;
+    overflow-x: hidden; /* Suppress internal horizontal scrollbar caused by overflow-y: auto */
     padding-top: $space-2; /* Minimal top padding, HUD is absolute */
 }
 
@@ -1932,7 +1960,8 @@
 }
 
 .logBody {
-    max-height: 180px;
+    flex: 1;         /* Grow to fill all available space in the sidebar */
+    min-height: 0;   /* Allow flex child to shrink below content size */
     overflow-y: auto;
     padding: $space-2 $space-4;
     @include flex-col;

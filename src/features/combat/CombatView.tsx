@@ -4,6 +4,8 @@ import { usePlayerStore } from '../../store/playerStore';
 import { useCombatEngine } from './useCombatEngine';
 import { EquipmentPanel } from '../character/EquipmentPanel';
 import { ConsumablePanel } from '../character/ConsumablePanel';
+import { HpBar } from '../ui/HpBar';
+import { AttackMeter } from '../ui/AttackMeter';
 import { DamageSplats } from './DamageSplats';
 import { IdleGainPanel } from '../ui/IdleGainPanel';
 import { SessionSummaryModal } from '../ui/SessionSummaryModal';
@@ -46,9 +48,6 @@ const SKILL_LABELS: Record<string, string> = {
     bloodSorcery: 'BLOOD SORCERY',
     vitae: 'VITAE'
 };
-
-import { HpBar } from '../ui/HpBar';
-import { AttackMeter } from '../ui/AttackMeter';
 
 // --- Sub-components ---
 
@@ -391,36 +390,30 @@ export function CombatView() {
                                 <div className={styles.combatantsRow}>
                                     <div className={styles.playerCardArea}>
                                         <div className={styles.playerCardHeader}>🧛 Your Vampire</div>
-                                        <EquipmentPanel 
-                                            hpProps={{
-                                                current: Math.max(0, currentVitae),
-                                                max: derived.maxHp,
-                                                label: "",
-                                                color: hpColor(currentVitae / derived.maxHp)
-                                            }}
-                                            meterProps={{
-                                                value: playerMeter,
-                                                label: "",
-                                                color: "#a855f7"
-                                            }}
-                                        />
+                                        <EquipmentPanel />
                                         <div className={styles.playerSplatAnchor}>
                                             <DamageSplats isPlayer={true} />
                                         </div>
                                         
                                         <div className={styles.playerStatsArea}>
-                                            <div className={styles.miniStyleRow}>
-                                                {modeOptions.map(({ mode, label }) => (
-                                                    <button
-                                                        key={mode}
-                                                        className={`${styles.miniStyleBtn} ${trainingMode === mode ? styles.active : ''}`}
-                                                        onClick={() => setTrainingMode(mode)}
-                                                    >
-                                                        {label}
-                                                    </button>
-                                                ))}
+                                            {/* Vitae (HP) — prominently shown */}
+                                            <div className={styles.vitaeRow}>
+                                                <div className={styles.vitaeLabel}>
+                                                    <span className={styles.vitaeLabelText}>🩸 Vitae</span>
+                                                    <span className={styles.vitaeValue}>{Math.max(0, currentVitae)}&nbsp;/&nbsp;{derived.maxHp}</span>
+                                                </div>
+                                                <HpBar
+                                                    current={Math.max(0, currentVitae)}
+                                                    max={derived.maxHp}
+                                                    label=""
+                                                    color={hpColor(currentVitae / derived.maxHp)}
+                                                />
                                             </div>
 
+                                            {/* Attack meter */}
+                                            <AttackMeter value={playerMeter} label="" color="#c41e3a" />
+
+                                            {/* Combat stats: Hit% and Max Hit */}
                                             <div className={styles.arenaStatGrid}>
                                                 <div className={styles.arenaStatBox}>
                                                     <span className={styles.arenaStatLabel}>Hit %</span>
@@ -436,6 +429,19 @@ export function CombatView() {
                                                     <span className={styles.arenaStatLabel}>Max Hit</span>
                                                     <span className={styles.arenaStatValue}>{playerMaxHitDisplay}</span>
                                                 </div>
+                                            </div>
+
+                                            {/* Style selector */}
+                                            <div className={styles.miniStyleRow}>
+                                                {modeOptions.map(({ mode, label }) => (
+                                                    <button
+                                                        key={mode}
+                                                        className={`${styles.miniStyleBtn} ${trainingMode === mode ? styles.active : ''}`}
+                                                        onClick={() => setTrainingMode(mode)}
+                                                    >
+                                                        {label}
+                                                    </button>
+                                                ))}
                                             </div>
                                         </div>
                                     </div>
