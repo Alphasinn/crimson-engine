@@ -57,6 +57,7 @@ interface CombatState {
     // Session Tracking
     sessionStats: SessionStats | null;
     lastSession: SessionStats | null;
+    viewMode: 'arena' | 'home';
 
     // Actions
     setZone: (zone: Zone) => void;
@@ -72,6 +73,7 @@ interface CombatState {
     fleeCombat: () => void;
     initPlayer: (maxHp: number) => void;
     updateCombatState: (updates: any) => void;
+    setViewMode: (mode: 'arena' | 'home') => void;
 
     // Stats Actions
     recordStat: (type: StatWindowEntry['type'], value: number) => void;
@@ -110,6 +112,7 @@ export const useCombatStore = create<CombatState>()((set) => ({
     statsStartTime: null,
     sessionStats: null,
     lastSession: null,
+    viewMode: 'home',
 
     setZone: (zone) => set({ selectedZone: zone, isRunning: false, activeEnemy: null }),
 
@@ -264,4 +267,6 @@ export const useCombatStore = create<CombatState>()((set) => ({
     updateCombatState: (updates) => set(() => ({
         ...updates
     })),
+
+    setViewMode: (mode) => set({ viewMode: mode }),
 }));

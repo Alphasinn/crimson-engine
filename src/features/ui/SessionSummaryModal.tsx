@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useCombatStore } from '../../store/combatStore';
+import { usePlayerStore } from '../../store/playerStore';
 import styles from './sessionSummary.module.scss';
 import iconMagic from '../../assets/icons/blood_magic.png';
 import iconHp from '../../assets/icons/hp.png';
@@ -12,6 +13,7 @@ interface Props {
 
 export const SessionSummaryModal: React.FC<Props> = ({ active, onClose }) => {
     const { lastSession, sessionStats, clearLastSession } = useCombatStore();
+    const { lootHistory, claimAllLoot } = usePlayerStore();
 
     const data = active ? sessionStats : lastSession;
 
@@ -33,6 +35,11 @@ export const SessionSummaryModal: React.FC<Props> = ({ active, onClose }) => {
         } else {
             clearLastSession();
         }
+    };
+
+    const handleClaimAll = () => {
+        claimAllLoot();
+        handleClose();
     };
 
     // Helper to get icon for loot (shared with LootPanel logic)
@@ -119,9 +126,16 @@ export const SessionSummaryModal: React.FC<Props> = ({ active, onClose }) => {
                     </div>
                 </div>
 
-                <button className={styles.okBtn} onClick={handleClose}>
-                    {active ? 'Close' : 'Back to Hunting'}
-                </button>
+                <div className={styles.modalFooter}>
+                    <button className={styles.okBtn} onClick={handleClose}>
+                        {active ? 'Close' : 'Back to Hunting'}
+                    </button>
+                    {!active && (data.lootCount > 0 || lootHistory.length > 0) && (
+                        <button className={styles.claimBtn} onClick={handleClaimAll}>
+                            Claim & Bank All
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );

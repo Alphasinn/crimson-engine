@@ -13,7 +13,10 @@ export function SessionReport({ onOpenCombatGains, onOpenHuntingGains }: Props) 
         unlockedUpgrades,
         toggleAutoLoot, 
         claimAllLoot,
-        lootHistory
+        lootHistory,
+        unbankedShards,
+        unbankedSteel,
+        unbankedIchor
     } = usePlayerStore();
     const { isRunning } = useCombatStore();
 
@@ -39,9 +42,9 @@ export function SessionReport({ onOpenCombatGains, onOpenHuntingGains }: Props) 
                 <button 
                     className={styles.claimAllBtn} 
                     onClick={claimAllLoot}
-                    disabled={lootHistory.length === 0}
+                    disabled={lootHistory.length === 0 && unbankedShards === 0 && unbankedSteel === 0 && unbankedIchor === 0}
                 >
-                    Claim All
+                    Claim & Bank All
                 </button>
             </div>
 

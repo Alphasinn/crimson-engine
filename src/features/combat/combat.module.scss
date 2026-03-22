@@ -237,6 +237,8 @@
     border-radius: 12px;
     position: relative;
     transition: all $transition-normal;
+    margin: 0 $space-3; // Consistent sidebar padding
+    box-sizing: border-box;
 
     &.locked {
         opacity: 0.35;
@@ -302,6 +304,7 @@
     @include flex-col;
     gap: 4px;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .sliderValue {
@@ -1549,10 +1552,25 @@
 
 .miniScentArea {
     margin-top: $space-4;
-    padding-top: $space-4;
+    padding: $space-4 $space-3 0; // Padding side to match buttons
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     @include flex-col;
     gap: 8px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.miniScentTrack {
+    @include progress-bar-base(10px, rgba(255, 255, 255, 0.1));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-sizing: border-box;
+}
+
+.miniScentFill {
+    height: 100%;
+    background: linear-gradient(90deg, #c41e3a, #ff3355);
+    box-shadow: 0 0 10px rgba(196, 30, 58, 0.4);
+    transition: width 0.3s ease;
 }
 
 .miniScentLabel {
@@ -1866,9 +1884,79 @@
     height: 100%;
     @include flex-center;
     @include flex-col;
-    gap: $space-4;
-    color: $color-text-muted;
-    opacity: 0.6;
+    padding: $space-16;
+}
+
+.welcomeCard {
+    @include glass-card(rgba(196, 30, 58, 0.5));
+    padding: $space-12 $space-16;
+    text-align: center;
+    max-width: 600px;
+    animation: welcomeFadeIn 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+    box-shadow: 0 0 50px rgba(196, 30, 58, 0.1), inset 0 0 20px rgba(196, 30, 58, 0.05);
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(circle at center, rgba(196, 30, 58, 0.05) 0%, transparent 70%);
+        pointer-events: none;
+    }
+}
+
+.welcomeIcon {
+    font-size: 64px;
+    margin-bottom: $space-6;
+    filter: drop-shadow(0 0 15px rgba(196, 30, 58, 0.5));
+    display: block;
+}
+
+.welcomeTitle {
+    @include heading-style;
+    font-size: $font-size-3xl;
+    color: $color-crimson;
+    margin-bottom: $space-2;
+    text-shadow: 0 0 20px rgba(196, 30, 58, 0.4);
+}
+
+.welcomeSubtitle {
+    color: $color-gold;
+    font-family: $font-mono;
+    font-size: $font-size-sm;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: $space-8;
+    opacity: 0.9;
+}
+
+.welcomeDivider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(196, 30, 58, 0.4), transparent);
+    margin: $space-8 auto;
+    width: 80%;
+}
+
+.welcomeHint {
+    color: $color-text-secondary;
+    font-size: $font-size-md;
+    font-style: italic;
+    font-family: $font-body;
+    letter-spacing: 0.02em;
+}
+
+@keyframes welcomeFadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(30px) scale(0.98); 
+        filter: blur(10px);
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
 }
 
 @keyframes slideInLeft {
@@ -2159,5 +2247,52 @@
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+.returnToArenaBtn {
+    @include button-base($color-crimson);
+    width: calc(100% - 24px); // Account for sidebar padding
+    box-sizing: border-box;
+    margin: $space-4 $space-3 0; // Margin top, Margin side, Margin bottom
+    padding: $space-3;
+    font-family: $font-heading;
+    font-size: $font-size-md;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $space-3;
+    box-shadow: 0 0 15px rgba(196, 30, 58, 0.4);
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    animation: arenaPulse 2.3s infinite ease-in-out;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 100;
+
+    &:hover {
+        transform: scale(1.03) translateY(-2px);
+        box-shadow: 0 0 30px rgba(196, 30, 58, 0.6), 0 0 10px rgba(212, 175, 55, 0.3);
+        background: $color-blood-light;
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+}
+
+@keyframes arenaPulse {
+    0% {
+        box-shadow: 0 0 10px rgba(196, 30, 58, 0.3);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 25px rgba(196, 30, 58, 0.6), 0 0 15px rgba(212, 175, 55, 0.2);
+        transform: scale(1.01);
+    }
+    100% {
+        box-shadow: 0 0 10px rgba(196, 30, 58, 0.3);
+        transform: scale(1);
+    }
 }
 

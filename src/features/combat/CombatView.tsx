@@ -78,7 +78,7 @@ export function CombatView() {
         enemyHp, enemyMaxHp,
         enemyMeter, playerMeter,
         activeEvent, isBossPending, scentIntensity,
-        lastEnemyCritStamp
+        lastEnemyCritStamp, viewMode, setViewMode
     } = useCombatStore();
     const { 
         trainingMode, setTrainingMode, equipment, 
@@ -159,9 +159,6 @@ export function CombatView() {
     // Which zone card has its enemy roster expanded
     const [expandedZoneId, setExpandedZoneId] = useState<string | null>(null);
 
-    // 'arena' = watching the fight, 'home' = zone-select screen
-    const [viewMode, setViewMode] = useState<'arena' | 'home'>('home');
-
     // Stats modals
     const [showGains, setShowGains] = useState(false);
     const [showHuntingGains, setShowHuntingGains] = useState(false);
@@ -178,19 +175,19 @@ export function CombatView() {
             startCombatWithEnemy(fullZone, enemy);
             setViewMode('arena');
         }
-    }, [startCombatWithEnemy]);
+    }, [startCombatWithEnemy, setViewMode]);
 
     // Flee — stop combat entirely, go back to zone roster and show what we got
     const handleFlee = useCallback(() => {
         fleeFromCombat();
         setViewMode('home');
         setShowHuntingGains(true);
-    }, [fleeFromCombat]);
+    }, [fleeFromCombat, setViewMode]);
 
     // Home — keep combat running, return to zone grid
     const handleHome = useCallback(() => {
         setViewMode('home');
-    }, []);
+    }, [setViewMode]);
 
 
     const hpColor = (pct: number) => pct > 0.5 ? '#22c55e' : pct > 0.25 ? '#eab308' : '#ef4444';
@@ -276,6 +273,16 @@ export function CombatView() {
                     </div>
                 )}
             </div>
+
+            {/* Return to Arena Button (Mobile/Home context) */}
+            {viewMode === 'home' && isRunning && (
+                <button 
+                    className={styles.returnToArenaBtn}
+                    onClick={() => setViewMode('arena')}
+                >
+                    ⚔️ RETURN TO ARENA
+                </button>
+            )}
         </div>
     );
 
@@ -358,8 +365,13 @@ export function CombatView() {
                                     );
                                 })() : (
                                     <div className={styles.noZoneSelected}>
-                                        <div className={styles.greetingTitle}>Welcome, Noble Vampire</div>
-                                        <div className={styles.greetingText}>Select a hunting ground above to begin your harvest.</div>
+                                        <div className={styles.welcomeCard}>
+                                            <div className={styles.welcomeIcon}>🧛</div>
+                                            <h1 className={styles.welcomeTitle}>Welcome, Noble Vampire</h1>
+                                            <p className={styles.welcomeSubtitle}>The night is young, and the blood is fresh.</p>
+                                            <div className={styles.welcomeDivider}></div>
+                                            <p className={styles.welcomeHint}>Select a hunting ground above to begin your harvest.</p>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -523,8 +535,8 @@ export function CombatView() {
                             <h2 className={styles.sidebarHeader}>📜 Battle Records</h2>
                             <CombatLog />
                             <SessionReport 
-                                onOpenCombatGains={() => {}} 
-                                onOpenHuntingGains={() => {}} 
+                                onOpenCombatGains={() => setShowGains(true)} 
+                                onOpenHuntingGains={() => setShowHuntingGains(true)} 
                             />
                         </div>
                     </div>

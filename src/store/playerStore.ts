@@ -241,7 +241,7 @@ export const usePlayerStore = create<PlayerState>()(
             },
 
             claimAllLoot: () => {
-                const { lootHistory, addInventoryItem } = get();
+                const { lootHistory, addInventoryItem, withdraw } = get();
                 lootHistory.forEach(item => {
                     addInventoryItem({
                         id: item.id,
@@ -251,6 +251,7 @@ export const usePlayerStore = create<PlayerState>()(
                     });
                 });
                 set({ lootHistory: [] });
+                withdraw(); // Unify currency banking with loot claiming
             },
 
             clearLootHistory: () => set({ lootHistory: [] }),
