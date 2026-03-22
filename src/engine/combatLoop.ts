@@ -335,7 +335,7 @@ export class CombatEngine {
         let enemyInterval = this.enemy.attackInterval;
         
         // --- Phase 2C: Razor Fangs (Enemy Attack Speed +10%) ---
-        if (this.activeEvent === 'Razor Fangs') {
+        if (this._scentIntensity >= EVENT_THRESHOLD_FANGS) {
             enemyInterval *= 0.90;
         }
 
@@ -504,9 +504,8 @@ export class CombatEngine {
         let enemyAccuracy = this.enemy.accuracy;
         
         // --- Phase 2C: Bloodlust (Enemy Accuracy +10%) ---
-        if (this.activeEvent === 'Bloodlust' || this.activeEvent === 'Hemophilic Curse' || this.activeEvent === 'Razor Fangs') {
-             // In Phase 2C, Scent Scaling is always on. Bloodlust is an extra modifier.
-             if (this.activeEvent === 'Bloodlust') enemyAccuracy *= 1.10;
+        if (this._scentIntensity >= EVENT_THRESHOLD_BLOODLUST) {
+             enemyAccuracy *= 1.10;
         }
 
         const totalEnemyAccuracy = enemyAccuracy * (1 + this._scentIntensity);
@@ -531,7 +530,7 @@ export class CombatEngine {
 
                 // --- Phase 2C: Hemophilic Curse (Income Damage +15%) ---
                 let incoming = raw;
-                if (this.activeEvent === 'Hemophilic Curse') {
+                if (this._scentIntensity >= EVENT_THRESHOLD_CURSE) {
                     incoming = Math.floor(incoming * 1.15);
                 }
 
