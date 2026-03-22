@@ -11,11 +11,16 @@
 }
 
 .arenaContainer {
-    display: flex; // Back to flex for cleaner behavior with sidebar
+    display: flex;
     height: 100%;
     background: $color-bg-deep;
     color: $color-text-primary;
     overflow: hidden;
+
+    @media (max-width: $bp-tablet) {
+        flex-direction: column;
+        overflow-y: auto;
+    }
 }
 
 // LeftNav is gone
@@ -34,6 +39,12 @@
     height: 100%;
     display: flex;
     flex-direction: column;
+
+    @media (max-width: $bp-tablet) {
+        flex: none;
+        overflow-y: visible;
+        height: auto;
+    }
 }
 
 .rightSidebar {
@@ -43,10 +54,18 @@
     height: 100%;
     overflow: hidden;
 
-    // Make CombatLog and LootPanel share space
     > div {
         flex: 1;
-        min-height: 0; // Allow shrinking
+        min-height: 0;
+    }
+
+    @media (max-width: $bp-tablet) {
+        height: auto;
+        overflow: visible;
+        > div {
+            min-height: 350px;
+            flex: none;
+        }
     }
 }
 

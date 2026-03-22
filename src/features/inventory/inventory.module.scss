@@ -1,9 +1,18 @@
+@use '../../styles/variables' as *;
+
 .root {
     display: grid;
     grid-template-columns: 1fr 380px;
-    gap: 24px;
-    padding: 24px;
+    gap: $space-6;
+    padding: $space-6;
     height: 100%;
+
+    @media (max-width: $bp-tablet) {
+        grid-template-columns: 1fr;
+        padding: $space-3;
+        gap: $space-3;
+        overflow-y: auto;
+    }
 }
 
 .inventoryArea {
