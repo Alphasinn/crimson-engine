@@ -162,6 +162,16 @@
     filter: drop-shadow(0 0 4px rgba(0,0,0,0.5));
 }
 
+.navEmoji {
+    font-size: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    filter: drop-shadow(0 0 4px rgba(0,0,0,0.5));
+}
+
 .content {
     flex: 1;
     display: flex;

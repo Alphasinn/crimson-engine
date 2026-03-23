@@ -1,0 +1,202 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: $space-6;
+    gap: $space-4;
+    overflow-y: auto;
+}
+
+.header {
+    @include flex-between();
+    padding-bottom: $space-4;
+    border-bottom: 1px solid $color-border-accent;
+}
+
+.title {
+    font-family: $font-heading;
+    font-size: $font-size-xl;
+    color: #4a90e2; // Alembic / Magic vibe
+    text-shadow: 0 0 10px rgba(74, 144, 226, 0.4);
+    margin: 0;
+}
+
+.skillBadge {
+    background: rgba(0, 30, 60, 0.4);
+    border: 1px solid rgba(74, 144, 226, 0.4);
+    padding: $space-2 $space-4;
+    border-radius: $radius-full;
+    font-family: $font-mono;
+    color: $color-text-primary;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(0, 30, 60, 0.2);
+}
+
+.description {
+    color: $color-text-secondary;
+    margin-bottom: $space-2;
+    font-size: $font-size-md;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: $space-4;
+}
+
+.card {
+    background: rgba(20, 20, 25, 0.8);
+    border: 1px solid $color-border;
+    border-radius: $radius-md;
+    padding: $space-4;
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+    cursor: pointer;
+    transition: all $transition-fast;
+    position: relative;
+    overflow: hidden;
+
+    &:hover:not(.locked):not(.empty) {
+        border-color: rgba(74, 144, 226, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    &.locked {
+        opacity: 0.3;
+        cursor: not-allowed;
+        filter: grayscale(1);
+    }
+
+    &.empty {
+        opacity: 0.6;
+        cursor: not-allowed;
+        border-color: rgba(255, 255, 255, 0.05);
+    }
+
+    &.active {
+        border-color: #4a90e2;
+        background: rgba(10, 25, 40, 0.8);
+        box-shadow: 0 0 15px rgba(74, 144, 226, 0.15);
+    }
+}
+
+.cardHeader {
+    @include flex-between();
+    margin-bottom: $space-2;
+}
+
+.nodeName {
+    font-family: $font-heading;
+    font-size: $font-size-md;
+    color: $color-text-primary;
+    margin: 0;
+}
+
+.reqBadge, .lockBadge {
+    font-size: $font-size-xs;
+    padding: 2px 6px;
+    border-radius: $radius-sm;
+    font-family: $font-mono;
+}
+.reqBadge {
+    background: rgba(255, 255, 255, 0.1);
+    color: $color-text-secondary;
+}
+.lockBadge {
+    background: rgba(255, 0, 0, 0.2);
+    color: #ffcccc;
+}
+
+.cardBody {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+    background: rgba(0, 0, 0, 0.3);
+    padding: $space-3;
+    border-radius: $radius-sm;
+}
+
+.rewardRow {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    font-weight: bold;
+    color: $color-text-primary;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: $space-2;
+    margin-bottom: $space-1;
+}
+
+.stockCount {
+    margin-left: auto;
+    color: $color-gold;
+    font-size: $font-size-xs;
+    font-family: $font-mono;
+}
+
+.statRow {
+    @include flex-between();
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+}
+
+.healRow {
+    @include flex-between();
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+}
+
+.healHighlight {
+    color: #4ade80;
+    font-weight: bold;
+}
+
+.highlight {
+    color: #4a90e2;
+    font-weight: bold;
+}
+
+.progressTrack {
+    height: 24px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: $radius-sm;
+    position: relative;
+    overflow: hidden;
+    margin-top: auto;
+}
+
+.progressBar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #0f2a4a, #4a90e2);
+    transition: width 0.1s linear;
+}
+
+.progressLabel {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: $font-size-xs;
+    color: white;
+    font-weight: bold;
+    text-shadow: 0 0 2px black;
+    z-index: 2;
+}
+
+.cardFooter {
+    text-align: center;
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: auto;
+}

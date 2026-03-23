@@ -8,7 +8,9 @@ export type SkillName =
     | 'obsidianWard'
     | 'shadowArchery'
     | 'bloodSorcery'
-    | 'vitae';
+    | 'vitae'
+    | 'bloodletting'
+    | 'distillation';
 
 export type CombatStyle = 'melee' | 'archery' | 'sorcery';
 
@@ -306,7 +308,7 @@ export interface InventoryItem {
     id: string;
     name: string;
     quantity: number;
-    type: 'food' | 'material' | 'equipment' | 'misc';
+    type: 'food' | 'material' | 'equipment' | 'misc' | 'raw_blood';
     healAmount?: number; // For food items
 }
 
