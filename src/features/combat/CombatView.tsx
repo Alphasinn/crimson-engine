@@ -221,8 +221,10 @@ export function CombatView() {
             ${showZoneGrid ? styles.homeHud : ''}
         `}>
             <div className={styles.prepSkills}>
-                {Object.entries(skills).map(([name, data]) => (
-                    <div key={name} className={styles.miniSkillBar}>
+                {Object.entries(skills)
+                    .filter(([name]) => name !== 'bloodletting' && name !== 'distillation')
+                    .map(([name, data]) => (
+                        <div key={name} className={styles.miniSkillBar}>
                         <img src={SKILL_ICONS[name]} alt={name} className={styles.skillBarIcon} />
                         <div className={styles.miniSkillContent}>
                             <div className={styles.miniSkillInfo}>

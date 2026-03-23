@@ -9,6 +9,7 @@ import type { CombatCallbacks } from '../../engine/combatLoop';
 import type { Zone, Enemy, InventoryItem } from '../../engine/types';
 import { usePlayerStore } from '../../store/playerStore';
 import { useCombatStore } from '../../store/combatStore';
+import { useHarvestingStore } from '../../store/harvestingStore';
 import { useNotificationStore } from '../../store/notificationStore';
 import { computeDerivedStats, calculatePathResonance } from '../../engine/formulas';
 import { getEnemiesForZone } from '../../data/enemies';
@@ -345,6 +346,8 @@ export function useCombatEngine() {
         const { activeRituals, activeRitualModifiers } = useCombatStore.getState();
         const resonance = calculatePathResonance(equipment);
 
+        useHarvestingStore.getState().stopAction();
+
         sharedEngine.start(
             zone, skills, equipment, food, autoEatEnabled, autoEatThreshold, currentVitae, trainingMode,
             { isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining },
@@ -369,6 +372,8 @@ export function useCombatEngine() {
 
         const { activeRituals, activeRitualModifiers } = useCombatStore.getState();
         const resonance = calculatePathResonance(equipment);
+
+        useHarvestingStore.getState().stopAction();
 
         sharedEngine.start(
             zone, skills, equipment, food, autoEatEnabled, autoEatThreshold, currentVitae, trainingMode,

@@ -9,6 +9,8 @@ import iconDefense from '../../assets/icons/defense.png';
 import iconArchery from '../../assets/icons/archery.png';
 import iconMagic from '../../assets/icons/blood_magic.png';
 import iconHp from '../../assets/icons/hp.png';
+import iconDistill from '../../assets/tech/test/distillation.png';
+import iconBlood from '../../assets/tech/test/bloodletting.png';
 
 const SKILLS_CONFIG: { key: SkillName; label: string; iconUrl: string; color: string }[] = [
     { key: 'fangMastery', label: 'Fang Mastery', iconUrl: iconAttack, color: '#c41e3a' },
@@ -17,6 +19,8 @@ const SKILLS_CONFIG: { key: SkillName; label: string; iconUrl: string; color: st
     { key: 'shadowArchery', label: 'Shadow Archery', iconUrl: iconArchery, color: '#60a5fa' },
     { key: 'bloodSorcery', label: 'Blood Sorcery', iconUrl: iconMagic, color: '#c084fc' },
     { key: 'vitae', label: 'Vitae', iconUrl: iconHp, color: '#22c55e' },
+    { key: 'bloodletting', label: 'Bloodletting', iconUrl: iconBlood, color: '#991b1b' },
+    { key: 'distillation', label: 'Distillation', iconUrl: iconDistill, color: '#4a90e2' },
 ];
 
 export function ProfileView() {

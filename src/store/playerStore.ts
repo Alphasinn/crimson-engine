@@ -35,6 +35,8 @@ const DEFAULT_SKILLS: PlayerSkills = {
     bloodSorcery:  { level: 1, xp: 0 },
     // Vitae starts at level 10; XP must match so gainXp doesn't recompute to level 1
     vitae: { level: STARTING_VITAE_LEVEL, xp: getXpForLevel(STARTING_VITAE_LEVEL) },
+    bloodletting: { level: 1, xp: 0 },
+    distillation: { level: 1, xp: 0 },
 };
 
 interface PlayerState {
@@ -84,6 +86,7 @@ interface PlayerState {
     addFood: (food: InventoryItem) => void;
     consumeFood: (itemId: string) => void;
     addInventoryItem: (item: InventoryItem) => void;
+    updateInventoryItem: (itemId: string, quantity: number, template?: InventoryItem) => void;
     addLootLog: (item: { itemId: string, itemName: string }) => void;
     claimLoot: (itemId: string) => void;
     claimAllLoot: () => void;
@@ -155,7 +158,7 @@ export const usePlayerStore = create<PlayerState>()(
 
             gainXp: (skill: SkillName, amount: number) => {
                 set((state) => {
-                    const current = state.skills[skill];
+                    const current = state.skills[skill] || { xp: 0, level: 1 };
                     const newXp = Math.min(current.xp + amount, 500_000_000);
                     const newLevel = getLevelFromXp(newXp);
                     return {
@@ -218,6 +221,22 @@ export const usePlayerStore = create<PlayerState>()(
                         };
                     }
                     return { inventory: [...state.inventory, item] };
+                });
+            },
+
+            updateInventoryItem: (itemId: string, quantity: number, template?: InventoryItem) => {
+                set((state) => {
+                    const existing = state.inventory.find(i => i.id === itemId);
+                    if (existing) {
+                        return {
+                            inventory: state.inventory.map(i =>
+                                i.id === itemId ? { ...i, quantity } : i
+                            ).filter(i => i.quantity > 0),
+                        };
+                    } else if (template && quantity > 0) {
+                        return { inventory: [...state.inventory, { ...template, quantity }] };
+                    }
+                    return state;
                 });
             },
 
@@ -558,8 +577,19 @@ export const usePlayerStore = create<PlayerState>()(
                 finesseTicksRemaining: 0,
                 permanentArmorBonus: 0,
                 redMistIchorDrops: 0,
-                redMistDeaths: 0
+                redMistDeaths: 0,
+                crucibleSealed: false,
+                activeRituals: [],
+                nextHuntModifiers: {
+                    scentGainMultiplier: 1,
+                    lootQualityMultiplier: 1,
+                    maxHpMultiplier: 1,
+                    lifestealBonus: 0,
+                    speedMultiplier: 1,
+                    armorBonus: 0
+                }
             }),
+
         }),
         {
             name: 'crimson-engine-player',

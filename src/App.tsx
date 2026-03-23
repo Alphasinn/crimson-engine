@@ -4,14 +4,18 @@ import { InventoryView } from './features/inventory/InventoryView';
 import { SanctumView } from './features/sanctum/SanctumView';
 import { ProfileView } from './features/character/ProfileView';
 import { SanguineExchangeView } from './features/store/SanguineExchangeView';
+import { BloodlettingView } from './features/harvesting/BloodlettingView';
+import { DistillationView } from './features/harvesting/DistillationView';
 
 import { ResourceHUD } from './features/ui/ResourceHUD';
 import './styles/main.scss';
 import iconMagic from './assets/icons/blood_magic.png';
+import iconDistill from './assets/tech/test/distillation.png';
+import iconBlood from './assets/tech/test/bloodletting.png';
 import iconAttack from './assets/icons/attack.png';
 import styles from './App.module.scss';
 
-type Tab = 'combat' | 'sanctum' | 'profile' | 'inventory' | 'store';
+type Tab = 'combat' | 'sanctum' | 'profile' | 'inventory' | 'store' | 'bloodletting' | 'distillation';
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('combat');
@@ -23,6 +27,8 @@ function App() {
       case 'profile': return <ProfileView />;
       case 'inventory': return <InventoryView />;
       case 'store': return <SanguineExchangeView />;
+      case 'bloodletting': return <BloodlettingView />;
+      case 'distillation': return <DistillationView />;
       default: return <CombatView />;
     }
   };
@@ -75,6 +81,22 @@ function App() {
           >
             <img src={iconMagic} alt="" className={styles.navIcon} />
             <span>Sanctum</span>
+          </button>
+
+          <button 
+            className={`${styles.navBtn} ${activeTab === 'bloodletting' ? styles.active : ''}`}
+            onClick={() => setActiveTab('bloodletting')}
+          >
+            <img src={iconBlood} alt="" className={styles.navIcon} />
+            <span>Bloodletting</span>
+          </button>
+
+          <button 
+            className={`${styles.navBtn} ${activeTab === 'distillation' ? styles.active : ''}`}
+            onClick={() => setActiveTab('distillation')}
+          >
+            <img src={iconDistill} alt="" className={styles.navIcon} />
+            <span>Distillation</span>
           </button>
 
           <div className={styles.navDivider} />
