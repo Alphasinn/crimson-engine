@@ -1,34 +1,102 @@
 // =============================================================================
 // CRIMSON ENGINE — Game Constants
-// Centralized balance parameters and system thresholds.
 // =============================================================================
 
-/** Core engine tick rate (100ms = 10 ticks per second) */
+/** Tick duration in milliseconds — the heartbeat of the combat loop */
 export const TICK_MS = 100;
 
-/** Starting level for most skills */
-export const STARTING_LEVEL = 1;
-/** Starting level for Vitae */
-export const STARTING_VITAE_LEVEL = 10;
+/** Minimum allowed attack interval in seconds (hard floor) */
+export const MIN_ATTACK_INTERVAL = 0.6;
 
-/** Level cap for all skills */
+/** Maximum damage reduction percentage (75% cap) */
+export const MAX_DAMAGE_REDUCTION = 0.75;
+
+/** Minimum hit chance — always at least a sliver of hope */
+export const MIN_HIT_CHANCE = 0.05;
+
+/** Maximum hit chance — nothing is guaranteed */
+export const MAX_HIT_CHANCE = 0.95;
+
+/** Maximum block chance from shields */
+export const MAX_BLOCK_CHANCE = 0.20;
+
+/** Maximum combat level */
 export const MAX_LEVEL = 120;
 
-// --- Combat Constants ---
-/** Base chance to hit (if accuracy == evasion) */
-export const BASE_HIT_CHANCE = 0.50;
-/** Bonus damage multiplier for weakness matches */
-export const WEAKNESS_DAMAGE_MOD = 1.25;
-/** Damage reduction multiplier for resistance matches */
-export const RESISTANCE_DAMAGE_MOD = 0.75;
+/** Maximum XP cap (500 million) */
+export const XP_CAP = 500_000_000;
 
-/** Hard cap for damage reduction (75%) */
-export const DR_CAP = 0.75;
-/** Multiplicative compression power factor */
-export const MC_POWER_DEFAULT = 0.5;
-export const MC_POWER_SLASH = 0.6;
+/** Starting Vitae level for a new character */
+export const STARTING_VITAE_LEVEL = 10;
 
-// --- Blood Siphon ---
+/** Starting HP = STARTING_VITAE_LEVEL */
+export const STARTING_HP = STARTING_VITAE_LEVEL;
+
+/** Auto-eat triggers when HP falls below this fraction */
+export const AUTO_EAT_THRESHOLD = 0.5;
+
+/** Max offline simulation in hours */
+export const MAX_OFFLINE_HOURS = 8;
+
+/** Anti-stall: warn if no kill in this many seconds */
+export const ANTI_STALL_SECONDS = 60;
+
+/** Style advantage/resistance modifiers */
+export const STYLE_ADVANTAGE_BONUS = 0.15;
+export const STYLE_RESISTANCE_PENALTY = -0.10;
+
+/** Damage modifier when hitting a weakness */
+export const WEAKNESS_DAMAGE_MOD = 1.15;
+
+/** Damage modifier when hitting a resistance */
+export const RESISTANCE_DAMAGE_MOD = 0.85;
+
+/** Vitae XP share — kept for reference; per-hit system uses HIT_XP_VITAE_MULT */
+export const VITAE_XP_SHARE = 0.33;
+
+// --- Per-hit XP Multipliers (Idle Clans model) ---
+/** Single-skill focus modes (attack/strength/defense/ranged/magic) */
+export const HIT_XP_FOCUS_MULT = 4;
+/** Mixed modes — warding (2x each of two skills) */
+export const HIT_XP_MIXED_MULT = 2;
+/** All-melee mode — 1x each of three skills */
+export const HIT_XP_ALL_MULT = 1;
+/** Vitae — always awarded passively on every hit */
+export const HIT_XP_VITAE_MULT = 1.33;
+// --- Trinity Lock Math (v1.7) ---
+/** Multiplicative Compression threshold multiplier */
+export const MC_THRESHOLD = 1.0;
+/** Default MC power (applied to magnitudes above threshold) */
+export const MC_POWER_DEFAULT = 0.65;
+/** Aggressive MC power for SLASH style */
+export const MC_POWER_SLASH = 0.45;
+
+/** STAB style: Base armor bypass fraction */
+export const STAB_ARMOR_BYPASS = 0.15;
+/** STAB/SLASH style: Frequency threshold for armor scaling */
+export const STYLE_FREQ_THRESHOLD = 1.5;
+/** STAB/SLASH style: Intensity of armor scaling */
+export const STYLE_FREQ_INTENSITY = 1.5;
+
+/** CRUSH style: Fracture rate (bypass fraction per second of interval) */
+export const CRUSH_FRACTURE_RATE = 0.05;
+
+/** Absolute minimum damage floor as fraction of raw pre-mitigation damage */
+export const DAMAGE_FLOOR_PERCENT = 0.15;
+
+// =============================================================================
+// PHASE 2A PROTOTYPE CONSTANTS
+// =============================================================================
+
+/** Fraction of unbanked shards lost on death */
+export const DEATH_SHARD_LOSS_PCT = 0.50;
+/** Fraction of unbanked ichor lost on death */
+export const DEATH_ICHOR_LOSS_PCT = 1.00;
+/** "Braced" shard loss reduction modifier (0.50 -> 0.25) */
+export const DEATH_SHARD_BRACED_PCT = 0.25;
+/** "Braced" ichor loss reduction modifier (1.00 -> 0.50) */
+export const DEATH_ICHOR_BRACED_PCT = 0.50;
+
 /** Fraction of Max HP restored per siphon */
 export const SIPHON_HEAL_PCT = 0.20;
 /** Starting shard cost for the first siphon */
@@ -36,20 +104,13 @@ export const SIPHON_BASE_COST = 10;
 /** Scaling factor for siphoning cost */
 export const SIPHON_COST_EXPONENT = 1.7;
 
-// --- Scent of Fear ---
 /** Ticks between each accuracy increment (4s @ 100ms ticks) */
 export const SCENT_BUILD_INTERVAL = 40;
-/** Accuracy bonus gained per interval (3% per 4s) */
-export const SCENT_INCREMENT = 0.03;
+/** Accuracy bonus gained per interval (2% per 4s base) */
+export const SCENT_INCREMENT = 0.03;      // Base gain per 4s
 /** Maximum accuracy bonus enemy can gain from scent (100%) */
 export const SCENT_ACCURACY_CAP = 1.00;
 
-/** Scent threshold required to trigger a Boss spawn */
-export const BOSS_SCENT_THRESHOLD = 0.20;
-/** Scent reduction awarded upon defeating a Zone Boss (10%) */
-export const SCENT_REDUCTION_BOSS = 0.10;
-
-// --- Red Mist & Events ---
 /** HP threshold (<30%) to trigger Red Mist bonuses */
 export const RED_MIST_THRESHOLD = 0.30;
 /** Damage multiplier during Red Mist */
@@ -57,18 +118,23 @@ export const RED_MIST_DMG_BONUS = 1.20;
 /** Additive drop rate bonus for Cursed Ichor during Red Mist */
 export const RED_MIST_ICHOR_MOD = 0.10;
 
-/** Scent threshold for 'Bloodlust' event */
-export const EVENT_THRESHOLD_BLOODLUST = 0.05;
-/** Scent threshold for 'Hemophilic Curse' event */
-export const EVENT_THRESHOLD_CURSE = 0.10;
-/** Scent threshold for 'Razor Fangs' event */
-export const EVENT_THRESHOLD_FANGS = 0.15;
-
 // --- Phase 2B Progression ---
 /** Maximum additive Scent accumulation penalty from gear (50%) */
 export const MAX_SCENT_SENSITIVITY = 0.50;
-/** Scent accumulation penalty per refinement level (2%) */
+/** Scent accumulation penalty per refinement level (2% multiplicative or additive) */
 export const REFINEMENT_SCENT_MULT = 0.02;
 
+// --- Phase 2C: Scent of Fear Refinement ---
+/** Scent threshold required to trigger a Boss spawn (once per hunt) */
+export const BOSS_SCENT_THRESHOLD = 0.20;
+/** Scent reduction awarded upon defeating a Zone Boss */
+export const SCENT_REDUCTION_BOSS = 0.10;
 /** Default damage multiplier for critical hits */
 export const CRIT_MULTIPLIER_DEFAULT = 1.5;
+
+/** Scent threshold for 'Bloodlust' event (Enemy Accuracy +10%) */
+export const EVENT_THRESHOLD_BLOODLUST = 0.05;
+/** Scent threshold for 'Hemophilic Curse' event (Player Damage Taken +15%) */
+export const EVENT_THRESHOLD_CURSE = 0.10;
+/** Scent threshold for 'Razor Fangs' event (Enemy Attack Speed +10%) */
+export const EVENT_THRESHOLD_FANGS = 0.15;
