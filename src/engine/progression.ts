@@ -1,155 +1,39 @@
-import type { GearTier, SessionStats, EquipmentItem, HuntEvaluation } from './types';
+// =============================================================================
+// CRIMSON ENGINE — Progression & Tier Shift Logic
+// Handles leveling, tier transitions, and item upgrades.
+// =============================================================================
+
+import type { PlayerSkills, EquipmentItem } from './types';
 
 /**
- * Deterministic evaluation of a combat session to determine if meta-progression
- * actions (Crucible unsealing) should be allowed.
- * 
- * MVP Rule: Survive 50+ ticks or survive a Red Mist event.
- * 
- * Performance Scoring:
- * - Survival: up to 50% (cap at 100 ticks)
- * - Aggression: up to 30% (kills)
- * - Risk: up to 20% (scent intensity)
+ * Checks if a player is eligible to perform a Tier Shift.
+ * Requires all core combat skills to be at the level cap.
  */
-export function evaluateHuntPerformance(
-    session: SessionStats, 
-    tickCount: number, 
-    wasSlain: boolean, 
-    redMistSurvived: boolean
-): HuntEvaluation {
-    // 1. Rule: Never unseal on death (Locked Rule)
-    if (wasSlain) {
-        return { isValid: false, quality: 0, reason: 'Death seals the Crucible.' };
-    }
-
-    // 2. MVP Survival Threshold (Locked Rule)
-    const thresholdMet = tickCount >= 50 || redMistSurvived;
-    if (!thresholdMet) {
-        return { isValid: false, quality: 0, reason: 'Survival threshold not met.' };
-    }
-
-    // 3. Performance Scoring (Phase 4 Overhaul)
-    // 3a. Survival Score: up to 0.4 at 100 ticks (Reduced from 0.5 to make room for Mastery)
-    const survivalScore = Math.min(0.4, (tickCount / 100) * 0.4);
-    
-    // 3b. Aggression Score: up to 0.25 at 15 kills (Reduced from 0.3)
-    const aggressionScore = Math.min(0.25, (session.kills / 15) * 0.25);
-    
-    // 3c. Pressure Mastery (The "Risk" evolution)
-    // Peak Scent contributes up to 0.15
-    const peakScent = session.peakScent || session.lastScentIntensity || 0;
-    const peakScore = Math.min(0.15, peakScent * 0.15);
-    
-    // Time at pressure thresholds (up to 0.10)
-    const highPressureTicks = (session.timeAbove60Scent || 0) + (session.timeAbove80Scent || 0);
-    const pressureTimeScore = Math.min(0.10, (highPressureTicks / 200) * 0.10);
-    
-    const pressureScore = peakScore + pressureTimeScore;
-
-    // 3d. Ritual Mastery Bonus (+0.03 per ritual, cap 0.09)
-    const ritualBonus = Math.min(0.09, (session.activeRitualIds?.length || 0) * 0.03);
-
-    // 3e. Condensation Penalty (Mastery Efficiency)
-    // 0-1 uses: 0, 2 uses: -0.05, 3+ uses: -0.05 - (n-2)*0.10
-    let condensePenalty = 0;
-    const uses = session.condensationUses || 0;
-    if (uses >= 2) {
-        condensePenalty = 0.05 + (uses - 2) * 0.10;
-    }
-
-    const totalQuality = Math.max(0, Math.min(1.0, 
-        survivalScore + 
-        aggressionScore + 
-        pressureScore + 
-        ritualBonus - 
-        condensePenalty
-    ));
-
-    return {
-        isValid: true,
-        quality: Number(totalQuality.toFixed(2)),
-        reason: 'Sanguine threshold met.'
-    };
+export function isEligibleForTierShift(skills: PlayerSkills): boolean {
+    const coreSkills: (keyof PlayerSkills)[] = ['attack', 'strength', 'defense', 'vitality', 'ranged', 'magic', 'agility'];
+    return coreSkills.every(skill => skills[skill].level >= 120);
 }
 
 /**
- * Generalized utility to determine the next gear tier in the progression chain.
- * Supports T1 through T6.
+ * Calculate the Vitae shard cost for a Tier Shift.
+ * Base: 1000 * (Tier ^ 1.5)
  */
-export function getNextTier(current: GearTier): GearTier | null {
-    const tierMap: Record<GearTier, GearTier | null> = {
-        'T1': 'T2',
-        'T2': 'T3',
-        'T3': 'T4',
-        'T4': 'T5',
-        'T5': 'T6',
-        'T6': null
-    };
-
-    return tierMap[current] || null;
+export function getTierShiftCost(currentTier: number): number {
+    return Math.floor(1000 * Math.pow(currentTier, 1.5));
 }
 
 /**
- * Check if an item is eligible for Tier-Shifting.
- * Rule: must be refinement level 5 and not at T6.
+ * Validates if the result of a shift matches the target tier.
  */
-export function isEligibleForTierShift(item: EquipmentItem): boolean {
-    if (!item) return false;
-    if (item.refinement !== 5) return false;
-    return getNextTier(item.tier) !== null;
+export function validateShiftResult(targetTier: number, resultItem: EquipmentItem): boolean {
+    return resultItem.tier === targetTier;
 }
 
 /**
- * Calculate the cost for Tier-Shifting based on the current tier.
- * MVP: Static cost model with a simple tier-based multiplier.
+ * Resolves the upgraded version of an item based on its current tier.
  */
-export function getTierShiftCost(current: GearTier) {
-    const baseShards = 200;
-    const baseIchor = 3;
-    const baseSteel = 25;
-
-    const tierValue = parseInt(current.replace('T', ''), 10);
-    const mult = tierValue; // T1: 1x, T2: 2x, T3: 3x, etc.
-
-    return {
-        shards: Math.floor(baseShards * mult),
-        stabilizedIchor: Math.floor(baseIchor * mult),
-        steel: Math.floor(baseSteel * mult)
-    };
-}
-
-/**
- * Resolve the template for the next gear tier based on the current item.
- * This ensures the shift process pulls exact baseline stats rather than scaling.
- */
-export function resolveNextTierItem(
-    item: EquipmentItem,
-    allEquipment: EquipmentItem[]
-): EquipmentItem | null {
-    const nextTier = getNextTier(item.tier);
-    if (!nextTier) return null;
-
-    // Find equivalent item in next tier by matching slot, style, subStyle, and tier
-    return allEquipment.find(template => 
-        template.slot === item.slot &&
-        template.tier === nextTier &&
-        // Weapons match by combat style AND sub-style (e.g. Melee-Stab)
-        (template.slot === 'weapon' ? 
-            (template.style === item.style && template.subStyle === item.subStyle) : 
-            // Armor matches by style (Melee, Archery, Sorcery)
-            (template.style === item.style)
-        )
-    ) || null;
-}
-
-/**
- * Validate the result of a Tier-Shift operation.
- */
-export function validateShiftResult(oldItem: EquipmentItem, newItem: EquipmentItem): boolean {
-    if (!oldItem || !newItem) return false;
-    if (newItem.tier === oldItem.tier) return false;
-    if (newItem.refinement !== 0) return false;
-    
-    const expectedTier = getNextTier(oldItem.tier);
-    return newItem.tier === expectedTier;
+export function resolveNextTierItem(item: EquipmentItem, allItems: EquipmentItem[]): EquipmentItem | null {
+    const nextTier = item.tier + 1;
+    // Simple lookup: same name/archetype but next tier
+    return allItems.find(i => i.name === item.name && i.tier === nextTier) || null;
 }
