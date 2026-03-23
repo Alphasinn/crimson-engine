@@ -7,6 +7,14 @@ import iconGraveSteel from '../../assets/icons/grave_steel.png';
 import iconCursedIchor from '../../assets/icons/cursed_ichor.png';
 import iconStabilizedIchor from '../../assets/icons/stabilized_ichor.png';
 import styles from './CruciblePanel.module.scss';
+import { 
+    isEligibleForTierShift, getTierShiftCost, resolveNextTierItem
+} from '../../engine/progression';
+import type { SpecializationPath, EquipmentSlot, EquipmentItem } from '../../engine/types';
+import WEAPONS from '../../data/weapons';
+import ARMOR from '../../data/armor';
+
+const ITEM_DATABASE = [...WEAPONS, ...ARMOR];
 
 export const CruciblePanel: React.FC = () => {
     const { 
@@ -27,7 +35,7 @@ export const CruciblePanel: React.FC = () => {
         refineGear(slot);
     };
 
-    const handleTierShift = (slot: any, path: 'sanguine' | 'vile') => {
+    const handleTierShift = (slot: EquipmentSlot, path: SpecializationPath) => {
         if (crucibleSealed) return;
         if (isRunning) fleeFromCombat();
         tierShift(slot, path);
@@ -36,10 +44,11 @@ export const CruciblePanel: React.FC = () => {
     const handleStabilize = () => {
         if (crucibleSealed) return;
         if (isRunning) fleeFromCombat();
-        stabilizeIchor();
+        doStabilizeIchor();
     };
 
-    const shiftableItems = Object.entries(equipment).filter(([_, item]) => (item.refinement ?? 0) >= 5 && item.tier === 'T1');
+    const shiftableEntries = (Object.entries(equipment) as [EquipmentSlot, EquipmentItem][])
+        .filter(([_, item]) => isEligibleForTierShift(item));
 
     return (
         <div className={`${styles.root} ${crucibleSealed ? styles.sealed : ''}`}>
@@ -107,7 +116,7 @@ export const CruciblePanel: React.FC = () => {
                                     <span className={styles.itemName}>Sanguine Finesse</span>
                                 </div>
                                 <div className={styles.yieldInfo} style={{ marginTop: '2px', marginBottom: '2px' }}>
-                                    <small>Gain 200 ticks of Finesse</small>
+                                    <small>+5% Accuracy & 2x Lifesteal (Low HP) for 20s</small>
                                 </div>
                                 <div className={styles.costArea}>
                                     <span className={`${styles.costItem} ${bloodShards >= 15 ? styles.affordable : styles.unaffordable}`}>
@@ -184,48 +193,88 @@ export const CruciblePanel: React.FC = () => {
                 {/* Tier-Shift Section */}
                 <div className={styles.section}>
                     <h4 className={styles.sectionTitle}>Altar of Flesh (Tier-Shift)</h4>
-                    {shiftableItems.length === 0 ? (
-                        <p className={styles.hint}>No +5 T1 gear equipped</p>
+                    {shiftableEntries.length === 0 ? (
+                        <p className={styles.hint}>No +5 gear ready for shifting</p>
                     ) : (
                         <div className={styles.gearList}>
-                            {shiftableItems.map(([slot, item]) => {
-                                const canAffordShift = bloodShards >= 200 && stabilizedIchor >= 3 && graveSteel >= 25;
+                            {shiftableEntries.map(([slot, item]) => {
+                                const nextItem = resolveNextTierItem(item, ITEM_DATABASE);
+                                const cost = getTierShiftCost(item.tier);
+                                const canAffordShift = 
+                                    bloodShards >= cost.shards && 
+                                    stabilizedIchor >= cost.stabilizedIchor && 
+                                    graveSteel >= cost.steel;
                                 const isReadyShift = canAffordShift && !crucibleSealed && !isRunning;
+
+                                if (!nextItem) return null;
+
                                 return (
                                 <div key={slot} className={styles.shiftItem}>
-                                    <div>
+                                    <div className={styles.shiftPreview}>
                                         <div className={styles.gearInfo}>
                                             <span className={styles.itemName}>{item.name}</span>
-                                            <span className={styles.pathMarker}>Ready to Shift</span>
+                                            <span className={styles.pathMarker}>➔ {nextItem.name} ({nextItem.tier})</span>
+                                        </div>
+                                        <div className={styles.statDiff}>
+                                            {nextItem.accuracyBonus !== item.accuracyBonus && (
+                                                <small>Acc: +{ (nextItem.accuracyBonus || 0) - (item.accuracyBonus || 0) }</small>
+                                            )}
+                                            {nextItem.powerModifier !== item.powerModifier && (
+                                                <small>Pow: +{ (nextItem.powerModifier || 0) - (item.powerModifier || 0) }</small>
+                                            )}
+                                            {nextItem.drPercent !== item.drPercent && (
+                                                <small>DR: +{ Math.round(((nextItem.drPercent || 0) - (item.drPercent || 0)) * 100) }%</small>
+                                            )}
                                         </div>
                                         <div className={styles.costArea}>
-                                            <span className={`${styles.costItem} ${bloodShards >= 200 ? styles.affordable : styles.unaffordable}`}>
-                                                <img src={iconBloodShard} alt="Shards" className={styles.costIcon} /> 200
+                                            <span className={`${styles.costItem} ${bloodShards >= cost.shards ? styles.affordable : styles.unaffordable}`}>
+                                                <img src={iconBloodShard} alt="Shards" className={styles.costIcon} /> {cost.shards}
                                             </span>
-                                            <span className={`${styles.costItem} ${stabilizedIchor >= 3 ? styles.affordable : styles.unaffordable}`}>
-                                                <img src={iconStabilizedIchor} alt="S. Ichor" className={styles.costIcon} /> 3
+                                            <span className={`${styles.costItem} ${stabilizedIchor >= cost.stabilizedIchor ? styles.affordable : styles.unaffordable}`}>
+                                                <img src={iconStabilizedIchor} alt="S. Ichor" className={styles.costIcon} /> {cost.stabilizedIchor}
                                             </span>
-                                            <span className={`${styles.costItem} ${graveSteel >= 25 ? styles.affordable : styles.unaffordable}`}>
-                                                <img src={iconGraveSteel} alt="Steel" className={styles.costIcon} /> 25
+                                            <span className={`${styles.costItem} ${graveSteel >= cost.steel ? styles.affordable : styles.unaffordable}`}>
+                                                <img src={iconGraveSteel} alt="Steel" className={styles.costIcon} /> {cost.steel}
                                             </span>
                                         </div>
                                     </div>
-                                    <div className={styles.shiftActions}>
-                                        <button 
-                                            className={`${styles.sanguineBtn} ${isReadyShift ? styles.readyGreen : ''}`}
-                                            onClick={() => handleTierShift(slot, 'sanguine')}
-                                            disabled={crucibleSealed || !isReadyShift}
-                                        >
-                                            Sanguine
-                                        </button>
-                                        <button 
-                                            className={`${styles.vileBtn} ${isReadyShift ? styles.readyGreen : ''}`}
-                                            onClick={() => handleTierShift(slot, 'vile')}
-                                            disabled={crucibleSealed || !isReadyShift}
-                                        >
-                                            Vile
-                                        </button>
-                                    </div>
+
+                                    {/* Path Selection for T1 -> T2 (or any initial branch) */}
+                                    {(!item.specPath) && (
+                                        <div className={styles.pathChoiceArea}>
+                                            <p className={styles.pathIdentity}>Choose your focus:</p>
+                                            <div className={styles.shiftActions}>
+                                                <button 
+                                                    className={`${styles.sanguineBtn} ${isReadyShift ? styles.readyGreen : ''}`}
+                                                    onClick={() => handleTierShift(slot, 'sanguine')}
+                                                    disabled={!isReadyShift}
+                                                    title="Focus: Speed & Lifesteal"
+                                                >
+                                                    Sanguine Path
+                                                </button>
+                                                <button 
+                                                    className={`${styles.vileBtn} ${isReadyShift ? styles.readyGreen : ''}`}
+                                                    onClick={() => handleTierShift(slot, 'vile')}
+                                                    disabled={!isReadyShift}
+                                                    title="Focus: Armor & Mitigation"
+                                                >
+                                                    Vile Path
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {item.specPath && (
+                                        <div className={styles.pathFinalized}>
+                                            <button 
+                                                className={`${styles.refineBtn} ${isReadyShift ? styles.readyGreen : ''}`}
+                                                onClick={() => handleTierShift(slot, item.specPath!)}
+                                                disabled={!isReadyShift}
+                                            >
+                                                Shift to {nextItem.tier} ({item.specPath})
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )})}
                         </div>
@@ -237,7 +286,7 @@ export const CruciblePanel: React.FC = () => {
                 <div className={styles.sealOverlay}>
                     <div className={styles.sealMessage}>
                         <span>Crucible is Sealed</span>
-                        <small>Survive a full Hunt (50+ ticks) to reset</small>
+                        <small>Survive a full Hunt (5 seconds) to reset</small>
                     </div>
                 </div>
             )}

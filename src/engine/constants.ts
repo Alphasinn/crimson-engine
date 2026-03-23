@@ -106,10 +106,10 @@ export const SIPHON_COST_EXPONENT = 1.7;
 
 /** Ticks between each accuracy increment (4s @ 100ms ticks) */
 export const SCENT_BUILD_INTERVAL = 40;
-/** Accuracy bonus gained per interval */
-export const SCENT_INCREMENT = 0.01;
-/** Maximum accuracy bonus enemy can gain from scent */
-export const SCENT_ACCURACY_CAP = 0.20;
+/** Accuracy bonus gained per interval (2% per 4s base) */
+export const SCENT_INCREMENT = 0.03;      // Base gain per 4s
+/** Maximum accuracy bonus enemy can gain from scent (100%) */
+export const SCENT_ACCURACY_CAP = 1.00;
 
 /** HP threshold (<30%) to trigger Red Mist bonuses */
 export const RED_MIST_THRESHOLD = 0.30;

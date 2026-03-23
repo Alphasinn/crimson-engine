@@ -12,7 +12,7 @@ interface Props {
 }
 
 export const SessionSummaryModal: React.FC<Props> = ({ active, onClose }) => {
-    const { lastSession, sessionStats, clearLastSession } = useCombatStore();
+    const { lastSession, sessionStats, clearLastSession, huntEvaluation } = useCombatStore();
     const { lootHistory, claimAllLoot } = usePlayerStore();
 
     const data = active ? sessionStats : lastSession;
@@ -109,6 +109,30 @@ export const SessionSummaryModal: React.FC<Props> = ({ active, onClose }) => {
                         </>
                     )}
                 </div>
+
+                {huntEvaluation && (
+                    <div className={styles.evaluationArea}>
+                        <div className={styles.evaluationHeader}>
+                            <span>Sanctum Evaluation</span>
+                            <span className={huntEvaluation.isValid ? styles.evalValid : styles.evalInvalid}>
+                                {huntEvaluation.isValid ? 'CRUCIBLE UNSEALED' : 'CRUCIBLE SEALED'}
+                            </span>
+                        </div>
+                        <div className={styles.qualityRow}>
+                            <div className={styles.qualityTrack}>
+                                <div 
+                                    className={styles.qualityFill} 
+                                    style={{ 
+                                        width: `${huntEvaluation.quality * 100}%`,
+                                        background: huntEvaluation.isValid ? '#22c55e' : '#6b7280'
+                                    }}
+                                />
+                            </div>
+                            <span className={styles.qualityPct}>{Math.round(huntEvaluation.quality * 100)}% Quality</span>
+                        </div>
+                        <div className={styles.evalReason}>{huntEvaluation.reason}</div>
+                    </div>
+                )}
 
                 <div className={styles.lootSection}>
                     <div className={styles.lootHeader}>Items Found ({data.lootCount})</div>

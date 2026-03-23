@@ -6,11 +6,21 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useCombatStore } from './combatStore';
-import type { PlayerSkills, PlayerEquipment, EquipmentItem, CombatStyle, InventoryItem, SkillName, TrainingMode, LootHistoryItem, UpgradeId } from '../engine/types';
+import type { PlayerSkills, PlayerEquipment, EquipmentItem, CombatStyle, InventoryItem, SkillName, TrainingMode, LootHistoryItem, UpgradeId, RitualDefinition } from '../engine/types';
 import { getLevelFromXp, getXpForLevel } from '../engine/xpTable';
 import {
     STARTING_VITAE_LEVEL,
 } from '../engine/constants';
+import { 
+    isEligibleForTierShift, 
+    getTierShiftCost, 
+    validateShiftResult,
+    resolveNextTierItem
+} from '../engine/progression';
+import WEAPONS from '../data/weapons';
+import ARMOR from '../data/armor';
+
+const ITEM_DATABASE = [...WEAPONS, ...ARMOR];
 
 const STARTER_FOOD: InventoryItem[] = [
     { id: 'blood_orange', name: 'Blood Orange', quantity: 25, type: 'food', healAmount: 12 },
@@ -55,6 +65,16 @@ interface PlayerState {
     redMistIchorDrops: number;
     redMistDeaths: number;
     crucibleSealed: boolean;
+    // Phase 4: Rituals & Resonance
+    activeRituals: RitualDefinition[];
+    nextHuntModifiers: {
+        scentGainMultiplier: number;
+        lootQualityMultiplier: number;
+        maxHpMultiplier: number;
+        lifestealBonus: number;
+        speedMultiplier: number;
+        armorBonus: number;
+    };
     // Actions
     gainXp: (skill: SkillName, amount: number) => void;
     equipItem: (item: EquipmentItem) => void;
@@ -87,6 +107,11 @@ interface PlayerState {
     // Phase 2B Crucible
     refineGear: (slot: keyof PlayerEquipment) => void;
     resetCrucibleSeal: () => void;
+    // Phase 4 Actions
+    addRitual: (ritual: RitualDefinition) => void;
+    removeRitual: (id: string) => void;
+    clearRituals: () => void;
+    computeNextHuntModifiers: () => void;
     resetPlayer: () => void;
 }
 
@@ -118,6 +143,15 @@ export const usePlayerStore = create<PlayerState>()(
             redMistIchorDrops: 0,
             redMistDeaths: 0,
             crucibleSealed: false,
+            activeRituals: [],
+            nextHuntModifiers: {
+                scentGainMultiplier: 1,
+                lootQualityMultiplier: 1,
+                maxHpMultiplier: 1,
+                lifestealBonus: 0,
+                speedMultiplier: 1,
+                armorBonus: 0
+            },
 
             gainXp: (skill: SkillName, amount: number) => {
                 set((state) => {
@@ -394,25 +428,41 @@ export const usePlayerStore = create<PlayerState>()(
             tierShift: (slot, path) => set((state) => {
                 if (state.crucibleSealed) return state;
                 const item = state.equipment[slot];
-                if (!item || (item.refinement ?? 0) < 5) return state;
+                if (!item) return state;
 
-                if (state.bloodShards >= 200 && state.stabilizedIchor >= 3 && state.graveSteel >= 25) {
-                    const newItem: EquipmentItem = {
-                        ...item,
-                        tier: 'T2',
-                        refinement: 0,
-                        specPath: path
-                    };
+                // 1. Check Eligibility (Refinement 5, not terminal tier)
+                if (!isEligibleForTierShift(item)) return state;
 
-                    return {
-                        bloodShards: state.bloodShards - 200,
-                        stabilizedIchor: state.stabilizedIchor - 3,
-                        graveSteel: state.graveSteel - 25,
-                        equipment: { ...state.equipment, [slot]: newItem },
-                        crucibleSealed: true
-                    };
+                // 2. Resource Check
+                const cost = getTierShiftCost(item.tier);
+                if (
+                    state.bloodShards < cost.shards || 
+                    state.stabilizedIchor < cost.stabilizedIchor || 
+                    state.graveSteel < cost.steel
+                ) {
+                    return state;
                 }
-                return state;
+
+                // 3. Execution (Pulling base stats for next tier)
+                const nextTierItem = resolveNextTierItem(item, ITEM_DATABASE);
+                if (!nextTierItem) return state;
+
+                const newItem: EquipmentItem = {
+                    ...nextTierItem,
+                    refinement: 0,
+                    specPath: path || item.specPath // Preserve if already set
+                };
+
+                // 4. Final Validation
+                if (!validateShiftResult(item, newItem)) return state;
+
+                return {
+                    bloodShards: state.bloodShards - cost.shards,
+                    stabilizedIchor: state.stabilizedIchor - cost.stabilizedIchor,
+                    graveSteel: state.graveSteel - cost.steel,
+                    equipment: { ...state.equipment, [slot]: newItem },
+                    crucibleSealed: true
+                };
             }),
 
             refineGear: (slot) => set((state) => {
@@ -441,6 +491,52 @@ export const usePlayerStore = create<PlayerState>()(
 
             resetCrucibleSeal: () => set({ crucibleSealed: false }),
 
+            // Phase 4 Implementation
+            addRitual: (ritual) => {
+                set((state) => {
+                    const alreadyHas = state.activeRituals.find(r => r.id === ritual.id);
+                    if (alreadyHas) return state;
+                    return { activeRituals: [...state.activeRituals, ritual] };
+                });
+                get().computeNextHuntModifiers();
+            },
+
+            removeRitual: (id) => {
+                set((state) => ({
+                    activeRituals: state.activeRituals.filter(r => r.id !== id)
+                }));
+                get().computeNextHuntModifiers();
+            },
+
+            clearRituals: () => {
+                set({ activeRituals: [] });
+                get().computeNextHuntModifiers();
+            },
+
+            computeNextHuntModifiers: () => {
+                set((state) => {
+                    const mods = {
+                        scentGainMultiplier: 1,
+                        lootQualityMultiplier: 1,
+                        maxHpMultiplier: 1,
+                        lifestealBonus: 0,
+                        speedMultiplier: 1,
+                        armorBonus: 0
+                    };
+
+                    state.activeRituals.forEach(r => {
+                        mods.scentGainMultiplier *= (r.modifiers.scentGainMultiplier ?? 1);
+                        mods.lootQualityMultiplier *= (r.modifiers.lootQualityMultiplier ?? 1);
+                        mods.maxHpMultiplier *= (r.modifiers.maxHpMultiplier ?? 1);
+                        mods.lifestealBonus += (r.modifiers.lifestealBonus ?? 0);
+                        mods.speedMultiplier *= (r.modifiers.speedMultiplier ?? 1);
+                        mods.armorBonus += (r.modifiers.armorBonus ?? 0);
+                    });
+
+                    return { nextHuntModifiers: mods };
+                });
+            },
+
             resetPlayer: () => set({ 
                 skills: DEFAULT_SKILLS, 
                 equipment: {}, 
@@ -467,15 +563,25 @@ export const usePlayerStore = create<PlayerState>()(
         }),
         {
             name: 'crimson-engine-player',
-            version: 4,
+            version: 5,
             migrate: (persistedState: any, version: number) => {
                 if (version < 4) {
-                    // Ensure player has starter food if they have none
                     if (!persistedState.food || persistedState.food.length === 0) {
                         persistedState.food = STARTER_FOOD;
                     }
                     persistedState.autoEatThreshold = 0.5;
                     persistedState.autoEatEnabled = false;
+                }
+                if (version < 5) {
+                    persistedState.activeRituals = [];
+                    persistedState.nextHuntModifiers = {
+                        scentGainMultiplier: 1,
+                        lootQualityMultiplier: 1,
+                        maxHpMultiplier: 1,
+                        lifestealBonus: 0,
+                        speedMultiplier: 1,
+                        armorBonus: 0
+                    };
                 }
                 return persistedState;
             }

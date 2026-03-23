@@ -78,14 +78,24 @@ export function CombatView() {
         enemyHp, enemyMaxHp,
         enemyMeter, playerMeter,
         activeEvent, isBossPending, scentIntensity,
-        lastEnemyCritStamp, viewMode, setViewMode
+        lastEnemyCritStamp, viewMode, setViewMode,
+        currentTick,
+        isDashReady, flickerTicks, ironboundTicks, isIronbound, activeRituals,
+        dashCooldownTicks
     } = useCombatStore();
     const { 
         trainingMode, setTrainingMode, equipment, 
         autoEatEnabled, autoEatThreshold, toggleAutoEat,
         unlockedUpgrades, currentVitae, skills,
         setAutoEatThreshold,
+        crucibleSealed, resetCrucibleSeal
     } = usePlayerStore();
+    const { 
+        playerHp, 
+        playerMaxHp, 
+        condensationCount, 
+        condenseScent 
+    } = useCombatStore();
     const { startCombatWithEnemy, fleeFromCombat } = useCombatEngine();
 
     const derived = useMemo(
@@ -162,6 +172,17 @@ export function CombatView() {
     // Stats modals
     const [showGains, setShowGains] = useState(false);
     const [showHuntingGains, setShowHuntingGains] = useState(false);
+    const [unsealToast, setUnsealToast] = useState(false);
+
+    // Phase 3: Unseal Detection
+    // Trigger reset mid-hunt if threshold hit
+    useEffect(() => {
+        if (isRunning && crucibleSealed && currentTick >= 50) {
+            resetCrucibleSeal();
+            setUnsealToast(true);
+            setTimeout(() => setUnsealToast(false), 4000);
+        }
+    }, [isRunning, crucibleSealed, currentTick, resetCrucibleSeal]);
 
 
     const handleZoneClick = useCallback((z: Zone) => {
@@ -219,6 +240,19 @@ export function CombatView() {
                 ))}
             </div>
 
+            {/* Style selector - Relocated to sidebar for better tactical access */}
+            <div className={styles.miniStyleRow}>
+                {modeOptions.map(({ mode, label }) => (
+                    <button
+                        key={mode}
+                        className={`${styles.miniStyleBtn} ${trainingMode === mode ? styles.active : ''}`}
+                        onClick={() => setTrainingMode(mode)}
+                    >
+                        {label}
+                    </button>
+                ))}
+            </div>
+
             <div className={`${styles.autoEatControl} ${!unlockedUpgrades.includes('auto_eat') ? styles.locked : ''}`}>
                 <div className={styles.autoEatToggleRow}>
                     <label className={styles.toggleLabel}>
@@ -251,14 +285,40 @@ export function CombatView() {
             <div className={styles.miniScentArea}>
                 <div className={styles.miniScentLabel}>
                     <span className={styles.miniScentTitle}>Scent of Fear</span>
+                    {condensationCount > 0 && (
+                        <span className={styles.miniScentPenalty} title={`Scent accumulates ${condensationCount * 10}% faster`}>
+                            +{condensationCount * 10}%
+                        </span>
+                    )}
                     {isBossPending && <span className={styles.miniScentBossWarning}>BOSS!</span>}
                     <span className={styles.miniScentValue}>{Math.floor(scentIntensity * 100)}%</span>
                 </div>
                 <div className={styles.miniScentTrack}>
                     <div 
                         className={styles.miniScentFill} 
-                        style={{ width: `${Math.min(100, (scentIntensity / 0.20) * 100)}%` }}
+                        style={{ width: `${Math.min(100, scentIntensity * 100)}%` }}
                     />
+                    {/* Milestones */}
+                    <div className={`${styles.scentMarker} ${styles.markerBoss}`} title="Boss Threshold (20%)" style={{ left: '20%' }} />
+                    <div className={`${styles.scentMarker} ${styles.markerCondense}`} title="Condensation Threshold (80%)" style={{ left: '80%' }} />
+                </div>
+
+                {/* Scent Condensation (Sprint 3) */}
+                <div className={styles.condenseUnit}>
+                    <button 
+                        className={styles.condenseBtn}
+                        onClick={condenseScent}
+                        disabled={scentIntensity < 0.8}
+                        title={scentIntensity < 0.8 ? "Scent must be at least 80% to condense" : "Reduce Scent at the cost of Vitae"}
+                    >
+                        {scentIntensity >= 0.8 ? 'CONDENSE SCENT' : 'LOW PRESSURE'}
+                    </button>
+                    {scentIntensity >= 0.8 && (
+                        <div className={styles.condenseCost}>
+                             Cost: <span className={styles.costValue}>{Math.round(Math.max(playerHp * 0.4, playerMaxHp * 0.15))}</span> Vitae
+                             {condensationCount > 0 && <span className={styles.penaltyText}> (+{condensationCount * 10}% Decay)</span>}
+                        </div>
+                    )}
                 </div>
 
                 {activeEvent && (
@@ -272,6 +332,29 @@ export function CombatView() {
                         </div>
                     </div>
                 )}
+
+                {/* Phase 3: Crucible State Feedback */}
+                <div className={styles.crucibleStatusArea}>
+                    <div className={`${styles.statusLabel} ${!crucibleSealed ? styles.unsealed : ''}`}>
+                        <span>Sanctum Crucible</span>
+                        <span>{crucibleSealed ? 'SEALED' : 'UNSEALED'}</span>
+                    </div>
+                    
+                    {crucibleSealed && isRunning && (
+                        <div className={styles.unsealProgress}>
+                            <div className={styles.statusLabel}>
+                                <span>Survival Progress</span>
+                                <span>{Math.min(50, currentTick)} / 50</span>
+                            </div>
+                            <div className={styles.unsealTrack}>
+                                <div 
+                                    className={styles.unsealFill} 
+                                    style={{ width: `${Math.min(100, (currentTick / 50) * 100)}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Return to Arena Button (Mobile/Home context) */}
@@ -425,6 +508,54 @@ export function CombatView() {
                                             {/* Attack meter */}
                                             <AttackMeter value={playerMeter} label="" color="#c41e3a" />
 
+                                            {/* Phase 4: Resonance & Rituals HUD */}
+                                            <div className={styles.statusAura}>
+                                                {/* Dash / Flicker Status */}
+                                                <div 
+                                                    className={`${styles.statusBadge} ${isDashReady ? styles.dashReady : styles.dashCooldown} ${flickerTicks > 0 ? styles.flickerActive : ''}`}
+                                                    title={flickerTicks > 0 ? `Flicker active for ${(flickerTicks * 20 / 1000).toFixed(1)}s` : (isDashReady ? 'Next hit will be negated' : `Recharging: ${(dashCooldownTicks * 20 / 1000).toFixed(1)}s`)}
+                                                >
+                                                    <span className={styles.statusIcon}>{isDashReady ? '💨' : '⌛'}</span>
+                                                    <span className={styles.statusText}>
+                                                        {flickerTicks > 0 ? 'FLICKER' : (isDashReady ? 'DASH READY' : 'RECHARGING')}
+                                                    </span>
+                                                </div>
+
+                                                {/* Ironbound Status */}
+                                                {isIronbound && (
+                                                    <div className={`${styles.statusBadge} ${styles.ironbound}`} title={`Stagger Immunity: ${(ironboundTicks * 20 / 1000).toFixed(1)}s`}>
+                                                        <span className={styles.statusIcon}>🛡️</span>
+                                                        <span className={styles.statusText}>IRONBOUND</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Armor Indicator (Visible when boosted by rituals/resonance) */}
+                                                {derived.flatArmor > 0 && (
+                                                    <div className={`${styles.statusBadge} ${styles.armorStatus}`} title={`Flat Armor: ${derived.flatArmor} reduction per hit`}>
+                                                        <span className={styles.statusIcon}>🛡️</span>
+                                                        <span className={styles.statusText}>{derived.flatArmor}</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Active Rituals */}
+                                                <div className={styles.ritualBadges}>
+                                                    {activeRituals.map(ritualId => {
+                                                        const isFrenzy = ritualId === 'ritual_frenzy';
+                                                        const isBrace = ritualId === 'ritual_brace';
+                                                        
+                                                        const name = isFrenzy ? 'Ritual of Frenzy' : isBrace ? 'Ritual of Bracing' : 'Blood Siphon Ritual';
+                                                        const desc = isFrenzy ? '+50% Scent, +20% Loot' : isBrace ? '+15 Armor, -20% Speed' : '-25% Max HP, +5% Lifesteal';
+                                                        const emoji = isFrenzy ? '🔥' : isBrace ? '🛡️' : '💉';
+
+                                                        return (
+                                                            <div key={ritualId} className={styles.ritualBadge} title={`${name}: ${desc}`}>
+                                                                {emoji}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+
                                             {/* Combat stats: Hit% and Max Hit */}
                                             <div className={styles.arenaStatGrid}>
                                                 <div className={styles.arenaStatBox}>
@@ -441,22 +572,16 @@ export function CombatView() {
                                                     <span className={styles.arenaStatLabel}>Max Hit</span>
                                                     <span className={styles.arenaStatValue}>{playerMaxHitDisplay}</span>
                                                 </div>
+                                                <div className={styles.arenaStatBox} title="Total Refinement Level across all equipment">
+                                                    <span className={styles.arenaStatLabel}>Refined</span>
+                                                    <span className={`${styles.arenaStatValue} ${styles.refinementText}`}>
+                                                        +{Object.values(equipment).reduce((sum, item) => sum + (item?.refinement ?? 0), 0)}
+                                                    </span>
+                                                </div>
                                             </div>
 
-                                            {/* Style selector */}
-                                            <div className={styles.miniStyleRow}>
-                                                {modeOptions.map(({ mode, label }) => (
-                                                    <button
-                                                        key={mode}
-                                                        className={`${styles.miniStyleBtn} ${trainingMode === mode ? styles.active : ''}`}
-                                                        onClick={() => setTrainingMode(mode)}
-                                                    >
-                                                        {label}
-                                                    </button>
-                                                ))}
                                             </div>
                                         </div>
-                                    </div>
 
                                     <div className={`${styles.enemyCard} ${activeEnemy.isElite ? styles.eliteCard : ''} ${isCritFlashing ? styles.enemyCardCrit : ''}`} style={{ position: 'relative' }}>
                                         <div className={styles.enemySplatOverlay} style={{ top: '40%', left: '50%' }}>
@@ -551,6 +676,13 @@ export function CombatView() {
                     active={isRunning} 
                     onClose={() => setShowHuntingGains(false)} 
                 />
+            )}
+
+            {unsealToast && (
+                <div className={styles.unsealToast}>
+                    <div className={styles.toastTitle}>Crucible Unsealed</div>
+                    <div className={styles.toastBody}>The Sanctum responds to your survival</div>
+                </div>
             )}
         </div>
     );

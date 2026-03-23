@@ -34,6 +34,7 @@ export type TrainingMode =
     // Vitae is always passive (×1.33) regardless of mode
 
 export type GearTier = 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | 'T6';
+export type SpecializationPath = 'sanguine' | 'vile';
 
 export type EquipmentSlot =
     | 'weapon'
@@ -94,7 +95,7 @@ export interface EquipmentItem {
     specialTraitValue?: number;
     // Phase 2B Progression
     refinement: number;           // 0-5
-    specPath?: 'sanguine' | 'vile';
+    specPath?: SpecializationPath;
 }
 
 export type PlayerEquipment = Partial<Record<EquipmentSlot, EquipmentItem>>;
@@ -208,6 +209,15 @@ export interface ActiveCombat {
     activeEvent?: string; // e.g. 'Bloodlust', 'Hemophilic Curse'
     isBossPending?: boolean;
     hasSpawnedBoss?: boolean;
+
+    // Phase 4: Resonance & Rituals
+    isDashReady?: boolean;
+    dashCooldownTicks?: number;
+    flickerTicks?: number;
+    isIronbound?: boolean;
+    ironboundTicks?: number;
+    activeRituals?: string[]; // IDs of rituals
+    condensationCount: number;
 }
 
 // --- Derived Player Stats (computed each frame, not stored) ---
@@ -234,6 +244,8 @@ export interface DerivedStats {
     // Phase 2C: Scent refinement
     critChance: number;      // 0.0 to 1.0
     critMultiplier: number;  // Multiplier, e.g. 1.5
+    // Phase 4: Resonance
+    resonance: ResonanceState;
 }
 
 // --- Stats Tracking ---
@@ -273,6 +285,20 @@ export interface SessionStats {
     wasSlain?: boolean;
     lastScentIntensity?: number;
     bossesSlain: number;
+    // Phase 4 metrics
+    flickerTriggers?: number;
+    ironboundTriggers?: number;
+    condensationUses?: number;
+    activeRitualIds?: string[];
+    peakScent?: number;
+    timeAbove60Scent?: number; // In ticks
+    timeAbove80Scent?: number; // In ticks
+}
+
+export interface HuntEvaluation {
+    isValid: boolean;
+    quality: number; // 0.0 to 1.0
+    reason: string;
 }
 
 // --- Inventory Item (stub for future expansion) ---
@@ -282,4 +308,32 @@ export interface InventoryItem {
     quantity: number;
     type: 'food' | 'material' | 'equipment' | 'misc';
     healAmount?: number; // For food items
+}
+
+// =============================================================================
+// PHASE 4: EVOLUTION SYSTEMS
+// =============================================================================
+
+export interface RitualDefinition {
+    id: string;
+    name: string;
+    description: string;
+    modifiers: {
+        scentGainMultiplier?: number;
+        lootQualityMultiplier?: number;
+        maxHpMultiplier?: number;
+        lifestealBonus?: number;
+        speedMultiplier?: number;
+        armorBonus?: number;
+    };
+}
+
+export interface ResonanceState {
+    activePath: 'sanguine' | 'vile' | null;
+    isActive: boolean;
+    bonuses: {
+        dashDistanceMultiplier?: number;
+        dashCooldownReduction?: number;
+        blockCounterWindow?: number;
+    };
 }

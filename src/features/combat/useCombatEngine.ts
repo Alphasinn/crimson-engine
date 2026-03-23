@@ -10,7 +10,7 @@ import type { Zone, Enemy, InventoryItem } from '../../engine/types';
 import { usePlayerStore } from '../../store/playerStore';
 import { useCombatStore } from '../../store/combatStore';
 import { useNotificationStore } from '../../store/notificationStore';
-import { computeDerivedStats } from '../../engine/formulas';
+import { computeDerivedStats, calculatePathResonance } from '../../engine/formulas';
 import { getEnemiesForZone } from '../../data/enemies';
 
 const sharedEngine = new CombatEngine({
@@ -160,7 +160,14 @@ export function useCombatEngine() {
             });
 
             // 4. End session and return Home
-            endSession(true, sharedEngine.tickCount, sharedEngine.redMistSurvived, sharedEngine.scentIntensity); // wasSlain = true
+            endSession(true, sharedEngine.tickCount, sharedEngine.redMistSurvived, sharedEngine.scentIntensity, {
+                flickerTriggers: (sharedEngine as any).flickerTriggers,
+                ironboundTriggers: (sharedEngine as any).ironboundTriggers,
+                condensationUses: (sharedEngine as any).condensationCount,
+                peakScent: (sharedEngine as any).peakScent,
+                timeAbove60Scent: (sharedEngine as any).timeAbove60Scent,
+                timeAbove80Scent: (sharedEngine as any).timeAbove80Scent
+            }); 
             sharedEngine.stop();
             setRunning(false);
             setEnemy(null);
@@ -181,11 +188,24 @@ export function useCombatEngine() {
                 if (activeCombat.finesseTicksRemaining !== undefined) {
                     setFinesseTicks(activeCombat.finesseTicksRemaining);
                 }
-                // Phase 2C: Update the store's knowledge of events and boss status
+                // Phase 2C to Phase 4: Update the store's knowledge of events and boss status
                 useCombatStore.getState().updateCombatState({
                     scentIntensity: activeCombat.scentIntensity,
                     activeEvent: activeCombat.activeEvent,
-                    isBossPending: activeCombat.isBossPending
+                    isBossPending: activeCombat.isBossPending,
+                    isDashReady: activeCombat.isDashReady,
+                    dashCooldownTicks: activeCombat.dashCooldownTicks,
+                    flickerTicks: activeCombat.flickerTicks,
+                    isIronbound: activeCombat.isIronbound,
+                    ironboundTicks: activeCombat.ironboundTicks,
+                    activeRituals: activeCombat.activeRituals,
+                    condensationCount: activeCombat.condensationCount,
+                    // Phase 4 S4 Metrics
+                    flickerTriggers: activeCombat.flickerTriggers,
+                    ironboundTriggers: activeCombat.ironboundTriggers,
+                    peakScent: activeCombat.peakScent,
+                    timeAbove60Scent: activeCombat.timeAbove60Scent,
+                    timeAbove80Scent: activeCombat.timeAbove80Scent
                 });
             }
 
@@ -225,10 +245,10 @@ export function useCombatEngine() {
                     graveSteelGained: prev.graveSteelGained + steel
                 }));
 
-                // Phase 2A: Pause on rare drops
+                // Phase 2A: No longer pausing on rare drops (Phase 4 Continuous Hunt)
                 if (ichor > 0 || steel > 0) {
-                    sharedEngine.stop();
-                    setRunning(false);
+                    // sharedEngine.stop(); // REMOVED
+                    // setRunning(false); // REMOVED
                 }
                 
                 // Still show notification for major resources
@@ -292,7 +312,15 @@ export function useCombatEngine() {
         setFinesseTicks,
         initPlayer, // Used in onPlayerDeath
         setVitae, // Used in onPlayerDeath, onTick
+        updateCombatState,
     ]);
+
+    // Bridge manual actions to the engine
+    useEffect(() => {
+        useCombatStore.setState({
+            condenseScent: () => sharedEngine.condenseScent()
+        });
+    }, []);
 
     // Every time dependencies change, update the engine's callbacks reference
     useEffect(() => {
@@ -314,13 +342,19 @@ export function useCombatEngine() {
         sharedEngine.setEnemy(firstEnemy);
         setEnemy(firstEnemy);
         
+        const { activeRituals, activeRitualModifiers } = useCombatStore.getState();
+        const resonance = calculatePathResonance(equipment);
+
         sharedEngine.start(
             zone, skills, equipment, food, autoEatEnabled, autoEatThreshold, currentVitae, trainingMode,
-            { isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining }
+            { isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining },
+            activeRitualModifiers,
+            resonance,
+            activeRituals
         );
         startSession();
         setRunning(true);
-    }, [skills, equipment, trainingMode, food, autoEatEnabled, autoEatThreshold, setEnemy, setRunning, resetCombat, initPlayer, setZone, startSession, isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining]);
+    }, [skills, equipment, trainingMode, food, autoEatEnabled, autoEatThreshold, setEnemy, setRunning, resetCombat, initPlayer, setZone, startSession, isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining, currentVitae]);
 
     /** Start combat with a specific player-chosen enemy */
     const startCombatWithEnemy = useCallback((zone: Zone, enemy: Enemy) => {
@@ -332,13 +366,20 @@ export function useCombatEngine() {
         setZone(zone);
         sharedEngine.setEnemy(enemy);
         setEnemy(enemy);
+
+        const { activeRituals, activeRitualModifiers } = useCombatStore.getState();
+        const resonance = calculatePathResonance(equipment);
+
         sharedEngine.start(
             zone, skills, equipment, food, autoEatEnabled, autoEatThreshold, currentVitae, trainingMode,
-            { isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining }
+            { isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining },
+            activeRitualModifiers,
+            resonance,
+            activeRituals
         );
         startSession();
         setRunning(true);
-    }, [skills, equipment, trainingMode, food, autoEatEnabled, autoEatThreshold, setEnemy, setRunning, resetCombat, initPlayer, setZone, startSession, isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining]);
+    }, [skills, equipment, trainingMode, food, autoEatEnabled, autoEatThreshold, setEnemy, setRunning, resetCombat, initPlayer, setZone, startSession, isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining, currentVitae]);
 
     const stopCombat = useCallback(() => {
         sharedEngine.stop();
@@ -362,9 +403,15 @@ export function useCombatEngine() {
     // Keep engine in sync if any relevant state changes mid-session
     useEffect(() => {
         if (sharedEngine.running) {
+            const { activeRituals, activeRitualModifiers } = useCombatStore.getState();
+            const resonance = calculatePathResonance(equipment);
+
             sharedEngine.updatePlayerState(
                 skills, equipment, food, trainingMode, autoEatEnabled, autoEatThreshold,
-                { isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining }
+                { isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining },
+                activeRitualModifiers,
+                resonance,
+                activeRituals
             );
         }
     }, [skills, equipment, food, trainingMode, autoEatEnabled, autoEatThreshold, isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining]);

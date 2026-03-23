@@ -30,7 +30,11 @@ import {
 } from './constants';
 
 const HEAVY_WEAKNESS_MAX_HIT_BONUS = 0.25; 
-import type { CombatStyle, DerivedStats, PlayerEquipment, PlayerSkills, TrainingMode, Weakness } from './types';
+import type { 
+    CombatStyle, DerivedStats, PlayerEquipment, PlayerSkills, 
+    TrainingMode, Weakness, SpecializationPath, EquipmentSlot,
+    ResonanceState
+} from './types';
 
 // =============================================================================
 // ATTACK INTERVAL
@@ -413,6 +417,50 @@ export function calcHitXpGains(
     return gains as Partial<PlayerSkills>;
 }
 
+/**
+ * PHASE 3: SPECIALIZATION PATH HOOKS
+ * Returns directional modifiers based on the chosen path.
+ * These are "SKELETON" values meant for future tuning.
+ */
+export function getSpecializationModifiers(
+    path: SpecializationPath | undefined,
+    _slot: EquipmentSlot,
+    _style: CombatStyle,
+    refinement: number = 0
+): { 
+    speedBonus?: number; 
+    lifestealBonus?: number; 
+    drBonus?: number; 
+    blockBonus?: number;
+    accuracyMult?: number;
+    masterySiphonBonus?: number;
+} {
+    if (!path) return {};
+
+    const isMastery = refinement === 5;
+
+    // SANGUINE: Speed, Finesse, Siphon
+    if (path === 'sanguine') {
+        return {
+            speedBonus: 0.05,     
+            lifestealBonus: 0.02, 
+            accuracyMult: 1.0,
+            masterySiphonBonus: isMastery ? 0.01 : 0 // +1% siphon per master item
+        };
+    }
+
+    // VILE: Armor, Mitigation, Stability
+    if (path === 'vile') {
+        return {
+            drBonus: 0.05,       
+            blockBonus: isMastery ? 0.02 : 0, // Mastery bonus +2% block per item
+            // Future: add flatArmor or brace stability hooks
+        };
+    }
+
+    return {};
+}
+
 
 /**
  * Compute all derived stats in one shot from skills and equipment.
@@ -425,11 +473,33 @@ export function computeDerivedStats(
         permanentArmorBonus: number;
         isFinesseActive: boolean;
         isLowHp: boolean;
+        isFlickerActive: boolean;
     }
 ): DerivedStats {
     const weapon = equipment.weapon;
     // Combat mechanics key off weapon type, not the training mode
     const weaponStyle: CombatStyle = weapon?.style ?? 'melee';
+
+    // --- Phase 3: Specialization Path Hooks ---
+    const specBonuses = {
+        speed: 0,
+        lifesteal: 0,
+        dr: 0,
+        block: 0,
+        siphon: 0,
+        accMult: 1.0
+    };
+
+    Object.entries(equipment).forEach(([slot, item]) => {
+        if (!item || !item.specPath) return;
+        const mods = getSpecializationModifiers(item.specPath, slot as EquipmentSlot, weaponStyle, item.refinement);
+        if (mods.speedBonus) specBonuses.speed += mods.speedBonus;
+        if (mods.lifestealBonus) specBonuses.lifesteal += mods.lifestealBonus;
+        if (mods.drBonus) specBonuses.dr += mods.drBonus;
+        if (mods.blockBonus) specBonuses.block += mods.blockBonus;
+        if (mods.accuracyMult) specBonuses.accMult *= mods.accuracyMult;
+        if (mods.masterySiphonBonus) specBonuses.siphon += mods.masterySiphonBonus;
+    });
 
     // --- Accuracy ---
     const offensiveLevel = weaponStyle === 'melee'
@@ -441,7 +511,7 @@ export function computeDerivedStats(
     const equipAccBonus = Object.values(equipment).reduce(
         (sum, item) => sum + (item?.accuracyBonus ?? 0), 0
     );
-    let accuracyRating = calcAccuracyRating(offensiveLevel, equipAccBonus);
+    let accuracyRating = calcAccuracyRating(offensiveLevel, equipAccBonus) * specBonuses.accMult;
     
     // Phase 2A: Sanguine Finesse Buff
     if (meta?.isFinesseActive) {
@@ -452,7 +522,12 @@ export function computeDerivedStats(
     const equipEvasBonus = Object.values(equipment).reduce(
         (sum, item) => sum + (item?.evasionBonus ?? 0), 0
     );
-    const evasionRating = calcEvasionRating(skills.obsidianWard.level, equipEvasBonus);
+    let evasionRating = calcEvasionRating(skills.obsidianWard.level, equipEvasBonus);
+
+    // Phase 4: Flicker (Evasion +25% after successful dash negation)
+    if (meta?.isFlickerActive) {
+        evasionRating = Math.floor(evasionRating * 1.25);
+    }
 
     // --- Max Hit (keyed by weapon style) ---
     const strengthLevel = weaponStyle === 'melee'
@@ -462,23 +537,18 @@ export function computeDerivedStats(
             : skills.bloodSorcery.level;
     const baseMaxHit = calcBaseMaxHit(strengthLevel);
     const powerMod = weapon?.powerModifier ?? 1.0;
-    const meleeMaxHit = calcMaxHit(baseMaxHit, powerMod, 0);
-    const rangedMaxHit = calcMaxHit(calcBaseMaxHit(skills.shadowArchery.level), powerMod, 0);
-    const magicMaxHit = calcMaxHit(calcBaseMaxHit(skills.bloodSorcery.level), weapon?.powerModifier ?? 1.0, 0);
-
-    // --- Phase 2B: Path Specializations ---
-    const t2Items = Object.values(equipment).filter(item => item && item.tier === 'T2');
-    const sanguineCount = t2Items.filter(item => item?.specPath === 'sanguine').length;
-    const vileCount = t2Items.filter(item => item?.specPath === 'vile').length;
+    let meleeMaxHit = calcMaxHit(baseMaxHit, powerMod, 0);
+    let rangedMaxHit = calcMaxHit(calcBaseMaxHit(skills.shadowArchery.level), powerMod, 0);
+    let magicMaxHit = calcMaxHit(calcBaseMaxHit(skills.bloodSorcery.level), weapon?.powerModifier ?? 1.0, 0);
 
     // --- Defense ---
     const drPercent = Math.min(
         MAX_DAMAGE_REDUCTION,
-        Object.values(equipment).reduce((sum, item) => sum + (item?.drPercent ?? 0), 0) + (vileCount * 0.05)
+        Object.values(equipment).reduce((sum, item) => sum + (item?.drPercent ?? 0), 0) + specBonuses.dr
     );
     const blockChance = Math.min(
         MAX_BLOCK_CHANCE,
-        Object.values(equipment).reduce((sum, item) => sum + (item?.blockChance ?? 0), 0) + (vileCount * 0.05)
+        Object.values(equipment).reduce((sum, item) => sum + (item?.blockChance ?? 0), 0) + specBonuses.block
     );
     const flatArmor = Object.values(equipment).reduce(
         (sum, item) => sum + (item?.flatArmor ?? 0), 0
@@ -491,8 +561,8 @@ export function computeDerivedStats(
         .map(item => item?.attackIntervalPct ?? 0)
         .filter(v => v > 0);
     
-    // Sanguine Path: +5% Speed per item
-    if (sanguineCount > 0) pctReductions.push(sanguineCount * 0.05);
+    // Apply specialization speed bonuses
+    if (specBonuses.speed > 0) pctReductions.push(specBonuses.speed);
 
     const attackInterval = calcAttackInterval(
         weapon ? (2.0 - weaponInterval) : baseInterval,
@@ -504,8 +574,7 @@ export function computeDerivedStats(
     let lifestealPercent = Object.values(equipment).reduce(
         (sum, item) => sum + (item?.lifestealPercent ?? 0), 0
     );
-    // Sanguine Path: +2% Lifesteal per item
-    lifestealPercent += (sanguineCount * 0.02);
+    lifestealPercent += specBonuses.lifesteal;
     
     // Phase 2A: Sanguine Finesse Lifesteal Doubling (if HP < 50%)
     if (meta?.isFinesseActive && meta?.isLowHp) {
@@ -519,7 +588,7 @@ export function computeDerivedStats(
     );
     const siphonAmount = Object.values(equipment).reduce(
         (sum, item) => sum + (item?.siphonAmount ?? 0), 0
-    );
+    ) + specBonuses.siphon;
 
     // --- Heavy Weapon Mechanics ---
     // A weapon is considered "Heavy" if its base attack interval is > 2.2s
@@ -540,6 +609,25 @@ export function computeDerivedStats(
         (sum, item) => sum + (item?.refinement ?? 0), 0
     );
     const scentSensitivity = Math.min(MAX_SCENT_SENSITIVITY, totalRefinement * REFINEMENT_SCENT_MULT);
+
+    // --- Phase 3: Refinement Scaling (MVP: 1% per level to primary stats) ---
+    // Rule: Deterministic boost to the item's inherent bonuses.
+    const refinementMultiplier = (ref: number) => 1 + (ref * 0.01);
+
+    Object.entries(equipment).forEach(([slot, item]) => {
+        if (!item || item.refinement <= 0) return;
+        const mult = refinementMultiplier(item.refinement);
+        
+        // Offensive items (Weapon/Offhand/Amulet/Ring/Ammo)
+        if (['weapon', 'offhand', 'amulet', 'ring', 'ammo'].includes(slot)) {
+            accuracyRating = Math.floor(accuracyRating * mult);
+            if (slot === 'weapon') {
+                if (weaponStyle === 'melee') meleeMaxHit = Math.floor(meleeMaxHit * mult);
+                if (weaponStyle === 'archery') rangedMaxHit = Math.floor(rangedMaxHit * mult);
+                if (weaponStyle === 'sorcery') magicMaxHit = Math.floor(magicMaxHit * mult);
+            }
+        }
+    });
 
     return {
         maxHp: calcMaxHp(skills.vitae.level),
@@ -564,5 +652,73 @@ export function computeDerivedStats(
         // Phase 2C: Scent refinement
         critChance: calcCritChance(skills.fangMastery.level), // Agility = Fang Mastery currently
         critMultiplier: calcCritMultiplier(skills.fangMastery.level),
+        // Phase 4: Resonance data
+        resonance: calculatePathResonance(equipment)
     };
+}
+
+/**
+ * PHASE 4: Path Resonance
+ * Detects if 3+ items share a specialization path.
+ */
+export function calculatePathResonance(equipment: PlayerEquipment): ResonanceState {
+    const counts: Record<string, number> = { sanguine: 0, vile: 0 };
+    
+    Object.values(equipment).forEach(item => {
+        if (item?.specPath) {
+            counts[item.specPath] = (counts[item.specPath] || 0) + 1;
+        }
+    });
+
+    const activePath = (counts.sanguine >= 3) ? 'sanguine' : (counts.vile >= 3) ? 'vile' : null;
+
+    if (activePath === 'sanguine') {
+        return {
+            activePath: 'sanguine',
+            isActive: true,
+            bonuses: {
+                dashDistanceMultiplier: 1.20,
+                dashCooldownReduction: 0.10
+            }
+        };
+    }
+
+    if (activePath === 'vile') {
+        return {
+            activePath: 'vile',
+            isActive: true,
+            bonuses: {
+                blockCounterWindow: 2.0 // Seconds of Braced state
+            }
+        };
+    }
+
+    return { activePath: null, isActive: false, bonuses: {} };
+}
+
+/**
+ * PHASE 4: Ritual Application
+ * Combines active rituals into a set of multipliers.
+ * Note: These are applied to the base stats BEFORE refinement scaling.
+ */
+export function applyRitualBonuses(
+    stats: DerivedStats, 
+    modifiers: { 
+        scentGainMultiplier: number;
+        lootQualityMultiplier: number;
+        maxHpMultiplier: number;
+        lifestealBonus: number;
+        speedMultiplier: number;
+        armorBonus: number;
+    }
+): DerivedStats {
+    const next = { ...stats };
+
+    // Apply multipliers (Multiplicative where appropriate, avoiding DR/MaxHit per constraints)
+    next.maxHp = Math.floor(next.maxHp * modifiers.maxHpMultiplier);
+    next.lifestealPercent += modifiers.lifestealBonus;
+    next.attackInterval /= modifiers.speedMultiplier; // Higher speed = lower interval
+    next.flatArmor += modifiers.armorBonus;
+
+    return next;
 }

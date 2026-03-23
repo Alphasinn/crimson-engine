@@ -6,7 +6,8 @@
 
 import { create } from 'zustand';
 import { usePlayerStore } from './playerStore';
-import type { Zone, Enemy, CombatEvent, PlayerSkills, StatWindowEntry, SessionStats } from '../engine/types';
+import type { Zone, Enemy, CombatEvent, PlayerSkills, StatWindowEntry, SessionStats, HuntEvaluation } from '../engine/types';
+import { evaluateHuntPerformance } from '../engine/progression';
 
 const MAX_LOG_ENTRIES = 120;
 const STATS_WINDOW_MS = 60000;
@@ -46,6 +47,23 @@ interface CombatState {
     scentIntensity: number;
     lastEnemyCritStamp: number;
 
+    // Phase 4: Resonance & Rituals
+    isDashReady: boolean;
+    dashCooldownTicks: number;
+    flickerTicks: number;
+    isIronbound: boolean;
+    ironboundTicks: number;
+    activeRituals: string[];
+    activeRitualModifiers: {
+        scentGainMultiplier: number;
+        lootQualityMultiplier: number;
+        maxHpMultiplier: number;
+        lifestealBonus: number;
+        speedMultiplier: number;
+        armorBonus: number;
+    };
+    condensationCount: number;
+
     // Event Log
     log: CombatEvent[];
     splats: DamageSplat[];
@@ -57,6 +75,7 @@ interface CombatState {
     // Session Tracking
     sessionStats: SessionStats | null;
     lastSession: SessionStats | null;
+    huntEvaluation: HuntEvaluation | null;
     viewMode: 'arena' | 'home';
 
     // Actions
@@ -78,11 +97,25 @@ interface CombatState {
     // Stats Actions
     recordStat: (type: StatWindowEntry['type'], value: number) => void;
     pruneStats: () => void;
+    condenseScent: () => void;
 
     // Session Actions
     startSession: () => void;
     updateSession: (patch: Partial<SessionStats> | ((prev: SessionStats) => Partial<SessionStats>)) => void;
-    endSession: (wasSlain?: boolean, tickCount?: number, redMistSurvived?: boolean, lastScentIntensity?: number) => void;
+    endSession: (
+        wasSlain?: boolean, 
+        tickCount?: number, 
+        redMistSurvived?: boolean, 
+        lastScentIntensity?: number,
+        metrics?: {
+            flickerTriggers?: number;
+            ironboundTriggers?: number;
+            condensationUses?: number;
+            peakScent?: number;
+            timeAbove60Scent?: number;
+            timeAbove80Scent?: number;
+        }
+    ) => void;
     clearLastSession: () => void;
 }
 
@@ -106,12 +139,31 @@ export const useCombatStore = create<CombatState>()((set) => ({
     isBossPending: false,
     scentIntensity: 0,
     lastEnemyCritStamp: 0,
+    
+    // Phase 4: Resonance & Rituals
+    isDashReady: false,
+    dashCooldownTicks: 0,
+    flickerTicks: 0,
+    isIronbound: false,
+    ironboundTicks: 0,
+    activeRituals: [],
+    activeRitualModifiers: {
+        scentGainMultiplier: 1,
+        lootQualityMultiplier: 1,
+        maxHpMultiplier: 1,
+        lifestealBonus: 0,
+        speedMultiplier: 1,
+        armorBonus: 0
+    },
+    condensationCount: 0,
+
     log: [],
     splats: [],
     statsWindow: [],
     statsStartTime: null,
     sessionStats: null,
     lastSession: null,
+    huntEvaluation: null,
     viewMode: 'home',
 
     setZone: (zone) => set({ selectedZone: zone, isRunning: false, activeEnemy: null }),
@@ -178,6 +230,8 @@ export const useCombatStore = create<CombatState>()((set) => ({
             splats: [],
             statsWindow: [],
             statsStartTime: null,
+            huntEvaluation: null,
+            condensationCount: 0,
         }),
 
     // Flee: stop combat and return to zone select, but keep the log
@@ -213,20 +267,38 @@ export const useCombatStore = create<CombatState>()((set) => ({
         }));
     },
 
-    startSession: () => set({
-        sessionStats: {
-            startTime: Date.now(),
-            kills: 0,
-            xpGained: 0,
-            lootCount: 0,
-            lootItems: [],
-            bloodShardsGained: 0,
-            cursedIchorGained: 0,
-            graveSteelGained: 0,
-            bossesSlain: 0
-        },
-        lastSession: null
-    }),
+    startSession: () => {
+        const playerState = usePlayerStore.getState();
+        set({
+            sessionStats: {
+                startTime: Date.now(),
+                kills: 0,
+                xpGained: 0,
+                lootCount: 0,
+                lootItems: [],
+                bloodShardsGained: 0,
+                cursedIchorGained: 0,
+                graveSteelGained: 0,
+                bossesSlain: 0,
+                flickerTriggers: 0,
+                ironboundTriggers: 0,
+                condensationUses: 0,
+                activeRitualIds: playerState.activeRituals.map(r => r.id),
+                peakScent: 0,
+                timeAbove60Scent: 0,
+                timeAbove80Scent: 0
+            },
+            lastSession: null,
+            // Phase 4 Rituals & Resonance Reset
+            activeRitualModifiers: { ...playerState.nextHuntModifiers },
+            activeRituals: playerState.activeRituals.map(r => r.id),
+            isDashReady: true,
+            dashCooldownTicks: 0,
+            flickerTicks: 0,
+            isIronbound: false,
+            ironboundTicks: 0
+        });
+    },
 
     updateSession: (patch) => set((state) => {
         if (!state.sessionStats) return {};
@@ -236,29 +308,57 @@ export const useCombatStore = create<CombatState>()((set) => ({
         };
     }),
 
-    endSession: (wasSlain?: boolean, tickCount?: number, redMistSurvived?: boolean, lastScentIntensity?: number) => set((state) => {
+    endSession: (
+        wasSlain?: boolean, 
+        tickCount?: number, 
+        redMistSurvived?: boolean, 
+        lastScentIntensity?: number,
+        metrics?: {
+            flickerTriggers?: number;
+            ironboundTriggers?: number;
+            condensationUses?: number;
+            peakScent?: number;
+            timeAbove60Scent?: number;
+            timeAbove80Scent?: number;
+        }
+    ) => set((state) => {
         if (!state.sessionStats) return {};
         const lastSession = { 
             ...state.sessionStats, 
             endTime: Date.now(), 
             wasSlain,
-            lastScentIntensity: lastScentIntensity ?? 0
+            lastScentIntensity: lastScentIntensity ?? 0,
+            ...metrics
         };
 
-        // Phase 2B: Crucible Seal Reset Logic
-        // 1. Never reset on death.
-        // 2. Reset if 50+ ticks or Red Mist survived.
-        if (!wasSlain) {
-            const duration = tickCount ?? state.currentTick;
-            if (duration >= 50 || redMistSurvived) {
-                // Bridge to playerStore
-                usePlayerStore.getState().resetCrucibleSeal();
-            }
+        // Phase 3: Hunt Performance Evaluation
+        const evaluation = evaluateHuntPerformance(
+            lastSession,
+            tickCount ?? state.currentTick,
+            wasSlain ?? false,
+            redMistSurvived ?? false
+        );
+
+        if (evaluation.isValid) {
+            usePlayerStore.getState().resetCrucibleSeal();
         }
+
+        // Phase 4: Clear Rituals after Hunt
+        usePlayerStore.getState().clearRituals();
 
         return {
             sessionStats: null,
-            lastSession
+            lastSession,
+            huntEvaluation: evaluation,
+            activeRituals: [],
+            activeRitualModifiers: {
+                scentGainMultiplier: 1,
+                lootQualityMultiplier: 1,
+                maxHpMultiplier: 1,
+                lifestealBonus: 0,
+                speedMultiplier: 1,
+                armorBonus: 0
+            }
         };
     }),
 
@@ -269,4 +369,8 @@ export const useCombatStore = create<CombatState>()((set) => ({
     })),
 
     setViewMode: (mode) => set({ viewMode: mode }),
+
+    condenseScent: () => {
+        // This is bridged to the engine instance in useCombatEngine.ts
+    },
 }));

@@ -503,12 +503,12 @@
 
 .fightArena {
     @include flex-col;
-    padding: $space-2 $space-10; // More horizontal breathing room at edges
-    gap: $space-4;
-    max-width: none; // Unbound for full edge-to-edge tactical feel
+    padding: $space-6 $space-10 $space-12 $space-10; // Significantly increased bottom padding
+    gap: $space-6;
+    max-width: none;
     width: 100%;
     height: 100%;
-    min-width: 0; // Allow shrinking horizontally
+    min-width: 0;
 }
 
 .arenaStatusHeader {
@@ -521,11 +521,12 @@
 
 .combatantsRow {
     display: flex;
-    justify-content: space-between; // Pin to far left and far right
+    justify-content: space-between;
     align-items: center;
     width: 100%;
     flex: 1;
     min-height: 0;
+    margin-bottom: 60px; // Very aggressive push up
 }
 
 .bottomBarArea {
@@ -538,38 +539,6 @@
     overflow: hidden; // Suppress persistent scrollbar
 }
 
-.miniStyleRow {
-    @include flex-center;
-    gap: $space-3;
-    padding: $space-4 $space-2;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: $radius-lg;
-    margin-bottom: $space-4;
-}
-
-.miniStyleBtn {
-    @include button-base(rgba(255, 255, 255, 0.05));
-    padding: $space-2 $space-4;
-    font-size: 11px;
-    color: $color-text-secondary;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    min-width: 80px;
-    text-transform: uppercase;
-    font-family: $font-heading;
-    letter-spacing: 0.05em;
-
-    &.active {
-        background: rgba(196, 30, 58, 0.2);
-        color: $color-crimson;
-        border-color: rgba(196, 30, 58, 0.5);
-        box-shadow: 0 0 10px rgba(196, 30, 58, 0.2);
-    }
-
-    &:hover:not(.active) {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.2);
-    }
-}
 
 .arenaButtons {
     margin-top: auto;
@@ -671,7 +640,12 @@
 .miniStyleRow {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 4px;
+    gap: 6px;
+    margin: $space-2 0 $space-4 0;
+    padding: $space-3;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: $radius-md;
 }
 
 .miniStyleBtn {
@@ -720,7 +694,17 @@
 }
 
 .arenaStatLabel { font-size: 10px; color: $color-text-muted; }
-.arenaStatValue { font-family: $font-mono; font-size: 12px; font-weight: 700; color: #fff; }
+.arenaStatValue { 
+    font-family: $font-mono; 
+    font-size: 12px; 
+    font-weight: 700; 
+    color: #fff; 
+
+    &.refinementText {
+        color: #44ff44;
+        text-shadow: 0 0 8px rgba(68, 255, 68, 0.4);
+    }
+}
 
 .miniAutoEat {
     @include flex-between;
@@ -1564,6 +1548,27 @@
     @include progress-bar-base(10px, rgba(255, 255, 255, 0.1));
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-sizing: border-box;
+    position: relative;
+}
+
+.scentMarker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    z-index: 2;
+    pointer-events: none;
+    
+    &.markerBoss {
+        background: $color-vile;
+        opacity: 0.8;
+        box-shadow: 0 0 6px rgba($color-vile, 0.8);
+    }
+    
+    &.markerCondense {
+        background: #f59e0b;
+        box-shadow: 0 0 8px rgba(245, 158, 11, 0.9);
+    }
 }
 
 .miniScentFill {
@@ -1619,6 +1624,93 @@
     color: $color-text-secondary;
     font-style: italic;
     line-height: 1.2;
+}
+
+// Phase 3: Crucible Feedback Area
+.crucibleStatusArea {
+    margin: $space-2 0;
+    padding: $space-2 $space-3;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: $radius-md;
+    @include flex-col;
+    gap: 6px;
+}
+
+.statusLabel {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-family: $font-mono;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(212, 175, 55, 0.6); // Gold-ish
+
+    &.unsealed {
+        color: #22c55e;
+        text-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+    }
+}
+
+.unsealProgress {
+    @include flex-col;
+    gap: 4px;
+
+    .unsealTrack {
+        @include progress-bar-base(6px, rgba(255, 255, 255, 0.05));
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+    }
+
+    .unsealFill {
+        height: 100%;
+        background: linear-gradient(90deg, #d4af37, #f0cc55);
+        box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        transition: width 0.3s ease;
+    }
+}
+
+.unsealToast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(13, 4, 4, 0.95);
+    border: 2px solid #22c55e;
+    padding: 24px 48px;
+    border-radius: $radius-lg;
+    z-index: 1000;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 0 60px rgba(34, 197, 94, 0.6);
+    animation: toastReveal 4s forwards;
+    text-align: center;
+
+    .toastTitle {
+        font-family: $font-heading;
+        font-size: 1.8rem;
+        color: #22c55e;
+        text-transform: uppercase;
+        letter-spacing: 5px;
+        margin-bottom: 8px;
+        text-shadow: 0 0 20px rgba(34, 197, 94, 0.8);
+    }
+
+    .toastBody {
+        font-size: 0.9rem;
+        color: #9a8fa0;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+}
+
+@keyframes toastReveal {
+    0% { opacity: 0; transform: translate(-50%, -40%) scale(0.9); }
+    10% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -60%) scale(0.9); }
 }
 
 @keyframes flashSoft {
@@ -2210,6 +2302,71 @@
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.condenseUnit {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+    .condenseBtn {
+        width: 100%;
+        padding: 0.6rem;
+        background: linear-gradient(135deg, rgba(139, 0, 0, 0.6), rgba(80, 0, 0, 0.8));
+        border: 1px solid rgba(255, 77, 77, 0.4);
+        border-radius: 4px;
+        color: #ffcccc;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: 'Cinzel', serif;
+        font-size: 0.85rem;
+
+        &:hover:not(:disabled) {
+            background: linear-gradient(135deg, rgba(200, 0, 0, 0.8), rgba(120, 0, 0, 0.9));
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+            transform: translateY(-1px);
+        }
+
+        &:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+
+        &:disabled {
+            background: rgba(40, 40, 40, 0.4);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.2);
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+    }
+
+    .condenseCost {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.6);
+        text-align: center;
+        font-family: 'Inter', sans-serif;
+
+        .costValue {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .penaltyText {
+            color: #f59e0b;
+            font-weight: 600;
+            display: block;
+            margin-top: 2px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    }
+}
+
 .navBtn {
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(139, 0, 0, 0.2);
@@ -2294,5 +2451,102 @@
         box-shadow: 0 0 10px rgba(196, 30, 58, 0.3);
         transform: scale(1);
     }
+}
+
+// --- Phase 4: Resonance & Rituals HUD ---
+.statusAura {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-3;
+    margin: $space-4 0 $space-2 0;
+    align-items: center;
+    position: relative;
+}
+
+.statusBadge {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-1 $space-3;
+    border-radius: $radius-full;
+    font-size: 10px;
+    font-family: $font-heading;
+    letter-spacing: 0.05em;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    height: 24px;
+    box-sizing: border-box;
+
+    .statusIcon {
+        font-size: 12px;
+    }
+
+    &.dashReady {
+        border-color: rgba(96, 165, 250, 0.5);
+        color: #60a5fa;
+        background: rgba(96, 165, 250, 0.1);
+        box-shadow: 0 0 8px rgba(96, 165, 250, 0.2);
+    }
+
+    &.dashCooldown {
+        opacity: 0.6;
+        color: $color-text-muted;
+    }
+
+    &.flickerActive {
+        border-color: $color-gold;
+        color: $color-gold;
+        background: rgba(212, 175, 55, 0.2);
+        box-shadow: 0 0 15px $color-gold-glow;
+        animation: pulse-gold 1.5s infinite;
+    }
+
+    &.ironbound {
+        border-color: $color-vile-glow;
+        color: $color-vile-light;
+        background: rgba($color-vile, 0.2);
+        box-shadow: 0 0 10px rgba($color-vile, 0.3);
+    }
+
+    &.armorStatus {
+        border-color: rgba(255, 255, 255, 0.2);
+        color: $color-text-primary;
+        background: rgba(255, 255, 255, 0.05);
+    }
+}
+
+.ritualBadges {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.ritualBadge {
+    width: 32px;
+    height: 32px;
+    background: rgba($color-crimson, 0.15);
+    border: 1px solid rgba($color-crimson, 0.3);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: inset 0 0 4px rgba(196, 30, 58, 0.2);
+    cursor: help;
+    transition: all 0.2s ease;
+
+    &:hover {
+        border-color: $color-crimson;
+        background: rgba($color-crimson, 0.25);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(196, 30, 58, 0.3);
+    }
+}
+
+@keyframes pulse-gold {
+    0% { transform: scale(1); box-shadow: 0 0 8px $color-gold-glow; }
+    50% { transform: scale(1.02); box-shadow: 0 0 20px $color-gold-glow; }
+    100% { transform: scale(1); box-shadow: 0 0 8px $color-gold-glow; }
 }
 

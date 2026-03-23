@@ -1,8 +1,171 @@
 .root {
+    display: flex;
+    flex-direction: column;
     padding: 24px;
-    color: #e5e7eb;
     height: 100%;
+    color: #e0e0e0;
+    gap: 20px;
+    background: radial-gradient(circle at center, rgba(20, 10, 10, 0.95), rgba(10, 5, 5, 1));
+    position: relative;
+    overflow: hidden;
+    transition: background 1s ease;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.15;
+        transition: opacity 1s ease;
+    }
+
+    &.sanguineTheme {
+        &::before {
+            background: radial-gradient(circle at center, rgba(196, 30, 58, 0.4), transparent 70%);
+            animation: bloodPulse 8s infinite alternate ease-in-out;
+            opacity: 0.3;
+        }
+    }
+
+    &.vileTheme {
+        &::before {
+            background: radial-gradient(circle at center, rgba(88, 28, 135, 0.4), transparent 70%);
+            animation: vileMist 8s infinite alternate ease-in-out;
+            opacity: 0.3;
+        }
+    }
+}
+
+@keyframes bloodPulse {
+    0% { transform: scale(1); opacity: 0.2; }
+    100% { transform: scale(1.1); opacity: 0.4; }
+}
+
+@keyframes vileMist {
+    0% { transform: scale(1) rotate(0deg); opacity: 0.2; }
+    100% { transform: scale(1.15) rotate(5deg); opacity: 0.4; }
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 15px;
+    position: relative;
+    z-index: 10;
+
+    .title {
+        margin: 0;
+        font-family: 'Crimson Text', serif;
+        font-size: 1.8rem;
+        color: #ff4d4d;
+        text-shadow: 0 0 15px rgba(255, 77, 77, 0.6);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+}
+
+.statusIndicator {
+    font-size: 0.9rem;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 4px 12px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+
+    .sealed {
+        color: #666;
+        &::before { content: "● "; color: #991b1b; }
+    }
+    .unsealed {
+        color: #4ade80;
+        text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+        &::before { content: "● "; color: #4ade80; }
+    }
+}
+
+.nav {
+    display: flex;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+    z-index: 10;
+
+    .navBtn {
+        background: none;
+        border: 1px solid transparent;
+        color: #888;
+        padding: 10px 24px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 6px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.85rem;
+
+        &:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        &.active {
+            color: #fff;
+            background: rgba(196, 30, 58, 0.2);
+            border-color: rgba(196, 30, 58, 0.4);
+            box-shadow: 0 0 15px rgba(196, 30, 58, 0.2);
+        }
+    }
+}
+
+.content {
+    flex: 1;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    gap: 24px;
+    position: relative;
+    z-index: 10;
+    
+    // Smooth fade in for content
+    animation: contentFade 0.5s ease-out;
+}
+
+@keyframes contentFade {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.summaryPlaceholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    color: #94a3b8;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+
+    h3 { 
+        color: #f8fafc; 
+        margin-bottom: 16px; 
+        font-family: 'Crimson Text', serif;
+        font-size: 1.5rem;
+    }
+    
+    p {
+        max-width: 400px;
+        line-height: 1.6;
+    }
 }
