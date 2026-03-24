@@ -97,9 +97,6 @@ export const DEATH_SHARD_BRACED_PCT = 0.25;
 /** "Braced" ichor loss reduction modifier (1.00 -> 0.50) */
 export const DEATH_ICHOR_BRACED_PCT = 0.50;
 
-/** Fraction of Max HP restored per siphon */
-export const SIPHON_HEAL_PCT = 0.20;
-/** Starting shard cost for the first siphon */
 export const SIPHON_BASE_COST = 10;
 /** Scaling factor for siphoning cost */
 export const SIPHON_COST_EXPONENT = 1.7;

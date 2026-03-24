@@ -441,11 +441,10 @@ export function getSpecializationModifiers(
 
     // SANGUINE: Speed, Finesse, Siphon
     if (path === 'sanguine') {
+        // No lifesteal/siphon specialization modifiers
         return {
             speedBonus: 0.05,     
-            lifestealBonus: 0.02, 
             accuracyMult: 1.0,
-            masterySiphonBonus: isMastery ? 0.01 : 0 // +1% siphon per master item
         };
     }
 
@@ -483,10 +482,8 @@ export function computeDerivedStats(
     // --- Phase 3: Specialization Path Hooks ---
     const specBonuses = {
         speed: 0,
-        lifesteal: 0,
         dr: 0,
         block: 0,
-        siphon: 0,
         accMult: 1.0
     };
 
@@ -494,11 +491,9 @@ export function computeDerivedStats(
         if (!item || !item.specPath) return;
         const mods = getSpecializationModifiers(item.specPath, slot as EquipmentSlot, weaponStyle, item.refinement);
         if (mods.speedBonus) specBonuses.speed += mods.speedBonus;
-        if (mods.lifestealBonus) specBonuses.lifesteal += mods.lifestealBonus;
         if (mods.drBonus) specBonuses.dr += mods.drBonus;
         if (mods.blockBonus) specBonuses.block += mods.blockBonus;
         if (mods.accuracyMult) specBonuses.accMult *= mods.accuracyMult;
-        if (mods.masterySiphonBonus) specBonuses.siphon += mods.masterySiphonBonus;
     });
 
     // --- Accuracy ---
@@ -570,26 +565,6 @@ export function computeDerivedStats(
         0
     );
 
-    // --- Lifesteal & Utility ---
-    let lifestealPercent = Object.values(equipment).reduce(
-        (sum, item) => sum + (item?.lifestealPercent ?? 0), 0
-    );
-    lifestealPercent += specBonuses.lifesteal;
-    
-    // Phase 2A: Sanguine Finesse Lifesteal Doubling (if HP < 50%)
-    if (meta?.isFinesseActive && meta?.isLowHp) {
-        lifestealPercent *= 2;
-    }
-    const regenPerSec = Object.values(equipment).reduce(
-        (sum, item) => sum + (item?.regenPerSec ?? 0), 0
-    );
-    const siphonChance = Object.values(equipment).reduce(
-        (sum, item) => sum + (item?.siphonChance ?? 0), 0
-    );
-    const siphonAmount = Object.values(equipment).reduce(
-        (sum, item) => sum + (item?.siphonAmount ?? 0), 0
-    ) + specBonuses.siphon;
-
     // --- Heavy Weapon Mechanics ---
     // A weapon is considered "Heavy" if its base attack interval is > 2.2s
     const isHeavyWeapon = attackInterval > 2.2;
@@ -629,7 +604,7 @@ export function computeDerivedStats(
         }
     });
 
-    return {
+    const stats: DerivedStats = {
         maxHp: calcMaxHp(skills.vitae.level),
         accuracyRating,
         evasionRating,
@@ -640,10 +615,6 @@ export function computeDerivedStats(
         attackInterval,
         blockChance,
         flatArmor,
-        lifestealPercent,
-        regenPerSec,
-        siphonChance,
-        siphonAmount,
         armPen,
         minDamagePct,
         scentSensitivity,
@@ -655,6 +626,7 @@ export function computeDerivedStats(
         // Phase 4: Resonance data
         resonance: calculatePathResonance(equipment)
     };
+    return stats;
 }
 
 /**
@@ -707,7 +679,6 @@ export function applyRitualBonuses(
         scentGainMultiplier: number;
         lootQualityMultiplier: number;
         maxHpMultiplier: number;
-        lifestealBonus: number;
         speedMultiplier: number;
         armorBonus: number;
     }
@@ -716,7 +687,6 @@ export function applyRitualBonuses(
 
     // Apply multipliers (Multiplicative where appropriate, avoiding DR/MaxHit per constraints)
     next.maxHp = Math.floor(next.maxHp * modifiers.maxHpMultiplier);
-    next.lifestealPercent += modifiers.lifestealBonus;
     next.attackInterval /= modifiers.speedMultiplier; // Higher speed = lower interval
     next.flatArmor += modifiers.armorBonus;
 

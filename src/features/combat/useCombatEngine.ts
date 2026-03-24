@@ -9,7 +9,7 @@ import type { CombatCallbacks } from '../../engine/combatLoop';
 import type { Zone, Enemy, InventoryItem } from '../../engine/types';
 import { usePlayerStore } from '../../store/playerStore';
 import { useCombatStore } from '../../store/combatStore';
-import { useHarvestingStore } from '../../store/harvestingStore';
+import { useSkillingStore } from '../../store/skillingStore';
 import { useNotificationStore } from '../../store/notificationStore';
 import { computeDerivedStats, calculatePathResonance } from '../../engine/formulas';
 import { getEnemiesForZone } from '../../data/enemies';
@@ -25,7 +25,6 @@ const sharedEngine = new CombatEngine({
     onAutoEat: () => {},
     onLog: () => {},
     onLoot: () => {},
-    onTrySiphon: () => {},
     sanguineFinesse: () => {},
     vileReinforcement: () => {},
     getEnemyData: () => null,
@@ -164,7 +163,6 @@ export function useCombatEngine() {
             endSession(true, sharedEngine.tickCount, sharedEngine.redMistSurvived, sharedEngine.scentIntensity, {
                 flickerTriggers: (sharedEngine as any).flickerTriggers,
                 ironboundTriggers: (sharedEngine as any).ironboundTriggers,
-                condensationUses: (sharedEngine as any).condensationCount,
                 peakScent: (sharedEngine as any).peakScent,
                 timeAbove60Scent: (sharedEngine as any).timeAbove60Scent,
                 timeAbove80Scent: (sharedEngine as any).timeAbove80Scent
@@ -200,7 +198,6 @@ export function useCombatEngine() {
                     isIronbound: activeCombat.isIronbound,
                     ironboundTicks: activeCombat.ironboundTicks,
                     activeRituals: activeCombat.activeRituals,
-                    condensationCount: activeCombat.condensationCount,
                     // Phase 4 S4 Metrics
                     flickerTriggers: activeCombat.flickerTriggers,
                     ironboundTriggers: activeCombat.ironboundTriggers,
@@ -266,28 +263,6 @@ export function useCombatEngine() {
                 addLootLog({ itemId: loot.itemId, itemName: loot.itemName });
             }
         },
-        onTrySiphon: (cost, callback) => {
-            const currentSkills = usePlayerStore.getState().skills;
-            const currentEquipment = usePlayerStore.getState().equipment;
-            const maxHp = computeDerivedStats(currentSkills, currentEquipment).maxHp;
-            
-            // Bridge to store-side siphon logic
-            const success = usePlayerStore.getState().siphon(maxHp, cost);
-            callback(success);
-
-            if (success) {
-                // Show blue heal splat for siphon
-                const id = `siphon-${Date.now()}`;
-                addSplat({
-                    id,
-                    amount: Math.floor(maxHp * 0.20),
-                    isPlayer: true,
-                    type: 'heal',
-                    timestamp: Date.now()
-                });
-                setTimeout(() => removeSplat(id), 2000);
-            }
-        },
         sanguineFinesse: () => usePlayerStore.getState().sanguineFinesse(),
         vileReinforcement: () => usePlayerStore.getState().vileReinforcement(),
         getEnemyData: (id) => {
@@ -316,13 +291,6 @@ export function useCombatEngine() {
         updateCombatState,
     ]);
 
-    // Bridge manual actions to the engine
-    useEffect(() => {
-        useCombatStore.setState({
-            condenseScent: () => sharedEngine.condenseScent()
-        });
-    }, []);
-
     // Every time dependencies change, update the engine's callbacks reference
     useEffect(() => {
         sharedEngine.setCallbacks(buildCallbacks);
@@ -346,7 +314,7 @@ export function useCombatEngine() {
         const { activeRituals, activeRitualModifiers } = useCombatStore.getState();
         const resonance = calculatePathResonance(equipment);
 
-        useHarvestingStore.getState().stopAction();
+        useSkillingStore.getState().stopAction();
 
         sharedEngine.start(
             zone, skills, equipment, food, autoEatEnabled, autoEatThreshold, currentVitae, trainingMode,
@@ -373,7 +341,7 @@ export function useCombatEngine() {
         const { activeRituals, activeRitualModifiers } = useCombatStore.getState();
         const resonance = calculatePathResonance(equipment);
 
-        useHarvestingStore.getState().stopAction();
+        useSkillingStore.getState().stopAction();
 
         sharedEngine.start(
             zone, skills, equipment, food, autoEatEnabled, autoEatThreshold, currentVitae, trainingMode,

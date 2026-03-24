@@ -1,4 +1,4 @@
-import { useHarvestingStore } from '../../store/harvestingStore';
+import { useSkillingStore } from '../../store/skillingStore';
 import { usePlayerStore } from '../../store/playerStore';
 import { BLOOD_TIERS } from '../../data/harvesting';
 import styles from './BloodlettingView.module.scss';
@@ -6,10 +6,10 @@ import React from 'react';
 
 export const BloodlettingView: React.FC = () => {
     const { skills } = usePlayerStore();
-    const { activeNodeId, actionType, isActive, progressTimer, requiredTicks, startAction, stopAction } = useHarvestingStore();
+    const { activeNodeId, activeSkill, isActive, progressTimer, requiredTicks, startAction, stopAction } = useSkillingStore();
 
     const bloodlettingLevel = skills.bloodletting?.level || 1;
-    const isHarvesting = isActive && actionType === 'harvesting';
+    const isHarvesting = isActive && activeSkill === 'bloodletting';
 
     return (
         <div className={styles.container}>
@@ -37,7 +37,7 @@ export const BloodlettingView: React.FC = () => {
                             onClick={() => {
                                 if (!isUnlocked) return;
                                 if (isThisActive) stopAction();
-                                else startAction(node.id, 'harvesting');
+                                else startAction(node.id, 'bloodletting');
                             }}
                         >
                             <div className={styles.cardHeader}>

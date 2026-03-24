@@ -49,20 +49,11 @@ export function evaluateHuntPerformance(
     // 3d. Ritual Mastery Bonus (+0.03 per ritual, cap 0.09)
     const ritualBonus = Math.min(0.09, (session.activeRitualIds?.length || 0) * 0.03);
 
-    // 3e. Condensation Penalty (Mastery Efficiency)
-    // 0-1 uses: 0, 2 uses: -0.05, 3+ uses: -0.05 - (n-2)*0.10
-    let condensePenalty = 0;
-    const uses = session.condensationUses || 0;
-    if (uses >= 2) {
-        condensePenalty = 0.05 + (uses - 2) * 0.10;
-    }
-
     const totalQuality = Math.max(0, Math.min(1.0, 
         survivalScore + 
         aggressionScore + 
         pressureScore + 
-        ritualBonus - 
-        condensePenalty
+        ritualBonus
     ));
 
     return {

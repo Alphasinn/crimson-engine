@@ -90,12 +90,6 @@ export function CombatView() {
         setAutoEatThreshold,
         crucibleSealed, resetCrucibleSeal
     } = usePlayerStore();
-    const { 
-        playerHp, 
-        playerMaxHp, 
-        condensationCount, 
-        condenseScent 
-    } = useCombatStore();
     const { startCombatWithEnemy, fleeFromCombat } = useCombatEngine();
 
     const derived = useMemo(
@@ -287,11 +281,6 @@ export function CombatView() {
             <div className={styles.miniScentArea}>
                 <div className={styles.miniScentLabel}>
                     <span className={styles.miniScentTitle}>Scent of Fear</span>
-                    {condensationCount > 0 && (
-                        <span className={styles.miniScentPenalty} title={`Scent accumulates ${condensationCount * 10}% faster`}>
-                            +{condensationCount * 10}%
-                        </span>
-                    )}
                     {isBossPending && <span className={styles.miniScentBossWarning}>BOSS!</span>}
                     <span className={styles.miniScentValue}>{Math.floor(scentIntensity * 100)}%</span>
                 </div>
@@ -302,25 +291,6 @@ export function CombatView() {
                     />
                     {/* Milestones */}
                     <div className={`${styles.scentMarker} ${styles.markerBoss}`} title="Boss Threshold (20%)" style={{ left: '20%' }} />
-                    <div className={`${styles.scentMarker} ${styles.markerCondense}`} title="Condensation Threshold (80%)" style={{ left: '80%' }} />
-                </div>
-
-                {/* Scent Condensation (Sprint 3) */}
-                <div className={styles.condenseUnit}>
-                    <button 
-                        className={styles.condenseBtn}
-                        onClick={condenseScent}
-                        disabled={scentIntensity < 0.8}
-                        title={scentIntensity < 0.8 ? "Scent must be at least 80% to condense" : "Reduce Scent at the cost of Vitae"}
-                    >
-                        {scentIntensity >= 0.8 ? 'CONDENSE SCENT' : 'LOW PRESSURE'}
-                    </button>
-                    {scentIntensity >= 0.8 && (
-                        <div className={styles.condenseCost}>
-                             Cost: <span className={styles.costValue}>{Math.round(Math.max(playerHp * 0.4, playerMaxHp * 0.15))}</span> Vitae
-                             {condensationCount > 0 && <span className={styles.penaltyText}> (+{condensationCount * 10}% Decay)</span>}
-                        </div>
-                    )}
                 </div>
 
                 {activeEvent && (
@@ -543,11 +513,10 @@ export function CombatView() {
                                                 <div className={styles.ritualBadges}>
                                                     {activeRituals.map(ritualId => {
                                                         const isFrenzy = ritualId === 'ritual_frenzy';
-                                                        const isBrace = ritualId === 'ritual_brace';
                                                         
-                                                        const name = isFrenzy ? 'Ritual of Frenzy' : isBrace ? 'Ritual of Bracing' : 'Blood Siphon Ritual';
-                                                        const desc = isFrenzy ? '+50% Scent, +20% Loot' : isBrace ? '+15 Armor, -20% Speed' : '-25% Max HP, +5% Lifesteal';
-                                                        const emoji = isFrenzy ? '🔥' : isBrace ? '🛡️' : '💉';
+                                                        const name = isFrenzy ? 'Ritual of Frenzy' : 'Ritual of Bracing';
+                                                        const desc = isFrenzy ? '+50% Scent, +20% Loot' : '+15 Armor, -20% Speed';
+                                                        const emoji = isFrenzy ? '🔥' : '🛡️';
 
                                                         return (
                                                             <div key={ritualId} className={styles.ritualBadge} title={`${name}: ${desc}`}>

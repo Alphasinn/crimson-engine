@@ -36,7 +36,12 @@ const DEFAULT_SKILLS: PlayerSkills = {
     // Vitae starts at level 10; XP must match so gainXp doesn't recompute to level 1
     vitae: { level: STARTING_VITAE_LEVEL, xp: getXpForLevel(STARTING_VITAE_LEVEL) },
     bloodletting: { level: 1, xp: 0 },
+    nightForaging: { level: 1, xp: 0 },
+    graveHarvesting: { level: 1, xp: 0 },
     distillation: { level: 1, xp: 0 },
+    forging: { level: 1, xp: 0 },
+    corpseHarvesting: { level: 1, xp: 0 },
+    alchemy: { level: 1, xp: 0 },
 };
 
 interface PlayerState {
@@ -73,7 +78,6 @@ interface PlayerState {
         scentGainMultiplier: number;
         lootQualityMultiplier: number;
         maxHpMultiplier: number;
-        lifestealBonus: number;
         speedMultiplier: number;
         armorBonus: number;
     };
@@ -100,7 +104,6 @@ interface PlayerState {
     addUnbankedLoot: (shards: number, steel: number, ichor: number, isRedMist?: boolean) => void;
     withdraw: () => void;
     applyDeathPenalties: (isBraced: boolean, isRedMist?: boolean) => void;
-    siphon: (maxHp: number, cost: number) => boolean; // Returns true if successful
     stabilizeIchor: () => void;
     setFinesseTicks: (ticks: number) => void;
     // Distill Actions
@@ -151,7 +154,6 @@ export const usePlayerStore = create<PlayerState>()(
                 scentGainMultiplier: 1,
                 lootQualityMultiplier: 1,
                 maxHpMultiplier: 1,
-                lifestealBonus: 0,
                 speedMultiplier: 1,
                 armorBonus: 0
             },
@@ -378,27 +380,6 @@ export const usePlayerStore = create<PlayerState>()(
                 };
             }),
 
-            siphon: (maxHp, cost) => {
-                const { bloodShards, unbankedShards, currentVitae, setVitae } = get();
-                // For simplicity, siphoning in prototype uses banked shards first, then unbanked
-                const totalShards = bloodShards + unbankedShards;
-                
-                if (totalShards < cost) return false;
-                
-                if (bloodShards >= cost) {
-                    set({ bloodShards: bloodShards - cost });
-                } else {
-                    set({ 
-                        bloodShards: 0, 
-                        unbankedShards: unbankedShards - (cost - bloodShards) 
-                    });
-                }
-                
-                const healAmount = Math.floor(maxHp * 0.20);
-                setVitae(Math.min(maxHp, currentVitae + healAmount));
-                return true;
-            },
-
             setFinesseTicks: (ticks) => set({ finesseTicksRemaining: ticks }),
 
             stabilizeIchor: () => set((state) => {
@@ -538,7 +519,6 @@ export const usePlayerStore = create<PlayerState>()(
                         scentGainMultiplier: 1,
                         lootQualityMultiplier: 1,
                         maxHpMultiplier: 1,
-                        lifestealBonus: 0,
                         speedMultiplier: 1,
                         armorBonus: 0
                     };
@@ -547,7 +527,6 @@ export const usePlayerStore = create<PlayerState>()(
                         mods.scentGainMultiplier *= (r.modifiers.scentGainMultiplier ?? 1);
                         mods.lootQualityMultiplier *= (r.modifiers.lootQualityMultiplier ?? 1);
                         mods.maxHpMultiplier *= (r.modifiers.maxHpMultiplier ?? 1);
-                        mods.lifestealBonus += (r.modifiers.lifestealBonus ?? 0);
                         mods.speedMultiplier *= (r.modifiers.speedMultiplier ?? 1);
                         mods.armorBonus += (r.modifiers.armorBonus ?? 0);
                     });
@@ -584,7 +563,6 @@ export const usePlayerStore = create<PlayerState>()(
                     scentGainMultiplier: 1,
                     lootQualityMultiplier: 1,
                     maxHpMultiplier: 1,
-                    lifestealBonus: 0,
                     speedMultiplier: 1,
                     armorBonus: 0
                 }
@@ -593,7 +571,7 @@ export const usePlayerStore = create<PlayerState>()(
         }),
         {
             name: 'crimson-engine-player',
-            version: 5,
+            version: 6,
             migrate: (persistedState: any, version: number) => {
                 if (version < 4) {
                     if (!persistedState.food || persistedState.food.length === 0) {
@@ -608,10 +586,21 @@ export const usePlayerStore = create<PlayerState>()(
                         scentGainMultiplier: 1,
                         lootQualityMultiplier: 1,
                         maxHpMultiplier: 1,
-                        lifestealBonus: 0,
                         speedMultiplier: 1,
                         armorBonus: 0
                     };
+                }
+                if (version < 6) {
+                    // Initialize new skills if they don't exist
+                    const skills = persistedState.skills || {};
+                    const newSkills = [
+                        'nightForaging', 'graveHarvesting', 'forging', 
+                        'corpseHarvesting', 'alchemy'
+                    ];
+                    newSkills.forEach(s => {
+                        if (!skills[s]) skills[s] = { level: 1, xp: 0 };
+                    });
+                    persistedState.skills = skills;
                 }
                 return persistedState;
             }

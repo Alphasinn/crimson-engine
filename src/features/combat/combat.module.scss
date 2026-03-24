@@ -1545,10 +1545,14 @@
 }
 
 .miniScentTrack {
-    @include progress-bar-base(10px, rgba(255, 255, 255, 0.1));
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    @include progress-bar-base(32px, rgba(0, 0, 0, 0.5));
+    border: 2px solid rgba($color-blood-light, 0.4);
     box-sizing: border-box;
     position: relative;
+    box-shadow: 
+        inset 0 0 15px rgba(0, 0, 0, 0.6), 
+        0 0 10px rgba($color-blood-light, 0.2);
+    margin: $space-1 0;
 }
 
 .scentMarker {
@@ -1560,9 +1564,10 @@
     pointer-events: none;
     
     &.markerBoss {
-        background: $color-vile;
-        opacity: 0.8;
-        box-shadow: 0 0 6px rgba($color-vile, 0.8);
+        background: $color-gold;
+        opacity: 1;
+        box-shadow: 0 0 10px $color-gold-glow;
+        z-index: 5;
     }
     
     &.markerCondense {
@@ -1573,19 +1578,45 @@
 
 .miniScentFill {
     height: 100%;
-    background: linear-gradient(90deg, #c41e3a, #ff3355);
-    box-shadow: 0 0 10px rgba(196, 30, 58, 0.4);
-    transition: width 0.3s ease;
+    background: linear-gradient(90deg, $color-vile-light, $color-blood-light, #ff0000);
+    background-size: 200% 100%;
+    animation: scentFlow 3s linear infinite;
+    box-shadow: 0 0 15px rgba($color-blood-light, 0.5), inset 0 0 8px rgba(255, 255, 255, 0.2);
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes scentFlow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
 }
 
 .miniScentLabel {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 10px;
-    font-family: $font-mono;
+    font-size: 11px;
+    font-family: $font-heading;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    color: $color-text-primary;
+    text-shadow: 0 0 10px rgba($color-blood-light, 0.4);
+}
+
+.miniScentTitle {
+    color: $color-text-secondary;
+}
+
+.miniScentBossWarning {
+    color: $color-gold;
+    font-weight: $font-weight-bold;
+    animation: pulse 2s infinite;
+    margin: 0 $space-2;
+}
+
+.miniScentValue {
+    color: $color-gold;
+    font-family: $font-mono;
 }
 
 // Scourge Info in Sidebar
@@ -1719,33 +1750,6 @@
     100% { border-color: rgba(196, 30, 58, 0.4); }
 }
 
-.miniScentTitle {
-    color: $color-text-secondary;
-}
-
-.miniScentBossWarning {
-    color: $color-blood-light;
-    font-weight: $font-weight-bold;
-    animation: pulse 2s infinite;
-}
-
-.miniScentValue {
-    color: $color-gold;
-}
-
-.miniScentTrack {
-    height: 3px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 1px;
-    overflow: hidden;
-}
-
-.miniScentFill {
-    height: 100%;
-    background: linear-gradient(to right, $color-crimson, $color-blood-light);
-    border-radius: 1px;
-    transition: width 0.3s ease;
-}
 
 .prepSkills {
     display: grid;

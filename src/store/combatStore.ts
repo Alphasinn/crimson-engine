@@ -58,11 +58,9 @@ interface CombatState {
         scentGainMultiplier: number;
         lootQualityMultiplier: number;
         maxHpMultiplier: number;
-        lifestealBonus: number;
         speedMultiplier: number;
         armorBonus: number;
     };
-    condensationCount: number;
 
     // Event Log
     log: CombatEvent[];
@@ -97,7 +95,6 @@ interface CombatState {
     // Stats Actions
     recordStat: (type: StatWindowEntry['type'], value: number) => void;
     pruneStats: () => void;
-    condenseScent: () => void;
 
     // Session Actions
     startSession: () => void;
@@ -110,7 +107,6 @@ interface CombatState {
         metrics?: {
             flickerTriggers?: number;
             ironboundTriggers?: number;
-            condensationUses?: number;
             peakScent?: number;
             timeAbove60Scent?: number;
             timeAbove80Scent?: number;
@@ -151,11 +147,9 @@ export const useCombatStore = create<CombatState>()((set) => ({
         scentGainMultiplier: 1,
         lootQualityMultiplier: 1,
         maxHpMultiplier: 1,
-        lifestealBonus: 0,
         speedMultiplier: 1,
         armorBonus: 0
     },
-    condensationCount: 0,
 
     log: [],
     splats: [],
@@ -231,7 +225,6 @@ export const useCombatStore = create<CombatState>()((set) => ({
             statsWindow: [],
             statsStartTime: null,
             huntEvaluation: null,
-            condensationCount: 0,
         }),
 
     // Flee: stop combat and return to zone select, but keep the log
@@ -282,7 +275,6 @@ export const useCombatStore = create<CombatState>()((set) => ({
                 bossesSlain: 0,
                 flickerTriggers: 0,
                 ironboundTriggers: 0,
-                condensationUses: 0,
                 activeRitualIds: playerState.activeRituals.map(r => r.id),
                 peakScent: 0,
                 timeAbove60Scent: 0,
@@ -316,7 +308,6 @@ export const useCombatStore = create<CombatState>()((set) => ({
         metrics?: {
             flickerTriggers?: number;
             ironboundTriggers?: number;
-            condensationUses?: number;
             peakScent?: number;
             timeAbove60Scent?: number;
             timeAbove80Scent?: number;
@@ -355,7 +346,6 @@ export const useCombatStore = create<CombatState>()((set) => ({
                 scentGainMultiplier: 1,
                 lootQualityMultiplier: 1,
                 maxHpMultiplier: 1,
-                lifestealBonus: 0,
                 speedMultiplier: 1,
                 armorBonus: 0
             }
@@ -369,8 +359,4 @@ export const useCombatStore = create<CombatState>()((set) => ({
     })),
 
     setViewMode: (mode) => set({ viewMode: mode }),
-
-    condenseScent: () => {
-        // This is bridged to the engine instance in useCombatEngine.ts
-    },
 }));

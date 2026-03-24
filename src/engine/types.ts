@@ -10,7 +10,12 @@ export type SkillName =
     | 'bloodSorcery'
     | 'vitae'
     | 'bloodletting'
-    | 'distillation';
+    | 'graveHarvesting'
+    | 'nightForaging'
+    | 'distillation'
+    | 'forging'
+    | 'corpseHarvesting'
+    | 'alchemy';
 
 export type CombatStyle = 'melee' | 'archery' | 'sorcery';
 
@@ -87,10 +92,6 @@ export interface EquipmentItem {
     blockChance?: number;         // 0.0–0.20
     flatArmor?: number;
     // Special
-    lifestealPercent?: number;    // 0.0–1.0 fraction of damage dealt
-    regenPerSec?: number;         // HP restored every second
-    siphonChance?: number;        // 0.0–1.0 chance to trigger Blood Siphon
-    siphonAmount?: number;        // 0.0–1.0 fraction of incoming damage to recover
     armPen?: number;              // 0.0–1.0 fraction of flat armor to ignore
     minDamagePct?: number;        // 0.0–1.0 fraction of max hit as minimum damage
     specialTrait?: string;
@@ -173,8 +174,7 @@ export type CombatEventType =
     | 'auto_eat'
     | 'player_death'
     | 'loot'
-    | 'respawn'
-    | 'siphon';
+    | 'respawn';
 
 export interface CombatEvent {
     id: string;
@@ -204,7 +204,6 @@ export interface ActiveCombat {
     redMistTicks: number;     // Session ticks in Red Mist
     redMistIchorDrops: number;
     redMistDeaths: number;
-    siphonsThisHunt: number;  // For scaling cost
     finesseTicksRemaining: number;
     isBraced: boolean;
     // Phase 2C: Scent refinement
@@ -219,7 +218,6 @@ export interface ActiveCombat {
     isIronbound?: boolean;
     ironboundTicks?: number;
     activeRituals?: string[]; // IDs of rituals
-    condensationCount: number;
 }
 
 // --- Derived Player Stats (computed each frame, not stored) ---
@@ -234,10 +232,6 @@ export interface DerivedStats {
     attackInterval: number;
     blockChance: number;
     flatArmor: number;
-    lifestealPercent: number;
-    regenPerSec: number;
-    siphonChance: number;
-    siphonAmount: number;
     armPen: number;              // Total armor pen from gear/weapon
     minDamagePct: number;        // Highest min damage floor from gear
     scentSensitivity: number;    // Phase 2B: 0.0 to 0.50
@@ -290,7 +284,6 @@ export interface SessionStats {
     // Phase 4 metrics
     flickerTriggers?: number;
     ironboundTriggers?: number;
-    condensationUses?: number;
     activeRitualIds?: string[];
     peakScent?: number;
     timeAbove60Scent?: number; // In ticks
@@ -324,7 +317,6 @@ export interface RitualDefinition {
         scentGainMultiplier?: number;
         lootQualityMultiplier?: number;
         maxHpMultiplier?: number;
-        lifestealBonus?: number;
         speedMultiplier?: number;
         armorBonus?: number;
     };

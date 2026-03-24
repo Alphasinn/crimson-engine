@@ -1,4 +1,4 @@
-import { useHarvestingStore } from '../../store/harvestingStore';
+import { useSkillingStore } from '../../store/skillingStore';
 import { usePlayerStore } from '../../store/playerStore';
 import { BLOOD_TIERS } from '../../data/harvesting';
 import styles from './DistillationView.module.scss';
@@ -6,10 +6,10 @@ import React from 'react';
 
 export const DistillationView: React.FC = () => {
     const { skills, inventory } = usePlayerStore();
-    const { activeNodeId, actionType, isActive, progressTimer, requiredTicks, startAction, stopAction } = useHarvestingStore();
+    const { activeNodeId, activeSkill, isActive, progressTimer, requiredTicks, startAction, stopAction } = useSkillingStore();
 
     const distillationLevel = skills.distillation?.level || 1;
-    const isDistilling = isActive && actionType === 'distilling';
+    const isDistilling = isActive && activeSkill === 'distillation';
 
     return (
         <div className={styles.container}>
@@ -41,7 +41,7 @@ export const DistillationView: React.FC = () => {
                             onClick={() => {
                                 if (!isUnlocked) return;
                                 if (isThisActive) stopAction();
-                                else if (canStart) startAction(node.id, 'distilling');
+                                else if (canStart) startAction(node.id, 'distillation');
                             }}
                         >
                             <div className={styles.cardHeader}>

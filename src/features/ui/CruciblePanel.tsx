@@ -116,7 +116,7 @@ export const CruciblePanel: React.FC = () => {
                                     <span className={styles.itemName}>Sanguine Finesse</span>
                                 </div>
                                 <div className={styles.yieldInfo} style={{ marginTop: '2px', marginBottom: '2px' }}>
-                                    <small>+5% Accuracy & 2x Lifesteal (Low HP) for 20s</small>
+                                    <small>+5% Accuracy for 20s</small>
                                 </div>
                                 <div className={styles.costArea}>
                                     <span className={`${styles.costItem} ${bloodShards >= 15 ? styles.affordable : styles.unaffordable}`}>
@@ -248,7 +248,7 @@ export const CruciblePanel: React.FC = () => {
                                                     className={`${styles.sanguineBtn} ${isReadyShift ? styles.readyGreen : ''}`}
                                                     onClick={() => handleTierShift(slot, 'sanguine')}
                                                     disabled={!isReadyShift}
-                                                    title="Focus: Speed & Lifesteal"
+                                                    title="Focus: Speed & Finesse"
                                                 >
                                                     Sanguine Path
                                                 </button>

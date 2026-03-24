@@ -29,6 +29,7 @@ const ENEMIES: Enemy[] = [
             { itemId: 'torn_cloth', itemName: 'Torn Cloth', weight: 50 },
             { itemId: 'copper_coin', itemName: 'Copper Coin', weight: 35 },
             { itemId: 'rusted_fang', itemName: 'Rusted Fang', weight: 15 },
+            { itemId: 'low_remains', itemName: 'Sattered Remains', weight: 20 },
         ],
     },
     {
@@ -167,6 +168,7 @@ const ENEMIES: Enemy[] = [
             { itemId: 'wolf_pelt', itemName: 'Wolf Pelt', weight: 40 },
             { itemId: 'wolf_fang', itemName: 'Wolf Fang', weight: 35 },
             { itemId: 'dark_blood', itemName: 'Dark Blood', weight: 25 },
+            { itemId: 'bone_remains', itemName: 'Animal Remains', weight: 30 },
         ],
     },
     {
@@ -255,6 +257,7 @@ const ENEMIES: Enemy[] = [
             { itemId: 'werewolf_claw', itemName: 'Werewolf Claw', weight: 35 },
             { itemId: 'moon_essence', itemName: 'Moon Essence', weight: 30 },
             { itemId: 'cursed_silver', itemName: 'Cursed Silver', weight: 35 },
+            { itemId: 'tough_remains', itemName: 'Tough Remains', weight: 25 },
         ],
     },
     {

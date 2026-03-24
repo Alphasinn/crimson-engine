@@ -25,9 +25,6 @@ import {
 import {
     MC_POWER_DEFAULT,
     MC_POWER_SLASH,
-    SIPHON_HEAL_PCT,
-    SIPHON_BASE_COST,
-    SIPHON_COST_EXPONENT,
     SCENT_BUILD_INTERVAL,
     SCENT_INCREMENT,
     RED_MIST_ICHOR_MOD,
@@ -76,9 +73,7 @@ export interface CombatCallbacks {
     onHitXp: (gains: Partial<PlayerSkills>) => void;
     onLog: (event: CombatEvent) => void;
     onLoot: (item: { itemId: string, itemName: string, quantity: number }, isRedMist: boolean) => void;
-    onTrySiphon: (cost: number, callback: (success: boolean) => void) => void;
     getEnemyData: (id: string) => Enemy | null;
-    // Distill Actions
     sanguineFinesse: () => void;
     vileReinforcement: () => void;
 }
@@ -115,7 +110,6 @@ export class CombatEngine {
 
     // Phase 2A State
     private _scentIntensity: number = 0.0;
-    private siphonsThisHunt: number = 0;
     private redMistTicks: number = 0;
     private redMistIchorDrops: number = 0;
     private redMistDeaths: number = 0;
@@ -140,7 +134,6 @@ export class CombatEngine {
     private ironboundTicksRemaining: number = 0;
     private isDashReady: boolean = true;
     private activeRitualIds: string[] = [];
-    private condensationCount: number = 0;
 
     // Phase 4 Sprint 4 Metrics
     private flickerTriggers: number = 0;
@@ -190,9 +183,7 @@ export class CombatEngine {
             scentGainMultiplier: 1,
             lootQualityMultiplier: 1,
             maxHpMultiplier: 1,
-            lifestealBonus: 0,
-            speedMultiplier: 1,
-            armorBonus: 0
+            ticksSinceLastSpawn: 0,
         };
         this.resonanceState = resonanceState || { activePath: null, bonuses: {} };
         this.activeRitualIds = activeRitualIds || [];
@@ -200,7 +191,7 @@ export class CombatEngine {
         this.dashCooldownTicks = 0;
         this.flickerTicksRemaining = 0;
         this.ironboundTicksRemaining = 0;
-        this.condensationCount = 0;
+
         this.flickerTriggers = 0;
         this.ironboundTriggers = 0;
         this.peakScent = 0;
@@ -227,6 +218,9 @@ export class CombatEngine {
         this.intervalId = setInterval(() => this.tick(), TICK_MS);
     }
 
+    /**
+     * Stop the combat engine.
+     */
     stop(): void {
         if (this.intervalId !== null) {
             clearInterval(this.intervalId);
@@ -237,33 +231,6 @@ export class CombatEngine {
             this.respawnTimeoutId = null;
         }
         this.isRunning = false;
-    }
-
-    condenseScent(): void {
-        if (!this.isRunning || this._scentIntensity < 0.8) return;
-
-        // Formula: max(40% current HP, 15% max HP)
-        const costBasedOnCurrent = this.playerHp * 0.4;
-        const costBasedOnMax = this.playerMaxHp * 0.15;
-        const finalCost = Math.max(costBasedOnCurrent, costBasedOnMax);
-
-        // Apply cost (Safety: Floor at 1 HP)
-        this.playerHp = Math.max(1, this.playerHp - finalCost);
-
-        // Apply effect: -25% Scent
-        this._scentIntensity = Math.max(0, this._scentIntensity - 0.25);
-        this.condensationCount++;
-
-        // Notify via log
-        this.callbacks.onLog({
-            id: crypto.randomUUID(),
-            type: 'hit', // Reusing hit for color/style similar to self-harm
-            tick: this.currentTick,
-            message: `Scent Condensed! (-25% Scent, Cost: ${Math.round(finalCost)} Vitae)`,
-            value: -Math.round(finalCost)
-        });
-
-        this.callbacks.onTick(this.getActiveCombatState());
     }
 
     /** Update player skills/equipment/trainingMode mid-session */
@@ -407,7 +374,6 @@ export class CombatEngine {
         // --- Phase 4 S4: Constant Lifecycle Logic ---
         // Scent and Regen now build regardless of whether an enemy is active
         this.tryAutoEat();
-        this.trySiphon();
         
         const hpRatio = this.playerHp / this.playerMaxHp;
         const wasRedMist = this.isRedMistActive;
@@ -423,9 +389,8 @@ export class CombatEngine {
         if (ticksSinceStart > 0 && ticksSinceStart % SCENT_BUILD_INTERVAL === 0) {
             const scentPenaltyMultiplier = 1 + this.derived.scentSensitivity;
             const ritualScentMult = this.ritualModifiers?.scentGainMultiplier || 1;
-            const condensationPenalty = 1 + (this.condensationCount * 0.10);
             
-            const totalScentGain = SCENT_INCREMENT * scentPenaltyMultiplier * ritualScentMult * condensationPenalty;
+            const totalScentGain = SCENT_INCREMENT * scentPenaltyMultiplier * ritualScentMult;
             this._scentIntensity = Math.min(SCENT_ACCURACY_CAP, this._scentIntensity + totalScentGain);
         }
 
@@ -459,12 +424,6 @@ export class CombatEngine {
                 this.log('xp_gain' as any, "Sanguine Finesse fades.");
                 this.recomputeDerived();
             }
-        }
-
-        // Spectral Regeneration
-        if (this.derived.regenPerSec > 0 && this.playerHp < this.playerMaxHp) {
-            const regenAmount = this.derived.regenPerSec * (TICK_MS / 1000);
-            this.playerHp = Math.min(this.playerMaxHp, this.playerHp + regenAmount);
         }
 
         // --- Phase 4 S4: Respawn Timer / Combat Logic Split ---
@@ -551,7 +510,6 @@ export class CombatEngine {
             redMistTicks: this.redMistTicks,
             redMistIchorDrops: this.redMistIchorDrops,
             redMistDeaths: this.redMistDeaths,
-            siphonsThisHunt: this.siphonsThisHunt,
             finesseTicksRemaining: this.finesseTicksRemaining,
             isBraced: this.isBraced,
             isBossPending: this.isBossPending,
@@ -562,7 +520,6 @@ export class CombatEngine {
             isIronbound: this.ironboundTicksRemaining > 0,
             ironboundTicks: this.ironboundTicksRemaining,
             activeRituals: this.activeRitualIds,
-            condensationCount: this.condensationCount,
             // Phase 4 Metrics
             flickerTriggers: this.flickerTriggers,
             ironboundTriggers: this.ironboundTriggers,
@@ -666,12 +623,6 @@ export class CombatEngine {
             // --- Per-hit XP (Idle Clans model) ---
             const xpGains = calcHitXpGains(damage, this.trainingMode);
             this.callbacks.onHitXp(xpGains);
-
-            // Check for lifesteal
-            if (this.derived.lifestealPercent > 0) {
-                const healed = Math.floor(damage * this.derived.lifestealPercent);
-                this.playerHp = Math.min(this.playerMaxHp, this.playerHp + healed);
-            }
         } else {
             this.log('miss', `You missed ${this.enemy.name}.`);
         }
@@ -683,7 +634,6 @@ export class CombatEngine {
             this.handleEnemyDeath();
         }
     }
-
     private resolveEnemyAttack(): void {
         if (!this.enemy) return;
  
@@ -740,33 +690,24 @@ export class CombatEngine {
                         0, // Player doesn't have ARMPEN yet
                         this.enemy.damageProfile,
                         this.enemy.attackInterval
-                    );
+                    );                    
                     damage = Math.min(mitigated, this.playerHp); // Cap damage to current player HP
                     this.playerHp -= damage;
-                    // Phase 4 Audit: REMOVED _scentIntensity *= 0.5 (redundant and suppresses pressure)
                     this.log('enemy_hit', `${this.enemy.name} hits you for ${damage} damage.`, damage);
 
                     // --- Phase 4: Stagger (Meter Setback) ---
                     if (this.ironboundTicksRemaining <= 0) {
                         this.playerMeter = Math.max(0, this.playerMeter - 0.1);
-                        this.log('auto_eat' as any, "Staggered! (-10% Meter)");
-                    }
-
-                    // --- Blood Siphon (v1.2 Sorcery Set Bonus) ---
-                    if (this.derived.siphonChance > 0 && Math.random() < this.derived.siphonChance) {
-                        const siphoned = Math.floor(damage * this.derived.siphonAmount);
-                        if (siphoned > 0) {
-                            this.playerHp = Math.min(this.playerMaxHp, this.playerHp + siphoned);
-                            this.log('siphon', `Blood Siphon triggered! Recovered ${siphoned} HP.`, siphoned);
-                        }
+                        this.log('auto_eat', "Staggered! (-10% Meter)");
                     }
                 } else {
                     this.log('enemy_miss', `You blocked ${this.enemy.name}'s attack!`);
+
                     // --- Phase 4: Vile Resonance (Ironbound) ---
                     if (this.resonanceState.activePath === 'vile') {
                         this.ironboundTicksRemaining = 100; // 2s
                         this.ironboundTriggers++;
-                        this.log('auto_eat' as any, "Ironbound active!");
+                        this.log('auto_eat', "Ironbound active!");
                     }
                 }
             }
@@ -855,34 +796,17 @@ export class CombatEngine {
         this.callbacks.onAutoEat(healed);
     }
 
-    private trySiphon(): void {
-        // Siphoning triggers if HP is low and we have shards (handled by callbacks/store)
-        if (this.playerHp / this.playerMaxHp > 0.3) return; 
-
-        const cost = Math.floor(SIPHON_BASE_COST * Math.pow(SIPHON_COST_EXPONENT, this.siphonsThisHunt));
-        
-        // This call will be bridged to playerStore.siphon(this.playerMaxHp) via callback
-        this.callbacks.onTrySiphon(cost, (success: boolean) => {
-            if (success) {
-                this.siphonsThisHunt++;
-                this._scentIntensity *= 0.75; // Phase 4 S4: Reduced from 0.5 (25% clear)
-                this.log('siphon', `Siphoned Blood Shards (+${Math.floor(this.playerMaxHp * SIPHON_HEAL_PCT)} HP). Cost: ${cost} Shards.`);
-            }
-        });
-    }
-
     private log(type: CombatEventType, message: string, value?: number): void {
         const event: CombatEvent = {
             id: `${this.currentTick}-${type}-${Math.random().toString(36).slice(2, 7)}`,
             type,
             tick: this.currentTick,
             message,
-            value,
+            value
         };
         this.callbacks.onLog(event);
     }
-
-    private updateActiveEvent() {
+    private updateActiveEvent(): void {
         const scent = this._scentIntensity;
         let newEvent: string | null = null;
 
@@ -898,7 +822,7 @@ export class CombatEngine {
         }
     }
 
-    private checkForBossTrigger() {
+    private checkForBossTrigger(): void {
         if (this.prevScent < BOSS_SCENT_THRESHOLD && this._scentIntensity >= BOSS_SCENT_THRESHOLD && !this.hasSpawnedBoss) {
             this.isBossPending = true;
             this.log('respawn', "A powerful presence is drawn to your scent... The hunt is escalating!");

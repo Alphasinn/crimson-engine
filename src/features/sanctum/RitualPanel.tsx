@@ -21,15 +21,6 @@ const AVAILABLE_RITUALS: RitualDefinition[] = [
             speedMultiplier: 0.8,
             armorBonus: 15
         }
-    },
-    {
-        id: 'ritual_siphon',
-        name: 'Blood Siphon Ritual',
-        description: 'Lower your maximum vitality to vastly increase lifesteal effectiveness.',
-        modifiers: {
-            maxHpMultiplier: 0.75,
-            lifestealBonus: 0.05
-        }
     }
 ];
 
@@ -112,11 +103,6 @@ export const RitualPanel: React.FC = () => {
                         {nextHuntModifiers.armorBonus > 0 && (
                             <div className={styles.modItem}>
                                 <span>Flat Armor:</span> +{nextHuntModifiers.armorBonus}
-                            </div>
-                        )}
-                        {nextHuntModifiers.lifestealBonus > 0 && (
-                            <div className={styles.modItem}>
-                                <span>Lifesteal:</span> +{(nextHuntModifiers.lifestealBonus * 100).toFixed(0)}%
                             </div>
                         )}
                     </div>
