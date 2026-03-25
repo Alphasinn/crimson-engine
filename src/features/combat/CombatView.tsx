@@ -81,7 +81,7 @@ export function CombatView() {
         lastEnemyCritStamp, viewMode, setViewMode,
         currentTick,
         isDashReady, flickerTicks, ironboundTicks, isIronbound, activeRituals,
-        dashCooldownTicks
+        dashCooldownTicks, setZone, updateCombatState
     } = useCombatStore();
     const { 
         trainingMode, setTrainingMode, equipment, 
@@ -275,6 +275,25 @@ export function CombatView() {
                 {!unlockedUpgrades.includes('auto_eat') && (
                     <div className={styles.lockedOverlay}>LOCKED</div>
                 )}
+            </div>
+
+            {/* DEBUG: Blood Echo Simulator */}
+            <div style={{ padding: '8px', border: '1px solid rgba(196, 30, 58, 0.4)', borderRadius: '4px', marginBottom: '12px', background: 'rgba(0,0,0,0.3)' }}>
+                <button 
+                    onClick={() => {
+                        const targetZone = ZONES.find(z => z.id === 'grimwood_forest');
+                        updateCombatState({
+                            selectedZone: targetZone || selectedZone,
+                            scentIntensity: 1.0,
+                            queuedBloodEchoId: 'skinwalker_alpha',
+                            scentLockTicks: 0 // Ensure no lock is blocking
+                        });
+                        console.log("DEBUG: Surgical Skinwalker injection.");
+                    }}
+                    style={{ width: '100%', padding: '6px', background: '#c41e3a', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 'bold' }}
+                >
+                    DEBUG: SPAWN SKINWALKER
+                </button>
             </div>
 
             {/* Scent of Fear — Dynamic tactical info */}
