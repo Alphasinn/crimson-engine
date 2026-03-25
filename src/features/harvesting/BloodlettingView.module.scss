@@ -48,131 +48,113 @@
 }
 
 .card {
-    background: rgba(20, 20, 25, 0.8);
-    border: 1px solid $color-border;
+    background: linear-gradient(180deg, rgba(30, 30, 45, 0.9) 0%, rgba(15, 15, 25, 0.95) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: $radius-md;
-    padding: $space-4;
+    padding: $space-5 $space-4 $space-1 $space-4; // Extra bottom space for progress bar
     display: flex;
     flex-direction: column;
-    gap: $space-3;
+    align-items: center;
+    text-align: center;
+    gap: $space-4;
     cursor: pointer;
     transition: all $transition-fast;
     position: relative;
     overflow: hidden;
+    min-height: 280px;
 
     &:hover:not(.locked) {
         border-color: $color-border-accent;
+        background: linear-gradient(180deg, rgba(40, 40, 60, 0.95) 0%, rgba(20, 20, 35, 1) 100%);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    }
-
-    &.locked {
-        opacity: 0.5;
-        cursor: not-allowed;
-        filter: grayscale(1);
+        box-shadow: $shadow-elevated;
     }
 
     &.active {
         border-color: $color-crimson;
-        background: rgba(40, 10, 15, 0.8);
-        box-shadow: 0 0 15px rgba(196, 30, 58, 0.15);
+        box-shadow: 0 0 20px rgba(196, 30, 58, 0.2);
+    }
+
+    &.locked {
+        filter: grayscale(1) brightness(0.5);
+        cursor: not-allowed;
     }
 }
 
-.cardHeader {
-    @include flex-between();
-    margin-bottom: $space-2;
+.topInfo {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
 }
 
 .nodeName {
     font-family: $font-heading;
-    font-size: $font-size-md;
-    color: $color-text-primary;
+    font-size: $font-size-xl;
+    color: white;
     margin: 0;
+    letter-spacing: 0.05em;
 }
 
-.reqBadge, .lockBadge {
-    font-size: $font-size-xs;
-    padding: 2px 6px;
-    border-radius: $radius-sm;
-    font-family: $font-mono;
-}
-.reqBadge {
-    background: rgba(255, 255, 255, 0.1);
-    color: $color-text-secondary;
-}
-.lockBadge {
-    background: rgba(255, 0, 0, 0.2);
-    color: #ffcccc;
+.reqText {
+    font-size: $font-size-md;
+    color: #e0e0e0;
 }
 
-.cardBody {
-    display: flex;
-    flex-direction: column;
-    gap: $space-2;
-    background: rgba(0, 0, 0, 0.3);
-    padding: $space-3;
-    border-radius: $radius-sm;
+.statText {
+    font-size: $font-size-md;
+    color: #e0e0e0;
+    font-weight: $font-weight-medium;
 }
 
-.rewardRow {
+.centerIcon {
+    flex: 1;
     display: flex;
     align-items: center;
-    gap: $space-2;
-    font-weight: bold;
-    color: $color-text-primary;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    padding-bottom: $space-2;
-    margin-bottom: $space-1;
+    justify-content: center;
+    width: 100%;
 }
 
-.statRow {
-    @include flex-between();
-    font-size: $font-size-sm;
-    color: $color-text-secondary;
+.sprite {
+    max-width: 110px;
+    max-height: 110px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.5));
 }
 
-.highlight {
-    color: $color-vitae;
-    font-weight: bold;
+.emojiFallback {
+    font-size: 64px;
+    filter: drop-shadow(0 0 10px rgba(139, 0, 0, 0.4));
 }
 
-.progressTrack {
-    height: 24px;
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: $radius-sm;
-    position: relative;
-    overflow: hidden;
+.bottomInfo {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
     margin-top: auto;
+    padding-bottom: 28px; // Leave room for progress bar plus some Gap
 }
 
-.progressBar {
+.qtyText {
+    font-size: $font-size-md; // A bit smaller to match reference
+    color: #e0e0e0;
+    font-weight: $font-weight-medium;
+    padding-right: $space-4;
+}
+
+.progressOverlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 18px; // Smaller progress bar like reference
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.progressFill {
     position: absolute;
     top: 0;
     left: 0;
     height: 100%;
-    background: linear-gradient(90deg, #600, $color-crimson);
+    background: $color-crimson;
     transition: width 0.1s linear;
-}
-
-.progressLabel {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: $font-size-xs;
-    color: white;
-    font-weight: bold;
-    text-shadow: 0 0 2px black;
-    z-index: 2;
-}
-
-.cardFooter {
-    text-align: center;
-    font-size: $font-size-xs;
-    color: $color-text-muted;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-top: auto;
 }

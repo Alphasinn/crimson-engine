@@ -77,7 +77,7 @@ export function CombatView() {
         selectedZone, activeEnemy, isRunning,
         enemyHp, enemyMaxHp,
         enemyMeter, playerMeter,
-        activeEvent, isBossPending, scentIntensity,
+        activeEvent, scentIntensity,
         lastEnemyCritStamp, viewMode, setViewMode,
         currentTick,
         isDashReady, flickerTicks, ironboundTicks, isIronbound, activeRituals,
@@ -216,7 +216,7 @@ export function CombatView() {
         `}>
             <div className={styles.prepSkills}>
                 {Object.entries(skills)
-                    .filter(([name]) => name !== 'bloodletting' && name !== 'distillation')
+                    .filter(([name]) => SKILL_LABELS[name] !== undefined)
                     .map(([name, data]) => (
                         <div key={name} className={styles.miniSkillBar}>
                         <img src={SKILL_ICONS[name]} alt={name} className={styles.skillBarIcon} />
@@ -281,7 +281,6 @@ export function CombatView() {
             <div className={styles.miniScentArea}>
                 <div className={styles.miniScentLabel}>
                     <span className={styles.miniScentTitle}>Scent of Fear</span>
-                    {isBossPending && <span className={styles.miniScentBossWarning}>BOSS!</span>}
                     <span className={styles.miniScentValue}>{Math.floor(scentIntensity * 100)}%</span>
                 </div>
                 <div className={styles.miniScentTrack}>
@@ -289,8 +288,6 @@ export function CombatView() {
                         className={styles.miniScentFill} 
                         style={{ width: `${Math.min(100, scentIntensity * 100)}%` }}
                     />
-                    {/* Milestones */}
-                    <div className={`${styles.scentMarker} ${styles.markerBoss}`} title="Boss Threshold (20%)" style={{ left: '20%' }} />
                 </div>
 
                 {activeEvent && (
@@ -554,13 +551,13 @@ export function CombatView() {
                                             </div>
                                         </div>
 
-                                    <div className={`${styles.enemyCard} ${activeEnemy.isElite ? styles.eliteCard : ''} ${isCritFlashing ? styles.enemyCardCrit : ''}`} style={{ position: 'relative' }}>
+                                    <div className={`${styles.enemyCard} ${activeEnemy.isElite ? styles.eliteCard : ''} ${activeEnemy.isBloodEcho ? styles.bloodEchoCard : ''} ${isCritFlashing ? styles.enemyCardCrit : ''}`} style={{ position: 'relative' }}>
                                         <div className={styles.enemySplatOverlay} style={{ top: '40%', left: '50%' }}>
                                             <DamageSplats isPlayer={false} />
                                         </div>
 
-                                        <div className={styles.enemyName}>
-                                            {activeEnemy.isElite ? '⚔️ ' : ''}{activeEnemy.name}
+                                        <div className={`${styles.enemyName} ${activeEnemy.isBloodEcho ? styles.bloodEchoName : ''}`}>
+                                            {activeEnemy.isElite && !activeEnemy.isBloodEcho ? '⚔️ ' : ''}{activeEnemy.name}
                                         </div>
                                         <div className={styles.enemyZone}>{selectedZone?.name}</div>
                                         
@@ -569,7 +566,7 @@ export function CombatView() {
                                                 <img 
                                                     src={activeEnemy.spriteUrl} 
                                                     alt={activeEnemy.name} 
-                                                    className={styles.enemySprite} 
+                                                    className={`${styles.enemySprite} ${activeEnemy.isBloodEcho ? styles.bloodEchoSprite : ''}`} 
                                                 />
                                             </div>
                                         )}

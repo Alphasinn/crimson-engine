@@ -112,6 +112,9 @@ export const SCENT_ACCURACY_CAP = 1.00;
 export const RED_MIST_THRESHOLD = 0.30;
 /** Damage multiplier during Red Mist */
 export const RED_MIST_DMG_BONUS = 1.20;
+
+// Phase 4 S4: Blood Echoes
+export const SCENT_LOCK_DURATION_MS = 120000; // 120 seconds
 /** Additive drop rate bonus for Cursed Ichor during Red Mist */
 export const RED_MIST_ICHOR_MOD = 0.10;
 

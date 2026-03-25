@@ -9,8 +9,8 @@ import iconDefense from '../../assets/icons/defense.png';
 import iconArchery from '../../assets/icons/archery.png';
 import iconMagic from '../../assets/icons/blood_magic.png';
 import iconHp from '../../assets/icons/hp.png';
-import iconDistill from '../../assets/tech/test/distillation.png';
-import iconBlood from '../../assets/tech/test/bloodletting.png';
+import iconDistill from '../../assets/skills/distillation/distillation.png';
+import iconBlood from '../../assets/skills/bloodletting/bloodletting.png';
 // Use existing icons as placeholders for new skills
 const iconGrave = iconStrength; 
 const iconForaging = iconHp;

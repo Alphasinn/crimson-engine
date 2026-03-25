@@ -111,7 +111,7 @@ export const useSkillingStore = create<SkillingState>((set, get) => ({
 
         const nextTimer = progressTimer + 1;
 
-        if (nextTimer >= requiredTicks) {
+        if (progressTimer >= requiredTicks) {
             const node = ALL_SKILLING_NODES[activeNodeId] || HARVESTING_NODES[activeNodeId];
             const pStore = usePlayerStore.getState();
 

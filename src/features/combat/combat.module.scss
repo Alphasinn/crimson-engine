@@ -773,13 +773,6 @@
     display: none; // Retired in favor of Scent Bar warning
 }
 
-.scentBossWarning {
-    margin-left: $space-2;
-    color: $color-gold;
-    font-size: 9px;
-    letter-spacing: 0.1em;
-    animation: flashGold 1s infinite alternate;
-}
 
 .activeScourge {
     margin-top: $space-2;
@@ -982,10 +975,6 @@
     50% { transform: scale(1.03); box-shadow: 0 0 25px rgba(196, 30, 58, 0.9); }
 }
 
-@keyframes flashGold {
-    from { opacity: 0.4; }
-    to { opacity: 1; text-shadow: 0 0 15px $color-gold; }
-}
 
 .persistentHpArea {
     margin-top: auto;
@@ -1555,26 +1544,6 @@
     margin: $space-1 0;
 }
 
-.scentMarker {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    z-index: 2;
-    pointer-events: none;
-    
-    &.markerBoss {
-        background: $color-gold;
-        opacity: 1;
-        box-shadow: 0 0 10px $color-gold-glow;
-        z-index: 5;
-    }
-    
-    &.markerCondense {
-        background: #f59e0b;
-        box-shadow: 0 0 8px rgba(245, 158, 11, 0.9);
-    }
-}
 
 .miniScentFill {
     height: 100%;
@@ -2552,5 +2521,46 @@
     0% { transform: scale(1); box-shadow: 0 0 8px $color-gold-glow; }
     50% { transform: scale(1.02); box-shadow: 0 0 20px $color-gold-glow; }
     100% { transform: scale(1); box-shadow: 0 0 8px $color-gold-glow; }
+}
+
+// --- Phase 4 S4: Blood Echoes (Manifestations) ---
+.bloodEchoCard {
+    border: 2px solid #ffd700 !important; // Gold
+    box-shadow: 0 0 25px rgba(255, 213, 0, 0.5), inset 0 0 15px rgba(255, 213, 0, 0.2) !important;
+    animation: bloodEchoSpectralGlow 3s infinite alternate ease-in-out !important;
+    background: linear-gradient(135deg, rgba(255, 213, 0, 0.1), rgba(0, 0, 0, 0.4)) !important;
+}
+
+.bloodEchoName {
+    color: #ffd700 !important;
+    text-shadow: 0 0 12px rgba(255, 213, 0, 0.8), 0 0 20px rgba(255, 213, 0, 0.4) !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.2em !important;
+    text-transform: uppercase;
+    font-family: $font-heading;
+}
+
+.bloodEchoSprite {
+    filter: drop-shadow(0 0 40px rgba(255, 213, 0, 0.6)) !important;
+    animation: bloodEchoFloat 4s ease-in-out infinite alternate !important;
+}
+
+@keyframes bloodEchoSpectralGlow {
+    0% {
+        box-shadow: 0 0 15px rgba(255, 213, 0, 0.4), inset 0 0 10px rgba(255, 213, 0, 0.1);
+        border-color: rgba(255, 213, 0, 0.7);
+        filter: brightness(1);
+    }
+    100% {
+        box-shadow: 0 0 40px rgba(255, 213, 0, 0.7), inset 0 0 25px rgba(255, 213, 0, 0.3);
+        border-color: #ffd700;
+        filter: brightness(1.2);
+        transform: translateY(-2px);
+    }
+}
+
+@keyframes bloodEchoFloat {
+    0% { transform: translateY(0) scale(1); }
+    100% { transform: translateY(-10px) scale(1.02); }
 }
 

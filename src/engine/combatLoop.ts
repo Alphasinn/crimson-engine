@@ -19,7 +19,6 @@ import {
     calcHeavyWeaknessMult,
     applyMultiplicativeCompression,
     calcScentScalingDmg,
-    calcScentScalingHp,
     applyRitualBonuses,
 } from './formulas';
 import {
@@ -28,15 +27,15 @@ import {
     SCENT_BUILD_INTERVAL,
     SCENT_INCREMENT,
     RED_MIST_ICHOR_MOD,
-    BOSS_SCENT_THRESHOLD,
-    SCENT_REDUCTION_BOSS,
     EVENT_THRESHOLD_BLOODLUST,
     EVENT_THRESHOLD_CURSE,
     EVENT_THRESHOLD_FANGS,
     RED_MIST_THRESHOLD,
     SCENT_ACCURACY_CAP,
     RED_MIST_DMG_BONUS,
+    SCENT_LOCK_DURATION_MS,
 } from './constants';
+import { BLOOD_ECHOES } from '../data/bloodEchoes';
 import { rollLootEntry } from './lootRoller';
 import type {
     Enemy,
@@ -121,10 +120,7 @@ export class CombatEngine {
     private permanentArmorBonus: number = 0;
     private bloodShards: number = 0; // Local copy for Famine Rest
     // Phase 2C State
-    private isBossPending: boolean = false;
-    private hasSpawnedBoss: boolean = false;
     private activeEvent: string | null = null;
-    private prevScent: number = 0;
 
     // Phase 4: Resonance & Rituals
     private ritualModifiers: any = null;
@@ -142,6 +138,8 @@ export class CombatEngine {
     private timeAbove60Scent: number = 0;
     private timeAbove80Scent: number = 0;
     private respawnTicksRemaining: number = 0;
+    private scentLockTicks: number = 0;
+    private queuedBloodEchoId: string | null = null;
 
     constructor(callbacks: CombatCallbacks) {
         this.callbacks = callbacks;
@@ -199,11 +197,12 @@ export class CombatEngine {
         this.timeAbove80Scent = 0;
 
         this.redMistOccurred = false;
-        this._scentIntensity = 0; // Ensure scent reset
-        this.isBossPending = false;
-        this.hasSpawnedBoss = false;
+        this.timeAbove60Scent = 0;
+        this.timeAbove80Scent = 0;
+        this.respawnTicksRemaining = 0;
+        this.scentLockTicks = 0;
+        this.queuedBloodEchoId = null;
         this.activeEvent = null;
-        this.prevScent = 0;
         this.enemyIndex = 0;
         this.currentTick = 0;
         
@@ -320,36 +319,6 @@ export class CombatEngine {
         }
     }
 
-    private spawnBoss(): void {
-        if (!this.zone) return;
-        
-        // Find the elite/boss enemy for this zone by ID lookup
-        const bossId = this.zone.enemyPool.find(id => {
-            const e = this.callbacks.getEnemyData(id);
-            return e?.isElite;
-        });
-
-        const template = bossId ? this.callbacks.getEnemyData(bossId) : null;
-        if (template) {
-            // Apply Scent-based scaling to Boss
-            const scaledBoss: Enemy = {
-                ...template,
-                isElite: true,
-                name: `[BOSS] ${template.name}`,
-                stats: {
-                    ...template.stats,
-                    hp: calcScentScalingHp(template.stats.hp, this._scentIntensity),
-                    attack: calcScentScalingDmg(template.stats.attack, this._scentIntensity),
-                    strength: calcScentScalingDmg(template.stats.strength, this._scentIntensity),
-                }
-            };
-            this.setEnemy(scaledBoss);
-            this.log('event_boss' as any, `CRITICAL ADVERSARY: ${scaledBoss.name} has arrived!`);
-            this.callbacks.onRespawn(scaledBoss);
-        } else {
-            this.spawnNextEnemy();
-        }
-    }
 
     /** Called by the store to set an actual enemy object */
     setEnemy(enemy: Enemy): void {
@@ -387,11 +356,19 @@ export class CombatEngine {
 
         const ticksSinceStart = this.currentTick;
         if (ticksSinceStart > 0 && ticksSinceStart % SCENT_BUILD_INTERVAL === 0) {
-            const scentPenaltyMultiplier = 1 + this.derived.scentSensitivity;
-            const ritualScentMult = this.ritualModifiers?.scentGainMultiplier || 1;
-            
-            const totalScentGain = SCENT_INCREMENT * scentPenaltyMultiplier * ritualScentMult;
-            this._scentIntensity = Math.min(SCENT_ACCURACY_CAP, this._scentIntensity + totalScentGain);
+            if (this.scentLockTicks > 0) {
+                // Scent is locked, do not increase
+            } else {
+                const scentPenaltyMultiplier = 1 + this.derived.scentSensitivity;
+                const ritualScentMult = this.ritualModifiers?.scentGainMultiplier || 1;
+                
+                const totalScentGain = SCENT_INCREMENT * scentPenaltyMultiplier * ritualScentMult;
+                this._scentIntensity = Math.min(SCENT_ACCURACY_CAP, this._scentIntensity + totalScentGain);
+            }
+        }
+
+        if (this.scentLockTicks > 0) {
+            this.scentLockTicks--;
         }
 
         this.peakScent = Math.max(this.peakScent, this._scentIntensity);
@@ -402,8 +379,18 @@ export class CombatEngine {
             this.timeAbove60Scent++;
         }
 
-        this.checkForBossTrigger();
-        this.prevScent = this._scentIntensity;
+        // Blood Echo Trigger at 100% (1.0)
+        if (this._scentIntensity >= 1.0 && !this.queuedBloodEchoId && this.scentLockTicks <= 0) {
+            if (this.zone && BLOOD_ECHOES[this.zone.id]) {
+                const echo = BLOOD_ECHOES[this.zone.id];
+                this.queuedBloodEchoId = echo.id;
+                this._scentIntensity = 0; // Immediate reset
+                // Start 120s lock (120,000ms / 20ms = 6000 ticks)
+                this.scentLockTicks = Math.floor(SCENT_LOCK_DURATION_MS / TICK_MS);
+                this.log('event_boss' as any, "A Blood Echo manifestation looms... It will appear after this encounter.");
+            }
+        }
+
 
         // --- Phase 4 S4: Famine Rest (Safety Net) ---
         if (hpRatio < 0.30 && this.bloodShards < 5) {
@@ -512,7 +499,9 @@ export class CombatEngine {
             redMistDeaths: this.redMistDeaths,
             finesseTicksRemaining: this.finesseTicksRemaining,
             isBraced: this.isBraced,
-            isBossPending: this.isBossPending,
+            viewMode: 'home',
+            queuedBloodEchoId: this.queuedBloodEchoId,
+            scentLockTicks: this.scentLockTicks,
             // Phase 4
             isDashReady: this.isDashReady,
             dashCooldownTicks: this.dashCooldownTicks,
@@ -754,7 +743,7 @@ export class CombatEngine {
 
         // Phase 2C: Boss Resolution (Partial Scent Reset)
         if (this.enemy.isElite) {
-            this._scentIntensity = Math.max(0, this._scentIntensity - SCENT_REDUCTION_BOSS);
+            // reduction logic removed in favor of Blood Echoes model
         }
 
         // Respawn next enemy after delay
@@ -765,15 +754,24 @@ export class CombatEngine {
     private executeRespawn(): void {
         if (!this.zone) return;
 
-        // Phase 2B/2C: Deterministic Boss Spawning
-        if (this.isBossPending && !this.hasSpawnedBoss) {
-            this.isBossPending = false;
-            this.hasSpawnedBoss = true;
-            this.spawnBoss();
-        } else {
-            // No longer incrementing index automatically (Respect user target focus)
-            this.spawnNextEnemy();
+        // Phase 4 S4: Blood Echoes manifestation takes priority over all
+        if (this.queuedBloodEchoId) {
+            const echo = BLOOD_ECHOES[this.zone.id];
+            if (echo && echo.id === this.queuedBloodEchoId) {
+                this.queuedBloodEchoId = null; // Clear queue
+                // Strict cloning to prevent cross-spawn state leakage
+                const echoInstance: Enemy = {
+                    ...echo,
+                    stats: { ...echo.stats }
+                };
+                this.setEnemy(echoInstance);
+                this.log('respawn', `MANIFESTATION: ${echoInstance.name} has erupted from the echoes!`);
+                this.callbacks.onRespawn(echoInstance);
+                return;
+            }
         }
+
+        this.spawnNextEnemy();
     }
 
     private handlePlayerDeath(): void {
@@ -822,10 +820,4 @@ export class CombatEngine {
         }
     }
 
-    private checkForBossTrigger(): void {
-        if (this.prevScent < BOSS_SCENT_THRESHOLD && this._scentIntensity >= BOSS_SCENT_THRESHOLD && !this.hasSpawnedBoss) {
-            this.isBossPending = true;
-            this.log('respawn', "A powerful presence is drawn to your scent... The hunt is escalating!");
-        }
-    }
 }

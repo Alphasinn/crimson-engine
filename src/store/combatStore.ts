@@ -43,9 +43,10 @@ interface CombatState {
     currentTick: number;
     // Phase 2C Status
     activeEvent: string | null;
-    isBossPending: boolean;
     scentIntensity: number;
     lastEnemyCritStamp: number;
+    queuedBloodEchoId: string | null;
+    scentLockTicks: number;
 
     // Phase 4: Resonance & Rituals
     isDashReady: boolean;
@@ -132,9 +133,10 @@ export const useCombatStore = create<CombatState>()((set) => ({
     isDead: false,
     currentTick: 0,
     activeEvent: null,
-    isBossPending: false,
     scentIntensity: 0,
     lastEnemyCritStamp: 0,
+    queuedBloodEchoId: null,
+    scentLockTicks: 0,
     
     // Phase 4: Resonance & Rituals
     isDashReady: false,
@@ -185,8 +187,6 @@ export const useCombatStore = create<CombatState>()((set) => ({
         set({ playerMeter, enemyMeter, playerHp, enemyHp, currentTick }),
 
     applyXpGains: (_gains) => {
-        // XP is applied directly to playerStore — this is a hook for UI effects
-        // (e.g. show level-up animation). The actual XP mutation happens in playerStore.
     },
 
     addLogEvent: (event) =>
@@ -217,9 +217,10 @@ export const useCombatStore = create<CombatState>()((set) => ({
             isDead: false,
             currentTick: 0,
             activeEvent: null,
-            isBossPending: false,
             scentIntensity: 0,
             lastEnemyCritStamp: 0,
+            queuedBloodEchoId: null,
+            scentLockTicks: 0,
             log: [],
             splats: [],
             statsWindow: [],
@@ -227,7 +228,6 @@ export const useCombatStore = create<CombatState>()((set) => ({
             huntEvaluation: null,
         }),
 
-    // Flee: stop combat and return to zone select, but keep the log
     fleeCombat: () =>
         set({
             activeEnemy: null,
@@ -281,7 +281,6 @@ export const useCombatStore = create<CombatState>()((set) => ({
                 timeAbove80Scent: 0
             },
             lastSession: null,
-            // Phase 4 Rituals & Resonance Reset
             activeRitualModifiers: { ...playerState.nextHuntModifiers },
             activeRituals: playerState.activeRituals.map(r => r.id),
             isDashReady: true,
@@ -322,7 +321,6 @@ export const useCombatStore = create<CombatState>()((set) => ({
             ...metrics
         };
 
-        // Phase 3: Hunt Performance Evaluation
         const evaluation = evaluateHuntPerformance(
             lastSession,
             tickCount ?? state.currentTick,
@@ -334,7 +332,6 @@ export const useCombatStore = create<CombatState>()((set) => ({
             usePlayerStore.getState().resetCrucibleSeal();
         }
 
-        // Phase 4: Clear Rituals after Hunt
         usePlayerStore.getState().clearRituals();
 
         return {

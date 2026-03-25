@@ -144,6 +144,7 @@ export interface Enemy {
     xpReward: number;
     respawnTime: number;
     isElite: boolean;
+    isBloodEcho?: boolean;
     spriteUrl?: string; // Optional URL for visual sprites
     lootTable: LootTableEntry[];
     notes?: string;

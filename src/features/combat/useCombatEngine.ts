@@ -203,7 +203,9 @@ export function useCombatEngine() {
                     ironboundTriggers: activeCombat.ironboundTriggers,
                     peakScent: activeCombat.peakScent,
                     timeAbove60Scent: activeCombat.timeAbove60Scent,
-                    timeAbove80Scent: activeCombat.timeAbove80Scent
+                    timeAbove80Scent: activeCombat.timeAbove80Scent,
+                    queuedBloodEchoId: activeCombat.queuedBloodEchoId,
+                    scentLockTicks: activeCombat.scentLockTicks
                 });
             }
 

@@ -5,7 +5,7 @@ import styles from './BloodlettingView.module.scss';
 import React from 'react';
 
 export const BloodlettingView: React.FC = () => {
-    const { skills } = usePlayerStore();
+    const { skills, inventory } = usePlayerStore();
     const { activeNodeId, activeSkill, isActive, progressTimer, requiredTicks, startAction, stopAction } = useSkillingStore();
 
     const bloodlettingLevel = skills.bloodletting?.level || 1;
@@ -29,6 +29,8 @@ export const BloodlettingView: React.FC = () => {
                     const isUnlocked = bloodlettingLevel >= node.levelReq;
                     const isThisActive = isHarvesting && activeNodeId === node.id;
                     const pPct = isThisActive && requiredTicks > 0 ? (progressTimer / requiredTicks) * 100 : 0;
+                    
+                    const qty = inventory.find(i => i.id === node.rawItem.id)?.quantity || 0;
 
                     return (
                         <div 
@@ -40,40 +42,33 @@ export const BloodlettingView: React.FC = () => {
                                 else startAction(node.id, 'bloodletting');
                             }}
                         >
-                            <div className={styles.cardHeader}>
+                            <div className={styles.topInfo}>
                                 <h3 className={styles.nodeName}>{node.name}</h3>
-                                {isUnlocked ? (
-                                    <span className={styles.reqBadge}>Lv {node.levelReq}</span>
+                                <div className={styles.reqText}>
+                                    Level requirement: {node.levelReq}
+                                </div>
+                                <div className={styles.statText}>
+                                    {node.harvestXp} XP / {(node.baseHarvestTimeMs / 1000).toFixed(1)} Seconds
+                                </div>
+                            </div>
+
+                            <div className={styles.centerIcon}>
+                                {node.icon ? (
+                                    <img src={node.icon} alt={node.name} className={styles.sprite} />
                                 ) : (
-                                    <span className={styles.lockBadge}>Requires Lv {node.levelReq}</span>
+                                    <span className={styles.emojiFallback}>🩸</span>
                                 )}
                             </div>
 
-                            <div className={styles.cardBody}>
-                                <div className={styles.rewardRow}>
-                                    <span className={styles.rewardIcon}>🩸</span>
-                                    <span>{node.rawItem.name}</span>
-                                </div>
-                                <div className={styles.statRow}>
-                                    <span>XP/Action</span>
-                                    <span className={styles.highlight}>+{node.harvestXp}</span>
-                                </div>
-                                <div className={styles.statRow}>
-                                    <span>Time</span>
-                                    <span>{(node.baseHarvestTimeMs / 1000).toFixed(1)}s</span>
+                            <div className={styles.bottomInfo}>
+                                <div className={styles.qtyText}>
+                                    Qty: {qty.toLocaleString()}
                                 </div>
                             </div>
 
                             {isThisActive && (
-                                <div className={styles.progressTrack}>
-                                    <div className={styles.progressBar} style={{ width: `${pPct}%` }} />
-                                    <div className={styles.progressLabel}>Harvesting...</div>
-                                </div>
-                            )}
-
-                            {(!isThisActive && isUnlocked) && (
-                                <div className={styles.cardFooter}>
-                                    Click to begin
+                                <div className={styles.progressOverlay}>
+                                    <div className={styles.progressFill} style={{ width: `${pPct}%` }} />
                                 </div>
                             )}
                         </div>

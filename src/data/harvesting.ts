@@ -1,9 +1,5 @@
-// =============================================================================
-// CRIMSON ENGINE — Harvesting & Distillation Data
-// Defines the 12 tiers of raw blood sources and their derived healing vials.
-// =============================================================================
-
 import type { InventoryItem } from '../engine/types';
+import iconRat from '../assets/skills/bloodletting/plagued_rat.png';
 
 export interface HarvestingNode {
     id: string;
@@ -15,6 +11,7 @@ export interface HarvestingNode {
     baseDistillTimeMs: number;
     harvestXp: number;
     distillXp: number;
+    icon?: string;
 }
 
 export const BLOOD_TIERS: HarvestingNode[] = [
@@ -27,7 +24,8 @@ export const BLOOD_TIERS: HarvestingNode[] = [
         baseHarvestTimeMs: 2000,
         baseDistillTimeMs: 1500,
         harvestXp: 10,
-        distillXp: 15
+        distillXp: 15,
+        icon: iconRat
     },
     {
         id: 'node_stray',

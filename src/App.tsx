@@ -12,8 +12,8 @@ import { GRAVE_NODES, FORAGING_NODES, FORGING_RECIPES, CORPSE_RECIPES, ALCHEMY_R
 import { ResourceHUD } from './features/ui/ResourceHUD';
 import './styles/main.scss';
 import iconMagic from './assets/icons/blood_magic.png';
-import iconDistill from './assets/tech/test/distillation.png';
-import iconBlood from './assets/tech/test/bloodletting.png';
+import iconDistill from './assets/skills/distillation/distillation.png';
+import iconBlood from './assets/skills/bloodletting/bloodletting.png';
 import iconAttack from './assets/icons/attack.png';
 import styles from './App.module.scss';
 

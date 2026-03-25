@@ -19,8 +19,10 @@ import {
 } from '../engine/progression';
 import WEAPONS from '../data/weapons';
 import ARMOR from '../data/armor';
+import { BLOOD_ECHO_ITEMS } from '../data/bloodEchoItems';
 
-const ITEM_DATABASE = [...WEAPONS, ...ARMOR];
+const ITEM_DATABASE = [...WEAPONS, ...ARMOR] as EquipmentItem[];
+const MATERIAL_DATABASE = [...BLOOD_ECHO_ITEMS];
 
 const STARTER_FOOD: InventoryItem[] = [
     { id: 'blood_orange', name: 'Blood Orange', quantity: 25, type: 'food', healAmount: 12 },
