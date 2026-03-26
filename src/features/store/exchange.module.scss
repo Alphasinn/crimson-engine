@@ -1,7 +1,8 @@
 .root {
     padding: 32px;
     color: #f0e6d3;
-    max-width: 900px;
+    width: 100%; // Ensure it takes full width
+    max-width: 1600px; // Increased max width
     margin: 0 auto;
 }
 
@@ -25,33 +26,196 @@
     margin-top: 8px;
 }
 
-.placeholderGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 24px;
+.tabs {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 32px;
 }
 
-.placeholderCard {
-    background: rgba(30, 10, 15, 0.6);
+.tab {
+    background: rgba(30, 10, 15, 0.4);
     border: 1px solid rgba(139, 0, 0, 0.3);
-    padding: 24px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    color: #9a8fa0;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+
+    &:hover {
+        border-color: rgba(255, 51, 85, 0.5);
+        color: #e5e7eb;
+    }
+
+    &.active {
+        background: rgba(139, 0, 0, 0.2);
+        border-color: #ff3355;
+        color: #ff3355;
+        box-shadow: 0 0 15px rgba(255, 51, 85, 0.2);
+    }
+}
+
+.merchantContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+}
+
+.styleSection {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sectionTitle {
+    color: #ff3355;
+    font-size: 1.25rem;
+    letter-spacing: 2px;
+    margin: 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 51, 85, 0.2);
+    width: fit-content;
+}
+
+.merchantGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.specialTraitLine {
+    color: #ff3355;
+    font-weight: 500;
+    margin-top: 4px;
+    font-size: 0.8rem;
+}
+
+.itemCard {
+    background: rgba(20, 5, 8, 0.7);
+    border: 1px solid rgba(139, 0, 0, 0.25);
+    padding: 16px;
     border-radius: 12px;
-    backdrop-filter: blur(5px);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     transition: transform 0.2s, border-color 0.2s;
 
     &:hover {
-        transform: translateY(-5px);
-        border-color: #ff3355;
+        border-color: rgba(255, 51, 85, 0.4);
+        transform: translateY(-2px);
+    }
+}
+
+.itemHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 8px;
+}
+
+.itemName {
+    color: #f0e6d3;
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.itemTier {
+    font-size: 0.75rem;
+    background: rgba(212, 175, 55, 0.15);
+    color: #d4af37;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.itemIconContainer {
+    width: 100%;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle, rgba(139, 0, 0, 0.1) 0%, transparent 70%);
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: url('../../assets/icons/blood_magic.png') no-repeat center;
+        background-size: 80%;
+        opacity: 0.03;
+        filter: grayscale(1);
+    }
+}
+
+.itemIcon {
+    width: auto;
+    height: 90%;
+    max-width: 90%;
+    object-fit: contain;
+    z-index: 1;
+    filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.6));
+}
+
+.placeholderIcon {
+    font-size: 0.8rem;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.itemStats {
+    flex: 1;
+    font-size: 0.85rem;
+    color: #9a8fa0;
+    
+    div {
+        margin-bottom: 2px;
+    }
+}
+
+.itemPrice {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.currencyIcon {
+    width: 16px;
+    height: 16px;
+}
+
+.priceValue {
+    color: #ffcc00;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.buyBtn {
+    background: #8b0000;
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover:not(:disabled) {
+        background: #aa0000;
     }
 
-    h3 {
-        color: #d4af37;
-        margin: 0 0 12px 0;
-    }
-
-    p {
-        font-size: 0.9rem;
-        color: #e5e7eb;
-        line-height: 1.5;
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background: #333;
     }
 }

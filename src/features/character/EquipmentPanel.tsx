@@ -3,6 +3,8 @@ import { HpBar } from '@features/ui/HpBar';
 import { AttackMeter } from '@features/ui/AttackMeter';
 import styles from './equipment.module.scss';
 import type { EquipmentSlot } from '../../engine/types';
+import { ARMOR_MAP } from '../../data/armor';
+import { WEAPON_MAP } from '../../data/weapons';
 
 // Simple, dark minimalist SVGs to act as empty slot silhouettes
 const SlotIcons: Record<EquipmentSlot, React.ReactNode> = {
@@ -59,9 +61,16 @@ export function EquipmentPanel({ hpProps, meterProps }: EquipmentPanelProps) {
                     return (
                         <div key={slotKey} className={styles.slot}>
                             {item ? (
-                                // Real equipment would render here (imagine an image tag)
                                 <div className={styles.filledSlot} title={item.name}>
-                                    <span className={styles.itemInitial}>{item.name.charAt(0)}</span>
+                                    {(ARMOR_MAP.get(item.id)?.icon || WEAPON_MAP.get(item.id)?.icon) ? (
+                                        <img 
+                                            src={ARMOR_MAP.get(item.id)?.icon || WEAPON_MAP.get(item.id)?.icon} 
+                                            alt={item.name} 
+                                            className={styles.slotImage} 
+                                        />
+                                    ) : (
+                                        <span className={styles.itemInitial}>{item.name.charAt(0)}</span>
+                                    )}
                                 </div>
                             ) : (
                                 // Empty Silhouette

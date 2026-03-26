@@ -4,6 +4,27 @@
 
 import type { EquipmentItem } from '../engine/types';
 
+// T1 Armor: Rustborn Plate (Melee)
+import rustborn_helm_icon from '../assets/items/armor/melee/rustborn/rustborn_helm.png';
+import rustborn_chest_icon from '../assets/items/armor/melee/rustborn/rustborn_chest.png';
+import rustborn_legs_icon from '../assets/items/armor/melee/rustborn/rustborn_leg.png';
+import rustborn_gloves_icon from '../assets/items/armor/melee/rustborn/rustborn_gauntlets.png';
+import rustborn_boots_icon from '../assets/items/armor/melee/rustborn/rustborn_boots.png';
+
+// T1 Armor: Scout Leathers (Archery)
+import scout_helm_icon from '../assets/items/armor/archery/scout_leathers/scout_helm.png';
+import scout_chest_icon from '../assets/items/armor/archery/scout_leathers/scout_chest.png';
+import scout_legs_icon from '../assets/items/armor/archery/scout_leathers/scout_leg.png';
+import scout_gloves_icon from '../assets/items/armor/archery/scout_leathers/scout_gloves.png';
+import scout_boots_icon from '../assets/items/armor/archery/scout_leathers/scout_boots.png';
+
+// T1 Armor: Acolyte Rags (Sorcery)
+import acolyte_helm_icon from '../assets/items/armor/sorcery/acolyte_rags/acolyte_helm.png';
+import acolyte_chest_icon from '../assets/items/armor/sorcery/acolyte_rags/acolyte_robes.png';
+import acolyte_legs_icon from '../assets/items/armor/sorcery/acolyte_rags/acolyte_leg.png';
+import acolyte_gloves_icon from '../assets/items/armor/sorcery/acolyte_rags/acolyte_gloves.png';
+import acolyte_boots_icon from '../assets/items/armor/sorcery/acolyte_rags/acolyte_boots.png';
+
 const ARMOR: EquipmentItem[] = [
     // ==========================================
     // 1. MELEE ARMOR SETS (T1-T6)
@@ -15,6 +36,7 @@ const ARMOR: EquipmentItem[] = [
         accuracyBonus: 0, powerModifier: 1.0, attackIntervalFlat: 0, attackIntervalPct: 0,
         drPercent: 0.01, evasionBonus: 0, blockChance: 0, flatArmor: 1,
         siphonAmount: 0,
+        icon: rustborn_helm_icon,
         armPen: 0, minDamagePct: 0, specialTrait: '', specialTraitValue: 0, refinement: 0,
     },
     {
@@ -22,6 +44,7 @@ const ARMOR: EquipmentItem[] = [
         accuracyBonus: 0, powerModifier: 1.0, attackIntervalFlat: 0, attackIntervalPct: 0,
         drPercent: 0.02, evasionBonus: 0, blockChance: 0, flatArmor: 1,
         siphonAmount: 0,
+        icon: rustborn_chest_icon,
         armPen: 0, minDamagePct: 0, specialTrait: '', specialTraitValue: 0, refinement: 0,
     },
     {
@@ -29,6 +52,7 @@ const ARMOR: EquipmentItem[] = [
         accuracyBonus: 0, powerModifier: 1.0, attackIntervalFlat: 0, attackIntervalPct: 0,
         drPercent: 0.01, evasionBonus: 0, blockChance: 0, flatArmor: 1,
         siphonAmount: 0,
+        icon: rustborn_legs_icon,
         armPen: 0, minDamagePct: 0, specialTrait: '', specialTraitValue: 0, refinement: 0,
     },
     {
@@ -36,6 +60,7 @@ const ARMOR: EquipmentItem[] = [
         accuracyBonus: 0, powerModifier: 1.0, attackIntervalFlat: 0, attackIntervalPct: 0,
         drPercent: 0.005, evasionBonus: 0, blockChance: 0, flatArmor: 0,
         siphonAmount: 0,
+        icon: rustborn_gloves_icon,
         armPen: 0, minDamagePct: 0, specialTrait: '', specialTraitValue: 0, refinement: 0,
     },
     {
@@ -43,6 +68,7 @@ const ARMOR: EquipmentItem[] = [
         accuracyBonus: 0, powerModifier: 1.0, attackIntervalFlat: 0, attackIntervalPct: 0,
         drPercent: 0.005, evasionBonus: 0, blockChance: 0, flatArmor: 1,
         siphonAmount: 0,
+        icon: rustborn_boots_icon,
         armPen: 0, minDamagePct: 0, specialTrait: '', specialTraitValue: 0, refinement: 0,
     },
 
@@ -241,6 +267,7 @@ const ARMOR: EquipmentItem[] = [
         accuracyBonus: 5, powerModifier: 1.0, attackIntervalFlat: 0, attackIntervalPct: 0,
         drPercent: 0.005, evasionBonus: 6, blockChance: 0, flatArmor: 0,
         siphonAmount: 0,
+        icon: scout_helm_icon,
         armPen: 0, minDamagePct: 0, specialTrait: '', specialTraitValue: 0, refinement: 0,
     },
     {
@@ -248,6 +275,7 @@ const ARMOR: EquipmentItem[] = [
         accuracyBonus: 10, powerModifier: 1.0, attackIntervalFlat: 0, attackIntervalPct: 0,
         drPercent: 0.01, evasionBonus: 16, blockChance: 0, flatArmor: 1,
         siphonAmount: 0,
+        icon: scout_chest_icon,
         armPen: 0, minDamagePct: 0, specialTrait: '', specialTraitValue: 0, refinement: 0,
     },
     {
@@ -255,6 +283,7 @@ const ARMOR: EquipmentItem[] = [
         accuracyBonus: 8, powerModifier: 1.0, attackIntervalFlat: 0, attackIntervalPct: 0,
         drPercent: 0.01, evasionBonus: 10, blockChance: 0, flatArmor: 1,
         siphonAmount: 0,
+        icon: scout_legs_icon,
         armPen: 0, minDamagePct: 0, specialTrait: '', specialTraitValue: 0, refinement: 0,
     },
     {
@@ -262,6 +291,7 @@ const ARMOR: EquipmentItem[] = [
         accuracyBonus: 4, powerModifier: 1.0, attackIntervalFlat: 0, attackIntervalPct: 0,
         drPercent: 0, evasionBonus: 4, blockChance: 0, flatArmor: 0,
         siphonAmount: 0,
+        icon: scout_gloves_icon,
         armPen: 0, minDamagePct: 0, specialTrait: '', specialTraitValue: 0, refinement: 0,
     },
     {
@@ -269,6 +299,7 @@ const ARMOR: EquipmentItem[] = [
         accuracyBonus: 4, powerModifier: 1.0, attackIntervalFlat: 0, attackIntervalPct: 0,
         drPercent: 0.005, evasionBonus: 4, blockChance: 0, flatArmor: 0,
         siphonAmount: 0,
+        icon: scout_boots_icon,
         armPen: 0, minDamagePct: 0, specialTrait: '', specialTraitValue: 0, refinement: 0,
     },
 
@@ -467,6 +498,7 @@ const ARMOR: EquipmentItem[] = [
         accuracyBonus: 5, powerModifier: 1.0, attackIntervalFlat: 0, attackIntervalPct: 0,
         drPercent: 0.0025, evasionBonus: 5, blockChance: 0, flatArmor: 0,
         siphonAmount: 0,
+        icon: acolyte_helm_icon,
         armPen: 0, minDamagePct: 0, specialTrait: '', specialTraitValue: 0, refinement: 0,
     },
     {
@@ -474,6 +506,7 @@ const ARMOR: EquipmentItem[] = [
         accuracyBonus: 12, powerModifier: 1.0, attackIntervalFlat: 0, attackIntervalPct: 0,
         drPercent: 0.0025, evasionBonus: 10, blockChance: 0, flatArmor: 1,
         siphonAmount: 0,
+        icon: acolyte_chest_icon,
         armPen: 0, minDamagePct: 0, specialTrait: 'Lifesteal 1%', specialTraitValue: 0.01, refinement: 0,
     },
     {
@@ -481,6 +514,7 @@ const ARMOR: EquipmentItem[] = [
         accuracyBonus: 8, powerModifier: 1.0, attackIntervalFlat: 0, attackIntervalPct: 0,
         drPercent: 0.0025, evasionBonus: 8, blockChance: 0, flatArmor: 0,
         siphonAmount: 0,
+        icon: acolyte_legs_icon,
         armPen: 0, minDamagePct: 0, specialTrait: '', specialTraitValue: 0, refinement: 0,
     },
     {
@@ -488,6 +522,7 @@ const ARMOR: EquipmentItem[] = [
         accuracyBonus: 4, powerModifier: 1.0, attackIntervalFlat: 0, attackIntervalPct: 0,
         drPercent: 0.001, evasionBonus: 4, blockChance: 0, flatArmor: 0,
         siphonAmount: 0,
+        icon: acolyte_gloves_icon,
         armPen: 0, minDamagePct: 0, specialTrait: '', specialTraitValue: 0, refinement: 0,
     },
     {
@@ -495,6 +530,7 @@ const ARMOR: EquipmentItem[] = [
         accuracyBonus: 4, powerModifier: 1.0, attackIntervalFlat: 0, attackIntervalPct: 0,
         drPercent: 0.0015, evasionBonus: 4, blockChance: 0, flatArmor: 0,
         siphonAmount: 0,
+        icon: acolyte_boots_icon,
         armPen: 0, minDamagePct: 0, specialTrait: '', specialTraitValue: 0, refinement: 0,
     },
 

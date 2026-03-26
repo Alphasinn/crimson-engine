@@ -96,6 +96,8 @@ export interface EquipmentItem {
     minDamagePct?: number;        // 0.0–1.0 fraction of max hit as minimum damage
     specialTrait?: string;
     specialTraitValue?: number;
+    siphonAmount?: number;
+    icon?: string;
     // Phase 2B Progression
     refinement: number;           // 0-5
     specPath?: SpecializationPath;

@@ -85,8 +85,9 @@ interface PlayerState {
     };
     // Actions
     gainXp: (skill: SkillName, amount: number) => void;
-    equipItem: (item: EquipmentItem) => void;
+    equipItem: (itemId: string) => void;
     unequipItem: (slot: keyof PlayerEquipment) => void;
+    useFood: (itemId: string) => void;
     setActiveStyle: (style: CombatStyle) => void;
     setTrainingMode: (mode: TrainingMode) => void;
     addFood: (food: InventoryItem) => void;
@@ -121,6 +122,8 @@ interface PlayerState {
     clearRituals: () => void;
     computeNextHuntModifiers: () => void;
     resetPlayer: () => void;
+    // Shop Actions
+    buyItem: (itemId: string, price: number, currency?: 'bloodShards' | 'stabilizedIchor' | 'graveSteel') => boolean;
 }
 
 export const usePlayerStore = create<PlayerState>()(
@@ -174,17 +177,87 @@ export const usePlayerStore = create<PlayerState>()(
                 });
             },
 
-            equipItem: (item: EquipmentItem) => {
-                set((state) => ({
-                    equipment: { ...state.equipment, [item.slot]: item },
-                }));
+            equipItem: (itemId: string) => {
+                set((state) => {
+                    const itemInInv = state.inventory.find(i => i.id === itemId);
+                    if (!itemInInv) return state;
+
+                    const itemTemplate = ITEM_DATABASE.find(i => i.id === itemId);
+                    if (!itemTemplate || !itemTemplate.slot) return state;
+
+                    const slot = itemTemplate.slot;
+                    const currentEquipped = state.equipment[slot];
+
+                    let nextInventory = state.inventory.map(i => 
+                        i.id === itemId ? { ...i, quantity: i.quantity - 1 } : i
+                    ).filter(i => i.quantity > 0);
+
+                    if (currentEquipped) {
+                        const existingInInv = nextInventory.find(i => i.id === currentEquipped.id);
+                        if (existingInInv) {
+                            nextInventory = nextInventory.map(i => 
+                                i.id === currentEquipped.id ? { ...i, quantity: i.quantity + 1 } : i
+                            );
+                        } else {
+                            nextInventory.push({
+                                id: currentEquipped.id,
+                                name: currentEquipped.name,
+                                quantity: 1,
+                                type: 'equipment'
+                            });
+                        }
+                    }
+
+                    return {
+                        inventory: nextInventory,
+                        equipment: { ...state.equipment, [slot]: itemTemplate }
+                    };
+                });
             },
 
             unequipItem: (slot: keyof PlayerEquipment) => {
                 set((state) => {
-                    const next = { ...state.equipment };
-                    delete next[slot];
-                    return { equipment: next };
+                    const item = state.equipment[slot];
+                    if (!item) return state;
+
+                    const nextEquipment = { ...state.equipment };
+                    delete nextEquipment[slot];
+
+                    const nextInventory = [...state.inventory];
+                    const existing = nextInventory.find(i => i.id === item.id);
+                    if (existing) {
+                        existing.quantity += 1;
+                    } else {
+                        nextInventory.push({
+                            id: item.id,
+                            name: item.name,
+                            quantity: 1,
+                            type: 'equipment'
+                        });
+                    }
+
+                    return {
+                        equipment: nextEquipment,
+                        inventory: nextInventory
+                    };
+                });
+            },
+
+            useFood: (itemId: string) => {
+                set((state) => {
+                    const foodItem = state.inventory.find(i => i.id === itemId && i.type === 'food');
+                    if (!foodItem) return state;
+
+                    const healAmount = foodItem.healAmount || 0;
+                    const maxHp = state.skills.vitae.level;
+                    const newVitae = Math.min(state.currentVitae + healAmount, maxHp);
+
+                    return {
+                        currentVitae: newVitae,
+                        inventory: state.inventory.map(i => 
+                            i.id === itemId ? { ...i, quantity: i.quantity - 1 } : i
+                        ).filter(i => i.quantity > 0)
+                    };
                 });
             },
 
@@ -569,6 +642,29 @@ export const usePlayerStore = create<PlayerState>()(
                     armorBonus: 0
                 }
             }),
+
+            buyItem: (itemId, price, currency = 'bloodShards') => {
+                const state = get();
+                // @ts-ignore - dynamic key access
+                if (state[currency] >= price) {
+                    set((s) => ({
+                        // @ts-ignore
+                        [currency]: s[currency] - price
+                    }));
+                    
+                    const itemTemplate = ITEM_DATABASE.find(i => i.id === itemId);
+                    if (itemTemplate) {
+                        state.addInventoryItem({
+                            id: itemTemplate.id,
+                            name: itemTemplate.name,
+                            quantity: 1,
+                            type: 'equipment'
+                        });
+                        return true;
+                    }
+                }
+                return false;
+            },
 
         }),
         {
