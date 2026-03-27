@@ -4,11 +4,11 @@ import styles from './equipment.module.scss'; // Share glassmorphic styling
 
 export function ConsumablePanel() {
     const { food } = usePlayerStore();
-    const { useConsumable } = useCombatEngine();
+    const { handleUseConsumable } = useCombatEngine();
     const maxSlots = 4;
     
     // Fill with empty slots if less than maxSlots
-    const displaySlots = [...food.slice(0, maxSlots)];
+    const displaySlots = [...food.filter(f => f.type === 'food').slice(0, maxSlots)];
     while (displaySlots.length < maxSlots) {
         displaySlots.push(null as any);
     }
@@ -20,7 +20,7 @@ export function ConsumablePanel() {
                     key={item ? item.id : `empty-food-${idx}`} 
                     className={`${styles.consumableSlot} ${!item ? styles.empty : ''} ${item ? styles.usable : ''}`}
                     title={item ? `${item.name} (+${item.healAmount} HP)` : "Empty Food Slot"}
-                    onClick={() => item && useConsumable(item)}
+                    onClick={() => item && handleUseConsumable(item)}
                 >
                     {item ? (
                         <div className={styles.foodInfo}>

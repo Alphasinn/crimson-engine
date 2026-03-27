@@ -161,7 +161,8 @@ export class CombatEngine {
         meta?: { isBraced: boolean, permanentArmorBonus: number, bloodShards: number, finesseTicksRemaining: number },
         ritualModifiers?: any,
         resonanceState?: any,
-        activeRitualIds?: string[]
+        activeRitualIds?: string[],
+        initialEnemy?: Enemy
     ): void {
         if (this.isRunning) this.stop();
         this.zone = zone;
@@ -208,11 +209,19 @@ export class CombatEngine {
         
         this.recomputeDerived();
 
+        // Important: Set max HP from derived stats so heal logic knows the cap
         this.playerMaxHp = this.derived.maxHp;
-        // Use initialHp if provided, otherwise default to max (first time start usually)
+        // Use provided HP or default to max
         this.playerHp = initialHp !== undefined ? Math.min(initialHp, this.playerMaxHp) : this.playerMaxHp;
 
-        this.spawnNextEnemy();
+        if (initialEnemy) {
+            this.setEnemy(initialEnemy);
+            this.log('respawn', `${initialEnemy.name} appears.`);
+            this.callbacks.onRespawn(initialEnemy);
+        } else {
+            this.spawnNextEnemy();
+        }
+
         this.isRunning = true;
         this.intervalId = setInterval(() => this.tick(), TICK_MS);
     }
@@ -290,7 +299,7 @@ export class CombatEngine {
 
     private recomputeDerived(): void {
         const hpRatio = this.playerHp / (this.playerMaxHp || 10);
-        let baseStats = computeDerivedStats(this.skills, this.equipment, {
+        const baseStats = computeDerivedStats(this.skills, this.equipment, {
             permanentArmorBonus: this.permanentArmorBonus,
             isFinesseActive: this.finesseTicksRemaining > 0,
             isLowHp: hpRatio < 0.50,
@@ -327,8 +336,8 @@ export class CombatEngine {
         this.enemyMeter = 0;
         this.playerMeter = 0;
 
-        // Phase 4: Sync focus index for regular enemies
-        if (this.zone && !enemy.isElite) {
+        // Phase 4: Sync focus index for any enemy in the pool (including Elites)
+        if (this.zone) {
             const idx = this.zone.enemyPool.indexOf(enemy.id);
             if (idx !== -1) {
                 this.enemyIndex = idx;
@@ -539,7 +548,7 @@ export class CombatEngine {
 
         const hit = Math.random() <= hitChance;
         let damage = 0;
-        let blocked = false;
+        const blocked = false;
         let crit = false;
 
         if (hit) {
@@ -718,8 +727,7 @@ export class CombatEngine {
         this.log('kill', `${enemy.name} has been slain!`);
 
         // Phase 2A: Blood Shard Reward (Tier 1 baseline: 3-8)
-        const shardCount = Math.floor(3 + Math.random() * 6);
-        this.callbacks.onLoot({ itemId: 'blood_shard', itemName: 'Blood Shard', quantity: shardCount }, this.isRedMistActive);
+        this.callbacks.onLoot({ itemId: 'blood_shard', itemName: 'Blood Shard', quantity: Math.floor(3 + Math.random() * 6) }, this.isRedMistActive);
 
         // Phase 2A: Cursed Ichor Roll with Red Mist bonus
         let ichorChance = 0.05; // 5% Base for Tier 1 Elite?
@@ -728,6 +736,22 @@ export class CombatEngine {
         if (Math.random() < ichorChance) {
             if (this.isRedMistActive) this.redMistIchorDrops++;
             this.callbacks.onLoot({ itemId: 'cursed_ichor', itemName: 'Cursed Ichor', quantity: 1 }, this.isRedMistActive);
+        }
+
+        // Phase 2A: Grave Steel Roll (Refinement Currency)
+        // Elites: 100% chance for 1-2
+        // Regulars (T2+): 10% chance for 1
+        let steelCount = 0;
+        if (enemy.isElite) {
+            steelCount = Math.floor(1 + Math.random() * 2); // 1 or 2
+        } else if (this.zone && this.zone.dropTier !== 'T1') {
+            if (Math.random() < 0.10) {
+                steelCount = 1;
+            }
+        }
+
+        if (steelCount > 0) {
+            this.callbacks.onLoot({ itemId: 'grave_steel', itemName: 'Grave Steel', quantity: steelCount }, this.isRedMistActive);
         }
 
         // XP is now awarded per-hit — roll other loot

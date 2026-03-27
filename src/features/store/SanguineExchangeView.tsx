@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { usePlayerStore } from '../../store/playerStore';
 import { MERCHANTS } from '../../data/merchants';
-import { ARMOR_MAP } from '../../data/armor';
-import { WEAPON_MAP } from '../../data/weapons';
+import { ITEM_MAP } from '../../data/items';
+import type { EquipmentItem } from '../../engine/types';
 import iconShard from '../../assets/icons/blood_magic.png';
 import styles from './exchange.module.scss';
 
@@ -11,6 +11,10 @@ export const SanguineExchangeView: React.FC = () => {
     const { bloodShards, buyItem } = usePlayerStore();
 
     const merchant = MERCHANTS[activeTab];
+
+    if (!merchant) {
+        return <div className={styles.root}>Merchant not found.</div>;
+    }
 
     const handleBuy = (itemId: string, price: number) => {
         const success = buyItem(itemId, price);
@@ -46,8 +50,9 @@ export const SanguineExchangeView: React.FC = () => {
                 <div className={styles.merchantContainer}>
                     {['melee', 'archery', 'sorcery'].map(style => {
                         const items = merchant.inventory.filter(item => {
-                            const stats = ARMOR_MAP.get(item.id) || WEAPON_MAP.get(item.id);
-                            return stats?.style === style;
+                            const template = ITEM_MAP.get(item.id);
+                            const isEquipment = template && 'slot' in template;
+                            return isEquipment && (template as EquipmentItem).style === style;
                         });
 
                         if (items.length === 0) return null;
@@ -57,8 +62,8 @@ export const SanguineExchangeView: React.FC = () => {
                                 <h3 className={styles.sectionTitle}>{style.toUpperCase()}</h3>
                                 <div className={styles.merchantGrid}>
                                     {items.map((item) => {
-                                        const stats = ARMOR_MAP.get(item.id) || WEAPON_MAP.get(item.id);
-                                        if (!stats) return null;
+                                        const stats = ITEM_MAP.get(item.id) as EquipmentItem | undefined;
+                                        if (!stats || !('slot' in stats)) return null;
                                         const canAfford = bloodShards >= item.price;
                                         const isWeapon = stats.slot === 'weapon';
 

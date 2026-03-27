@@ -1,0 +1,206 @@
+﻿
+> combat_system@0.1.0 lint
+> eslint .
+
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\engine\balanceSim.ts
+  108:75  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\engine\combatLoop.ts
+   67:48  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+   70:28  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  126:30  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  127:29  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  162:27  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  163:26  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  244:27  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  245:26  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  293:13  error  'baseStats' is never reassigned. Use 'const' instead  prefer-const
+  354:52  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  390:42  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  401:43  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  411:39  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  487:37  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  542:13  error  'blocked' is never reassigned. Use 'const' instead    prefer-const
+  592:57  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  593:50  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  659:38  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\engine\formulas.ts
+  252:36  error  '_agilityLevel' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\features\character\ConsumablePanel.tsx
+  13:35  error  Unexpected any. Specify a different type                                                                                                                 @typescript-eslint/no-explicit-any
+  23:44  error  React Hook "useConsumable" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function  react-hooks/rules-of-hooks
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\features\combat\CombatView.tsx
+  151:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\features\combat\CombatView.tsx:151:13
+  149 |     useEffect(() => {
+  150 |         if (lastEnemyCritStamp > 0) {
+> 151 |             setIsCritFlashing(true);
+      |             ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  152 |             const timer = setTimeout(() => setIsCritFlashing(false), 400);
+  153 |             return () => clearTimeout(timer);
+  154 |         }                                                                                       react-hooks/set-state-in-effect
+  176:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\features\combat\CombatView.tsx:176:13
+  174 |         if (isRunning && crucibleSealed && currentTick >= 50) {
+  175 |             resetCrucibleSeal();
+> 176 |             setUnsealToast(true);
+      |             ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  177 |             setTimeout(() => setUnsealToast(false), 4000);
+  178 |         }
+  179 |     }, [isRunning, crucibleSealed, currentTick, resetCrucibleSeal]);                                                 react-hooks/set-state-in-effect
+  196:36  error  Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `setShowHuntingGains`, but the source dependencies were [fleeFromCombat, setViewMode]. Inferred different dependency than source.
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\features\combat\CombatView.tsx:196:36
+  194 |
+  195 |     // Flee ΓÇö stop combat entirely, go back to zone roster and show what we got
+> 196 |     const handleFlee = useCallback(() => {
+      |                                    ^^^^^^^
+> 197 |         fleeFromCombat();
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 198 |         setViewMode('home');
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 199 |         setShowHuntingGains(true);
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 200 |     }, [fleeFromCombat, setViewMode]);
+      | ^^^^^^ Could not preserve existing manual memoization
+  201 |
+  202 |     // Home ΓÇö keep combat running, return to zone grid
+  203 |     const handleHome = useCallback(() => {  react-hooks/preserve-manual-memoization
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\features\combat\useCombatEngine.ts
+  164:51  error    Unexpected any. Specify a different type                                                                                                        @typescript-eslint/no-explicit-any
+  165:53  error    Unexpected any. Specify a different type                                                                                                        @typescript-eslint/no-explicit-any
+  166:45  error    Unexpected any. Specify a different type                                                                                                        @typescript-eslint/no-explicit-any
+  167:52  error    Unexpected any. Specify a different type                                                                                                        @typescript-eslint/no-explicit-any
+  168:52  error    Unexpected any. Specify a different type                                                                                                        @typescript-eslint/no-explicit-any
+  276:9   warning  React Hook useMemo has unnecessary dependencies: 'equipment', 'skills', and 'startSession'. Either exclude them or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\features\inventory\InventoryView.tsx
+   8:30  error  Unexpected any. Specify a different type                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  35:33  error  React Hook "useFood" is called in function "handleAction" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"  react-hooks/rules-of-hooks
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\features\ui\AttackMeter.tsx
+  16:38  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\features\ui\AttackMeter.tsx:16:38
+  14 |     
+  15 |     // Disable transition when resetting (e.g. 100% -> 0%)
+> 16 |     const isIncreasing = safeValue > prevValueRef.current;
+     |                                      ^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  17 |     const transition = isIncreasing ? 'width 0.1s linear' : 'none';
+  18 |     
+  19 |     useEffect(() => {  react-hooks/refs
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\features\ui\CruciblePanel.tsx
+  32:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  51:19  error  '_' is defined but never used             @typescript-eslint/no-unused-vars
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\features\ui\IdleGainPanel.tsx
+  15:28  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\features\ui\IdleGainPanel.tsx:15:28
+  13 |     const rates = useMemo(() => {
+  14 |         if (!statsStartTime) return null;
+> 15 |         const timeSpanMs = Date.now() - statsStartTime;
+     |                            ^^^^^^^^^^ Cannot call impure function
+  16 |         return calculateRates(statsWindow, timeSpanMs);
+  17 |     }, [statsWindow, statsStartTime]);
+  18 |  react-hooks/purity
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\features\ui\SessionSummaryModal.tsx
+  22:30  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\features\ui\SessionSummaryModal.tsx:22:30
+  20 |     const formattedTime = useMemo(() => {
+  21 |         if (!data) return '0s';
+> 22 |         const end = active ? Date.now() : (data.endTime || Date.now());
+     |                              ^^^^^^^^^^ Cannot call impure function
+  23 |         const diff = end - data.startTime;
+  24 |         const totalSec = Math.floor(diff / 1000);
+  25 |         const mins = Math.floor(totalSec / 60);                                react-hooks/purity
+  22:60  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\features\ui\SessionSummaryModal.tsx:22:60
+  20 |     const formattedTime = useMemo(() => {
+  21 |         if (!data) return '0s';
+> 22 |         const end = active ? Date.now() : (data.endTime || Date.now());
+     |                                                            ^^^^^^^^^^ Cannot call impure function
+  23 |         const diff = end - data.startTime;
+  24 |         const totalSec = Math.floor(diff / 1000);
+  25 |         const mins = Math.floor(totalSec / 60);  react-hooks/purity
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\scripts\audit.test.ts
+   19:60  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   85:30  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  106:13  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  109:13  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  114:13  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  125:13  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  127:13  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  129:13  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  137:13  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  143:13  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  152:13  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  154:13  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  156:13  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  189:17  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  191:17  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  194:17  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\store\combatStore.ts
+   93:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  189:20  error  '_gains' is defined but never used        @typescript-eslint/no-unused-vars
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\store\playerStore.ts
+   25:7   error  'MATERIAL_DATABASE' is assigned a value but never used                                                               @typescript-eslint/no-unused-vars
+  648:17  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  651:25  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  673:39  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\src\store\skillingStore.ts
+   72:94   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   72:128  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:77   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  143:53   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  147:97   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  147:123  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  160:40   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\tmp_playerStore.ts
+  1:0  error  Parsing error: File appears to be binary
+
+C:\Users\lingd\OneDrive\Desktop\Antigravity Projects\combat_system\vite.config.ts
+  8:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+Γ£û 70 problems (69 errors, 1 warning)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+
+

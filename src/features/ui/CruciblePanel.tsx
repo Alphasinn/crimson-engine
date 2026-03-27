@@ -11,10 +11,7 @@ import {
     isEligibleForTierShift, getTierShiftCost, resolveNextTierItem
 } from '../../engine/progression';
 import type { SpecializationPath, EquipmentSlot, EquipmentItem } from '../../engine/types';
-import WEAPONS from '../../data/weapons';
-import ARMOR from '../../data/armor';
-
-const ITEM_DATABASE = [...WEAPONS, ...ARMOR];
+import { ITEM_DATABASE } from '../../data/items';
 
 export const CruciblePanel: React.FC = () => {
     const { 
@@ -48,7 +45,7 @@ export const CruciblePanel: React.FC = () => {
     };
 
     const shiftableEntries = (Object.entries(equipment) as [EquipmentSlot, EquipmentItem][])
-        .filter(([_, item]) => isEligibleForTierShift(item));
+        .filter(([, item]) => isEligibleForTierShift(item));
 
     return (
         <div className={`${styles.root} ${crucibleSealed ? styles.sealed : ''}`}>
@@ -65,9 +62,9 @@ export const CruciblePanel: React.FC = () => {
             </header>
 
             <div className={styles.crucibleGrid}>
-                {/* Refinement Section */}
+                {/* COLUMN 1: Refinement */}
                 <div className={styles.section}>
-                    <h4 className={styles.sectionTitle}>Altar of Steel (Refine)</h4>
+                    <h4 className={styles.sectionTitle}>Altar of Steel</h4>
                     <div className={styles.gearList}>
                         {Object.entries(equipment).map(([slot, item]) => {
                             const shardCost = 25 * ((item.refinement || 0) + 1);
@@ -76,47 +73,49 @@ export const CruciblePanel: React.FC = () => {
                             const isReady = canAfford && !crucibleSealed && !isRunning && (item.refinement ?? 0) < 5;
 
                             return (
-                            <div key={slot} className={styles.gearItem}>
-                                <div>
-                                    <div className={styles.gearInfo}>
-                                        <span className={styles.itemName}>{item.name}</span>
-                                        <span className={styles.refinement}>+{item.refinement || 0}</span>
-                                    </div>
-                                    {(item.refinement ?? 0) < 5 && (
-                                        <div className={styles.costArea}>
-                                            <span className={`${styles.costItem} ${bloodShards >= shardCost ? styles.affordable : styles.unaffordable}`}>
-                                                <img src={iconBloodShard} alt="Shards" className={styles.costIcon} /> {shardCost}
-                                            </span>
-                                            <span className={`${styles.costItem} ${graveSteel >= steelCost ? styles.affordable : styles.unaffordable}`}>
-                                                <img src={iconGraveSteel} alt="Steel" className={styles.costIcon} /> {steelCost}
-                                            </span>
+                                <div key={slot} className={styles.gearItem}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                                        <div className={styles.gearInfo}>
+                                            <span className={styles.itemName} style={{ fontSize: '0.8rem' }}>{item.name}</span>
+                                            <span className={styles.refinement}>+{item.refinement || 0}</span>
                                         </div>
-                                    )}
+                                        {(item.refinement ?? 0) < 5 && (
+                                            <div className={styles.costArea}>
+                                                <span className={`${styles.costItem} ${bloodShards >= shardCost ? styles.affordable : styles.unaffordable}`}>
+                                                    <img src={iconBloodShard} alt="Shards" className={styles.costIcon} /> {shardCost}
+                                                </span>
+                                                <span className={`${styles.costItem} ${graveSteel >= steelCost ? styles.affordable : styles.unaffordable}`}>
+                                                    <img src={iconGraveSteel} alt="Steel" className={styles.costIcon} /> {steelCost}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <button 
+                                        className={`${styles.refineBtn} ${isReady ? styles.readyGreen : ''}`}
+                                        onClick={() => handleRefine(slot)}
+                                        disabled={crucibleSealed || !isReady || (item.refinement ?? 0) >= 5}
+                                        style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                                    >
+                                        {(item.refinement ?? 0) >= 5 ? 'MAX' : 'Refine'}
+                                    </button>
                                 </div>
-                                <button 
-                                    className={`${styles.refineBtn} ${isReady ? styles.readyGreen : ''}`}
-                                    onClick={() => handleRefine(slot)}
-                                    disabled={crucibleSealed || !isReady || (item.refinement ?? 0) >= 5}
-                                >
-                                    {(item.refinement ?? 0) >= 5 ? 'MAX' : 'Refine'}
-                                </button>
-                            </div>
-                        )})}
+                            );
+                        })}
                     </div>
                 </div>
 
-                {/* Enhancement Section */}
+                {/* COLUMN 2: Enhancement */}
                 <div className={styles.section}>
-                    <h4 className={styles.sectionTitle}>Altar of Blood (Enhance)</h4>
+                    <h4 className={styles.sectionTitle}>Altar of Blood</h4>
                     <div className={styles.gearList}>
                         {/* Sanguine Finesse */}
                         <div className={styles.gearItem}>
-                            <div>
+                            <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                                 <div className={styles.gearInfo}>
-                                    <span className={styles.itemName}>Sanguine Finesse</span>
+                                    <span className={styles.itemName} style={{ fontSize: '0.8rem' }}>Sanguine Finesse</span>
                                 </div>
-                                <div className={styles.yieldInfo} style={{ marginTop: '2px', marginBottom: '2px' }}>
-                                    <small>+5% Accuracy for 20s</small>
+                                <div className={styles.yieldInfo}>
+                                    <small style={{ fontSize: '10px' }}>+5% Acc (20s)</small>
                                 </div>
                                 <div className={styles.costArea}>
                                     <span className={`${styles.costItem} ${bloodShards >= 15 ? styles.affordable : styles.unaffordable}`}>
@@ -128,6 +127,7 @@ export const CruciblePanel: React.FC = () => {
                                 className={`${styles.refineBtn} ${(!crucibleSealed && !isRunning && bloodShards >= 15) ? styles.readyGreen : ''}`}
                                 onClick={() => !crucibleSealed && sanguineFinesse()}
                                 disabled={crucibleSealed || isRunning || bloodShards < 15}
+                                style={{ padding: '4px 8px', fontSize: '0.75rem' }}
                             >
                                 Craft
                             </button>
@@ -135,12 +135,12 @@ export const CruciblePanel: React.FC = () => {
 
                         {/* Vile Reinforcement */}
                         <div className={styles.gearItem}>
-                            <div>
+                            <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                                 <div className={styles.gearInfo}>
-                                    <span className={styles.itemName}>Vile Reinforcement</span>
+                                    <span className={styles.itemName} style={{ fontSize: '0.8rem' }}>Vile Reinforce</span>
                                 </div>
-                                <div className={styles.yieldInfo} style={{ marginTop: '2px', marginBottom: '2px' }}>
-                                    <small>Gain +5 Permanent Armor & Braced</small>
+                                <div className={styles.yieldInfo}>
+                                    <small style={{ fontSize: '10px' }}>+5 Armor & Braced</small>
                                 </div>
                                 <div className={styles.costArea}>
                                     <span className={`${styles.costItem} ${bloodShards >= 30 ? styles.affordable : styles.unaffordable}`}>
@@ -155,6 +155,7 @@ export const CruciblePanel: React.FC = () => {
                                 className={`${styles.refineBtn} ${(!crucibleSealed && !isRunning && bloodShards >= 30 && graveSteel >= 10) ? styles.readyGreen : ''}`}
                                 onClick={() => !crucibleSealed && vileReinforcement()}
                                 disabled={crucibleSealed || isRunning || bloodShards < 30 || graveSteel < 10}
+                                style={{ padding: '4px 8px', fontSize: '0.75rem' }}
                             >
                                 Craft
                             </button>
@@ -162,43 +163,44 @@ export const CruciblePanel: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Transmutation Section */}
+                {/* COLUMN 3: Transmutation */}
                 <div className={styles.section}>
-                    <h4 className={styles.sectionTitle}>Altar of Ichor (Transmute)</h4>
-                    <div className={styles.transmuteArea}>
-                        <div>
-                            <div className={styles.yieldInfo}>
-                                <span>Yield Bonus: <strong className={styles.bonus}>+{potentialYieldBonus}%</strong></span>
-                                <small>Based on escape intensity</small>
-                            </div>
-                            <div className={styles.costArea}>
-                                <span className={`${styles.costItem} ${bloodShards >= 125 ? styles.affordable : styles.unaffordable}`}>
-                                    <img src={iconBloodShard} alt="Shards" className={styles.costIcon} /> 125
-                                </span>
-                                <span className={`${styles.costItem} ${cursedIchor >= 1 ? styles.affordable : styles.unaffordable}`}>
-                                    <img src={iconCursedIchor} alt="C. Ichor" className={styles.costIcon} /> 1
-                                </span>
-                            </div>
+                    <h4 className={styles.sectionTitle}>Altar of Ichor</h4>
+                    <div className={styles.transmuteArea} style={{ flexDirection: 'column', gap: '12px', alignItems: 'flex-start' }}>
+                        <div className={styles.yieldInfo}>
+                            <span>Yield: <strong className={styles.bonus}>+{potentialYieldBonus}%</strong></span>
+                            <small>Based on escape risk</small>
+                        </div>
+                        <div className={styles.costArea}>
+                            <span className={`${styles.costItem} ${bloodShards >= 125 ? styles.affordable : styles.unaffordable}`}>
+                                <img src={iconBloodShard} alt="Shards" className={styles.costIcon} /> 125
+                            </span>
+                            <span className={`${styles.costItem} ${cursedIchor >= 1 ? styles.affordable : styles.unaffordable}`}>
+                                <img src={iconCursedIchor} alt="C. Ichor" className={styles.costIcon} /> 1
+                            </span>
                         </div>
                         <button 
                             className={`${styles.transmuteBtn} ${(!crucibleSealed && !isRunning && bloodShards >= 125 && cursedIchor >= 1) ? styles.readyGreen : ''}`}
                             onClick={handleStabilize}
                             disabled={crucibleSealed || cursedIchor < 1 || bloodShards < 125 || isRunning}
+                            style={{ width: '100%' }}
                         >
                             Stabilize Ichor
                         </button>
                     </div>
                 </div>
 
-                {/* Tier-Shift Section */}
+                {/* COLUMN 4: Tier-Shift */}
                 <div className={styles.section}>
-                    <h4 className={styles.sectionTitle}>Altar of Flesh (Tier-Shift)</h4>
+                    <h4 className={styles.sectionTitle}>Altar of Flesh</h4>
                     {shiftableEntries.length === 0 ? (
-                        <p className={styles.hint}>No +5 gear ready for shifting</p>
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <p className={styles.hint}>No +5 gear ready</p>
+                        </div>
                     ) : (
                         <div className={styles.gearList}>
                             {shiftableEntries.map(([slot, item]) => {
-                                const nextItem = resolveNextTierItem(item, ITEM_DATABASE);
+                                const nextItem = resolveNextTierItem(item, ITEM_DATABASE.filter(i => 'slot' in i) as EquipmentItem[]);
                                 const cost = getTierShiftCost(item.tier);
                                 const canAffordShift = 
                                     bloodShards >= cost.shards && 
@@ -209,74 +211,57 @@ export const CruciblePanel: React.FC = () => {
                                 if (!nextItem) return null;
 
                                 return (
-                                <div key={slot} className={styles.shiftItem}>
-                                    <div className={styles.shiftPreview}>
-                                        <div className={styles.gearInfo}>
-                                            <span className={styles.itemName}>{item.name}</span>
-                                            <span className={styles.pathMarker}>➔ {nextItem.name} ({nextItem.tier})</span>
+                                    <div key={slot} className={styles.shiftItem}>
+                                        <div className={styles.shiftPreview}>
+                                            <div className={styles.gearInfo}>
+                                                <span className={styles.itemName} style={{ fontSize: '0.8rem' }}>{item.name} ➔</span>
+                                                <span className={styles.itemName} style={{ color: '#4ade80', fontSize: '0.8rem' }}>{nextItem.name}</span>
+                                            </div>
+                                            <div className={styles.costArea}>
+                                                <span className={`${styles.costItem} ${bloodShards >= cost.shards ? styles.affordable : styles.unaffordable}`}>
+                                                    <img src={iconBloodShard} alt="Shards" className={styles.costIcon} /> {cost.shards}
+                                                </span>
+                                                <span className={`${styles.costItem} ${stabilizedIchor >= cost.stabilizedIchor ? styles.affordable : styles.unaffordable}`}>
+                                                    <img src={iconStabilizedIchor} alt="S. Ichor" className={styles.costIcon} /> {cost.stabilizedIchor}
+                                                </span>
+                                                <span className={`${styles.costItem} ${graveSteel >= cost.steel ? styles.affordable : styles.unaffordable}`}>
+                                                    <img src={iconGraveSteel} alt="Steel" className={styles.costIcon} /> {cost.steel}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className={styles.statDiff}>
-                                            {nextItem.accuracyBonus !== item.accuracyBonus && (
-                                                <small>Acc: +{ (nextItem.accuracyBonus || 0) - (item.accuracyBonus || 0) }</small>
-                                            )}
-                                            {nextItem.powerModifier !== item.powerModifier && (
-                                                <small>Pow: +{ (nextItem.powerModifier || 0) - (item.powerModifier || 0) }</small>
-                                            )}
-                                            {nextItem.drPercent !== item.drPercent && (
-                                                <small>DR: +{ Math.round(((nextItem.drPercent || 0) - (item.drPercent || 0)) * 100) }%</small>
-                                            )}
-                                        </div>
-                                        <div className={styles.costArea}>
-                                            <span className={`${styles.costItem} ${bloodShards >= cost.shards ? styles.affordable : styles.unaffordable}`}>
-                                                <img src={iconBloodShard} alt="Shards" className={styles.costIcon} /> {cost.shards}
-                                            </span>
-                                            <span className={`${styles.costItem} ${stabilizedIchor >= cost.stabilizedIchor ? styles.affordable : styles.unaffordable}`}>
-                                                <img src={iconStabilizedIchor} alt="S. Ichor" className={styles.costIcon} /> {cost.stabilizedIchor}
-                                            </span>
-                                            <span className={`${styles.costItem} ${graveSteel >= cost.steel ? styles.affordable : styles.unaffordable}`}>
-                                                <img src={iconGraveSteel} alt="Steel" className={styles.costIcon} /> {cost.steel}
-                                            </span>
-                                        </div>
-                                    </div>
 
-                                    {/* Path Selection for T1 -> T2 (or any initial branch) */}
-                                    {(!item.specPath) && (
-                                        <div className={styles.pathChoiceArea}>
-                                            <p className={styles.pathIdentity}>Choose your focus:</p>
+                                        {!item.specPath ? (
                                             <div className={styles.shiftActions}>
                                                 <button 
                                                     className={`${styles.sanguineBtn} ${isReadyShift ? styles.readyGreen : ''}`}
                                                     onClick={() => handleTierShift(slot, 'sanguine')}
                                                     disabled={!isReadyShift}
-                                                    title="Focus: Speed & Finesse"
+                                                    style={{ padding: '6px', fontSize: '10px' }}
                                                 >
-                                                    Sanguine Path
+                                                    Sanguine
                                                 </button>
                                                 <button 
                                                     className={`${styles.vileBtn} ${isReadyShift ? styles.readyGreen : ''}`}
                                                     onClick={() => handleTierShift(slot, 'vile')}
                                                     disabled={!isReadyShift}
-                                                    title="Focus: Armor & Mitigation"
+                                                    style={{ padding: '6px', fontSize: '10px' }}
                                                 >
-                                                    Vile Path
+                                                    Vile
                                                 </button>
                                             </div>
-                                        </div>
-                                    )}
-
-                                    {item.specPath && (
-                                        <div className={styles.pathFinalized}>
+                                        ) : (
                                             <button 
                                                 className={`${styles.refineBtn} ${isReadyShift ? styles.readyGreen : ''}`}
                                                 onClick={() => handleTierShift(slot, item.specPath!)}
                                                 disabled={!isReadyShift}
+                                                style={{ width: '100%', fontSize: '0.75rem' }}
                                             >
-                                                Shift to {nextItem.tier} ({item.specPath})
+                                                Shift ({item.specPath})
                                             </button>
-                                        </div>
-                                    )}
-                                </div>
-                            )})}
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>

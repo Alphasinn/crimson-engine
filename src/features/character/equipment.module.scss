@@ -112,6 +112,15 @@
     max-width: 100%; // Bound by parent
     box-sizing: border-box;
     overflow: hidden; // Eliminate unwanted scrollbars
+    justify-content: center;
+
+    &.minimal {
+        background: transparent;
+        border: none;
+        padding: 0;
+        backdrop-filter: none;
+        gap: $space-2;
+    }
 }
 
 .consumableSlot {

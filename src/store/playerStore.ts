@@ -17,12 +17,8 @@ import {
     validateShiftResult,
     resolveNextTierItem
 } from '../engine/progression';
-import WEAPONS from '../data/weapons';
-import ARMOR from '../data/armor';
-import { BLOOD_ECHO_ITEMS } from '../data/bloodEchoItems';
-
-const ITEM_DATABASE = [...WEAPONS, ...ARMOR] as EquipmentItem[];
-const MATERIAL_DATABASE = [...BLOOD_ECHO_ITEMS];
+import { ITEM_DATABASE } from '../data/items';
+import { InventoryManager } from '../engine/inventoryManager';
 
 const STARTER_FOOD: InventoryItem[] = [
     { id: 'blood_orange', name: 'Blood Orange', quantity: 25, type: 'food', healAmount: 12 },
@@ -87,7 +83,7 @@ interface PlayerState {
     gainXp: (skill: SkillName, amount: number) => void;
     equipItem: (itemId: string) => void;
     unequipItem: (slot: keyof PlayerEquipment) => void;
-    useFood: (itemId: string) => void;
+    consumeFoodItem: (itemId: string) => void;
     setActiveStyle: (style: CombatStyle) => void;
     setTrainingMode: (mode: TrainingMode) => void;
     addFood: (food: InventoryItem) => void;
@@ -182,30 +178,16 @@ export const usePlayerStore = create<PlayerState>()(
                     const itemInInv = state.inventory.find(i => i.id === itemId);
                     if (!itemInInv) return state;
 
-                    const itemTemplate = ITEM_DATABASE.find(i => i.id === itemId);
-                    if (!itemTemplate || !itemTemplate.slot) return state;
+                    const itemTemplate = InventoryManager.resolveItem(itemId, ITEM_DATABASE);
+                    if (!itemTemplate || !('slot' in itemTemplate)) return state;
 
                     const slot = itemTemplate.slot;
-                    const currentEquipped = state.equipment[slot];
+                    const currentEquipped = state.equipment[slot] as EquipmentItem | undefined;
 
-                    let nextInventory = state.inventory.map(i => 
-                        i.id === itemId ? { ...i, quantity: i.quantity - 1 } : i
-                    ).filter(i => i.quantity > 0);
+                    let nextInventory = InventoryManager.removeItem(state.inventory, itemId, 1);
 
                     if (currentEquipped) {
-                        const existingInInv = nextInventory.find(i => i.id === currentEquipped.id);
-                        if (existingInInv) {
-                            nextInventory = nextInventory.map(i => 
-                                i.id === currentEquipped.id ? { ...i, quantity: i.quantity + 1 } : i
-                            );
-                        } else {
-                            nextInventory.push({
-                                id: currentEquipped.id,
-                                name: currentEquipped.name,
-                                quantity: 1,
-                                type: 'equipment'
-                            });
-                        }
+                        nextInventory = InventoryManager.addItem(nextInventory, currentEquipped, 1);
                     }
 
                     return {
@@ -223,27 +205,14 @@ export const usePlayerStore = create<PlayerState>()(
                     const nextEquipment = { ...state.equipment };
                     delete nextEquipment[slot];
 
-                    const nextInventory = [...state.inventory];
-                    const existing = nextInventory.find(i => i.id === item.id);
-                    if (existing) {
-                        existing.quantity += 1;
-                    } else {
-                        nextInventory.push({
-                            id: item.id,
-                            name: item.name,
-                            quantity: 1,
-                            type: 'equipment'
-                        });
-                    }
-
                     return {
                         equipment: nextEquipment,
-                        inventory: nextInventory
+                        inventory: InventoryManager.addItem(state.inventory, item, 1)
                     };
                 });
             },
 
-            useFood: (itemId: string) => {
+            consumeFoodItem: (itemId: string) => {
                 set((state) => {
                     const foodItem = state.inventory.find(i => i.id === itemId && i.type === 'food');
                     if (!foodItem) return state;
@@ -265,18 +234,15 @@ export const usePlayerStore = create<PlayerState>()(
 
             setTrainingMode: (mode: TrainingMode) => set({ trainingMode: mode }),
 
-            addFood: (food: InventoryItem) => {
-                set((state) => {
-                    const existing = state.food.find(f => f.id === food.id);
-                    if (existing) {
-                        return {
-                            food: state.food.map(f =>
-                                f.id === food.id ? { ...f, quantity: f.quantity + food.quantity } : f
-                            ),
-                        };
-                    }
-                    return { food: [...state.food, food] };
-                });
+            addFood: (foodItem: InventoryItem) => {
+                if (foodItem.type !== 'food') {
+                    console.warn(`Attempted to add non-food item to food inventory: ${foodItem.id}`);
+                    return;
+                }
+                set((state) => ({
+                    food: InventoryManager.addItem(state.food, foodItem, foodItem.quantity)
+                        .filter(f => f.type === 'food') // Sanity check
+                }));
             },
 
             consumeFood: (itemId: string) => {
@@ -288,17 +254,12 @@ export const usePlayerStore = create<PlayerState>()(
             },
 
             addInventoryItem: (item: InventoryItem) => {
-                set((state) => {
-                    const existing = state.inventory.find(i => i.id === item.id);
-                    if (existing) {
-                        return {
-                            inventory: state.inventory.map(i =>
-                                i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i
-                            ),
-                        };
-                    }
-                    return { inventory: [...state.inventory, item] };
-                });
+                const itemTemplate = InventoryManager.resolveItem(item.id, ITEM_DATABASE);
+                const template = itemTemplate || item; // Fallback to provided item if not in database
+                
+                set((state) => ({
+                    inventory: InventoryManager.addItem(state.inventory, template, item.quantity)
+                }));
             },
 
             updateInventoryItem: (itemId: string, quantity: number, template?: InventoryItem) => {
@@ -318,15 +279,16 @@ export const usePlayerStore = create<PlayerState>()(
             },
 
             addLootLog: (item) => {
-                const { autoLootEnabled, addInventoryItem } = get();
+                const { autoLootEnabled } = get();
                 
+                const itemTemplate = InventoryManager.resolveItem(item.itemId, ITEM_DATABASE);
+                // Fail-safe: If not in database, we should still allow it but it's a bug if it's missing
+                const template = itemTemplate || { id: item.itemId, name: item.itemName, type: 'misc' as const, quantity: 1 };
+
                 if (autoLootEnabled) {
-                    addInventoryItem({
-                        id: item.itemId,
-                        name: item.itemName,
-                        quantity: 1,
-                        type: 'misc' // Default for general loot
-                    });
+                    set((state) => ({
+                        inventory: InventoryManager.addItem(state.inventory, template, 1)
+                    }));
                     return;
                 }
 
@@ -354,34 +316,37 @@ export const usePlayerStore = create<PlayerState>()(
             },
 
             claimLoot: (itemId: string) => {
-                const { lootHistory, addInventoryItem } = get();
+                const { lootHistory } = get();
                 const item = lootHistory.find(l => l.id === itemId);
                 if (!item) return;
 
-                addInventoryItem({
-                    id: item.id,
-                    name: item.name,
-                    quantity: item.quantity,
-                    type: 'misc'
-                });
+                const itemTemplate = InventoryManager.resolveItem(item.id, ITEM_DATABASE);
+                // Fallback for non-equipment items
+                const template = itemTemplate || { id: item.id, name: item.name, type: 'misc' as const, quantity: item.quantity };
 
                 set((state) => ({
+                    inventory: InventoryManager.addItem(state.inventory, template, item.quantity),
                     lootHistory: state.lootHistory.filter(l => l.id !== itemId)
                 }));
             },
 
             claimAllLoot: () => {
-                const { lootHistory, addInventoryItem, withdraw } = get();
-                lootHistory.forEach(item => {
-                    addInventoryItem({
-                        id: item.id,
-                        name: item.name,
-                        quantity: item.quantity,
-                        type: 'misc'
+                const { lootHistory, withdraw } = get();
+                
+                set((state) => {
+                    let nextInventory = [...state.inventory];
+                    lootHistory.forEach(item => {
+                        const itemTemplate = InventoryManager.resolveItem(item.id, ITEM_DATABASE);
+                        const template = itemTemplate || { id: item.id, name: item.name, type: 'misc' as const, quantity: item.quantity };
+                        nextInventory = InventoryManager.addItem(nextInventory, template, item.quantity);
                     });
+                    
+                    return { 
+                        inventory: nextInventory,
+                        lootHistory: []
+                    };
                 });
-                set({ lootHistory: [] });
-                withdraw(); // Unify currency banking with loot claiming
+                withdraw(); 
             },
 
             clearLootHistory: () => set({ lootHistory: [] }),
@@ -519,7 +484,7 @@ export const usePlayerStore = create<PlayerState>()(
                 }
 
                 // 3. Execution (Pulling base stats for next tier)
-                const nextTierItem = resolveNextTierItem(item, ITEM_DATABASE);
+                const nextTierItem = resolveNextTierItem(item, ITEM_DATABASE.filter(i => 'slot' in i) as EquipmentItem[]);
                 if (!nextTierItem) return state;
 
                 const newItem: EquipmentItem = {
@@ -610,58 +575,59 @@ export const usePlayerStore = create<PlayerState>()(
                 });
             },
 
-            resetPlayer: () => set({ 
-                skills: DEFAULT_SKILLS, 
-                equipment: {}, 
-                food: [], 
-                inventory: [],
-                lootHistory: [],
-                autoLootEnabled: false,
-                autoEatThreshold: 0.5,
-                autoEatEnabled: false,
-                unlockedUpgrades: [],
-                bloodShards: 0,
-                graveSteel: 0,
-                cursedIchor: 0,
-                stabilizedIchor: 0,
-                unbankedShards: 0,
-                unbankedSteel: 0,
-                unbankedIchor: 0,
-                isBraced: false,
-                finesseTicksRemaining: 0,
-                permanentArmorBonus: 0,
-                redMistIchorDrops: 0,
-                redMistDeaths: 0,
-                crucibleSealed: false,
-                activeRituals: [],
-                nextHuntModifiers: {
-                    scentGainMultiplier: 1,
-                    lootQualityMultiplier: 1,
-                    maxHpMultiplier: 1,
-                    speedMultiplier: 1,
-                    armorBonus: 0
-                }
-            }),
+            resetPlayer: () => {
+                const fang = InventoryManager.resolveItem('rusted_fang', ITEM_DATABASE);
+                const initialInv = fang ? [InventoryManager.createItem(fang, 1)] : [];
+                
+                set({ 
+                    skills: DEFAULT_SKILLS, 
+                    equipment: {}, 
+                    food: STARTER_FOOD, 
+                    inventory: initialInv,
+                    lootHistory: [],
+                    autoLootEnabled: false,
+                    autoEatThreshold: 0.5,
+                    autoEatEnabled: false,
+                    unlockedUpgrades: [],
+                    bloodShards: 100, // Give some starting shards
+                    graveSteel: 0,
+                    cursedIchor: 0,
+                    stabilizedIchor: 0,
+                    unbankedShards: 0,
+                    unbankedSteel: 0,
+                    unbankedIchor: 0,
+                    isBraced: false,
+                    finesseTicksRemaining: 0,
+                    permanentArmorBonus: 0,
+                    redMistIchorDrops: 0,
+                    redMistDeaths: 0,
+                    crucibleSealed: false,
+                    activeRituals: [],
+                    nextHuntModifiers: {
+                        scentGainMultiplier: 1,
+                        lootQualityMultiplier: 1,
+                        maxHpMultiplier: 1,
+                        speedMultiplier: 1,
+                        armorBonus: 0
+                    }
+                });
+            },
 
             buyItem: (itemId, price, currency = 'bloodShards') => {
+                const itemTemplate = InventoryManager.resolveItem(itemId, ITEM_DATABASE);
+                if (!itemTemplate) return false;
+
                 const state = get();
                 // @ts-ignore - dynamic key access
-                if (state[currency] >= price) {
+                const currentBalance = state[currency];
+                
+                if (currentBalance >= price) {
                     set((s) => ({
                         // @ts-ignore
-                        [currency]: s[currency] - price
+                        [currency]: s[currency] - price,
+                        inventory: InventoryManager.addItem(s.inventory, itemTemplate, 1)
                     }));
-                    
-                    const itemTemplate = ITEM_DATABASE.find(i => i.id === itemId);
-                    if (itemTemplate) {
-                        state.addInventoryItem({
-                            id: itemTemplate.id,
-                            name: itemTemplate.name,
-                            quantity: 1,
-                            type: 'equipment'
-                        });
-                        return true;
-                    }
+                    return true;
                 }
                 return false;
             },

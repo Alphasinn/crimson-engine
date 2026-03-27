@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
+import { useState } from 'react';
 import { useCombatStore } from '../../store/combatStore';
 import { usePlayerStore } from '../../store/playerStore';
+import { ITEM_MAP } from '../../data/items';
 import styles from './sessionSummary.module.scss';
-import iconMagic from '../../assets/icons/blood_magic.png';
 import iconHp from '../../assets/icons/hp.png';
 import iconAttack from '../../assets/icons/attack.png';
 
@@ -17,15 +17,17 @@ export const SessionSummaryModal: React.FC<Props> = ({ active, onClose }) => {
 
     const data = active ? sessionStats : lastSession;
 
-    const formattedTime = useMemo(() => {
+    const [now] = useState(Date.now());
+
+    const formattedTime = (() => {
         if (!data) return '0s';
-        const end = active ? Date.now() : (data.endTime || Date.now());
+        const end = active ? now : (data.endTime || now);
         const diff = end - data.startTime;
         const totalSec = Math.floor(diff / 1000);
         const mins = Math.floor(totalSec / 60);
         const secs = totalSec % 60;
         return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
-    }, [data, active]);
+    })();
 
     if (!data) return null;
 
@@ -43,11 +45,15 @@ export const SessionSummaryModal: React.FC<Props> = ({ active, onClose }) => {
     };
 
     // Helper to get icon for loot (shared with LootPanel logic)
-    const getIcon = (id: string) => {
+    const getIcon = (id: string, name: string) => {
+        const template = ITEM_MAP.get(id);
+        if (template && (template as any).icon) {
+            return <img src={(template as any).icon} alt={name} style={{ width: '16px', height: '16px' }} />;
+        }
+        
         if (id.includes('coin')) return '🪙';
         if (id.includes('cloth') || id.includes('pelt') || id.includes('fur')) return '🧶';
         if (id.includes('dagger') || id.includes('sword') || id.includes('blade')) return '🗡️';
-        if (id.includes('blood') || id.includes('vial') || id.includes('essence')) return <img src={iconMagic} alt="Blood" style={{ width: '16px', height: '16px' }} />;
         if (id.includes('bone') || id.includes('fragment')) return '☠️';
         return '📦';
     };
@@ -142,7 +148,7 @@ export const SessionSummaryModal: React.FC<Props> = ({ active, onClose }) => {
                         ) : (
                             groupedLoot.map(item => (
                                 <div key={item.itemId} className={styles.lootItem} title={item.itemName}>
-                                    <span className={styles.lootIcon}>{getIcon(item.itemId)}</span>
+                                    <span className={styles.lootIcon}>{getIcon(item.itemId, item.itemName)}</span>
                                     <span className={styles.lootQty}>x{item.quantity}</span>
                                 </div>
                             ))

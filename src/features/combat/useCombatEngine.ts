@@ -37,13 +37,14 @@ export function useCombatEngine() {
         addSplat, removeSplat, addLogEvent,
         updateSession, recordStat, updateCombatState 
     } = useCombatStore();
-    const {
-        skills, equipment, trainingMode, food, gainXp, addLootLog,
-        autoEatEnabled, autoEatThreshold,
-        currentVitae, setVitae,
-        isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining,
-        setFinesseTicks
-    } = usePlayerStore();
+
+    // Use specific selectors for only what we need to react to in the hook's scope.
+    // Most logic can use getState() inside the callbacks to avoid re-renders.
+    const gainXp = usePlayerStore(s => s.gainXp);
+    const addLootLog = usePlayerStore(s => s.addLootLog);
+    const setVitae = usePlayerStore(s => s.setVitae);
+    const setFinesseTicks = usePlayerStore(s => s.setFinesseTicks);
+
     const { addNotification } = useNotificationStore();
 
     /** Build shared callbacks — extracted to avoid duplication */
@@ -116,19 +117,19 @@ export function useCombatEngine() {
         },
         onHitXp: (gains) => {
             // Award XP per successful hit
-            (Object.entries(gains) as [keyof typeof skills, { xp: number }][]).forEach(([skill, data]) => {
-                if (data && data.xp > 0) {
-                    gainXp(skill, data.xp);
+            Object.entries(gains).forEach(([skill, data]) => {
+                const xpAmount = (data as any).xp;
+                if (xpAmount && xpAmount > 0) {
+                    gainXp(skill as any, xpAmount);
                     
                     // Show floating notification for XP gain
-                    const skillName = skill as string;
                     addNotification({
                         type: 'xp',
-                        label: skillName.charAt(0).toUpperCase() + skillName.slice(1),
-                        amount: data.xp,
+                        label: skill.charAt(0).toUpperCase() + skill.slice(1),
+                        amount: xpAmount,
                     });
-                    recordStat('xp', data.xp);
-                    updateSession(prev => ({ xpGained: prev.xpGained + data.xp }));
+                    recordStat('xp', xpAmount);
+                    updateSession(prev => ({ xpGained: prev.xpGained + xpAmount }));
                 }
             });
         },
@@ -140,9 +141,12 @@ export function useCombatEngine() {
             // 1. Restore HP
             setVitae(maxHp);
             initPlayer(maxHp);
-            sharedEngine.heal(maxHp);
+            
+            // 2. Stop UI (The engine already stopped itself)
+            setRunning(false);
+            setEnemy(null);
 
-            // 2. Penalties
+            // 3. Penalties
             usePlayerStore.getState().applyDeathPenalties(isBraced, isRedMist);
             recordStat('death', 1);
 
@@ -274,9 +278,9 @@ export function useCombatEngine() {
             return enemies.find(e => e.id === id) || null;
         },
     }), [
-        gainXp, skills, setDead, setRunning, setEnemy, tickUpdate, 
+        gainXp, setDead, setRunning, setEnemy, tickUpdate, 
         addLogEvent, addLootLog, addSplat, removeSplat, 
-        addNotification, equipment, recordStat, pruneStats,
+        addNotification, recordStat, pruneStats,
         startSession, updateSession, endSession,
         // Dependencies from usePlayerStore actions called directly in callbacks
         // These are not direct state values but functions from the store,
@@ -304,8 +308,8 @@ export function useCombatEngine() {
         const enemies = getEnemiesForZone(zone.id);
         if (!enemies.length) return;
 
-        const derived = computeDerivedStats(skills, equipment);
-        // initPlayer still sets maxHp for the UI/Store, but we don't force currentHp to maxHp anymore
+        const playerState = usePlayerStore.getState();
+        const derived = computeDerivedStats(playerState.skills, playerState.equipment);
         initPlayer(derived.maxHp); 
 
         const firstEnemy = enemies[0];
@@ -313,48 +317,65 @@ export function useCombatEngine() {
         sharedEngine.setEnemy(firstEnemy);
         setEnemy(firstEnemy);
         
-        const { activeRituals, activeRitualModifiers } = useCombatStore.getState();
-        const resonance = calculatePathResonance(equipment);
+        const combatState = useCombatStore.getState();
+        const resonance = calculatePathResonance(playerState.equipment);
 
         useSkillingStore.getState().stopAction();
 
         sharedEngine.start(
-            zone, skills, equipment, food, autoEatEnabled, autoEatThreshold, currentVitae, trainingMode,
-            { isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining },
-            activeRitualModifiers,
+            zone, playerState.skills, playerState.equipment, playerState.food, 
+            playerState.autoEatEnabled, playerState.autoEatThreshold, 
+            playerState.currentVitae, playerState.trainingMode,
+            { 
+                isBraced: playerState.isBraced, 
+                permanentArmorBonus: playerState.permanentArmorBonus, 
+                bloodShards: playerState.bloodShards, 
+                finesseTicksRemaining: playerState.finesseTicksRemaining 
+            },
+            combatState.activeRitualModifiers,
             resonance,
-            activeRituals
+            combatState.activeRituals
         );
         startSession();
         setRunning(true);
-    }, [skills, equipment, trainingMode, food, autoEatEnabled, autoEatThreshold, setEnemy, setRunning, resetCombat, initPlayer, setZone, startSession, isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining, currentVitae]);
+    }, [setEnemy, setRunning, resetCombat, initPlayer, setZone, startSession]);
 
     /** Start combat with a specific player-chosen enemy */
     const startCombatWithEnemy = useCallback((zone: Zone, enemy: Enemy) => {
         resetCombat();
 
-        const derived = computeDerivedStats(skills, equipment);
+        const playerState = usePlayerStore.getState();
+        const derived = computeDerivedStats(playerState.skills, playerState.equipment);
         initPlayer(derived.maxHp);
 
         setZone(zone);
-        sharedEngine.setEnemy(enemy);
-        setEnemy(enemy);
-
-        const { activeRituals, activeRitualModifiers } = useCombatStore.getState();
-        const resonance = calculatePathResonance(equipment);
+        
+        const combatState = useCombatStore.getState();
+        const resonance = calculatePathResonance(playerState.equipment);
 
         useSkillingStore.getState().stopAction();
-
+        
         sharedEngine.start(
-            zone, skills, equipment, food, autoEatEnabled, autoEatThreshold, currentVitae, trainingMode,
-            { isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining },
-            activeRitualModifiers,
+            zone, playerState.skills, playerState.equipment, playerState.food, 
+            playerState.autoEatEnabled, playerState.autoEatThreshold, 
+            playerState.currentVitae, playerState.trainingMode,
+            { 
+                isBraced: playerState.isBraced, 
+                permanentArmorBonus: playerState.permanentArmorBonus, 
+                bloodShards: playerState.bloodShards, 
+                finesseTicksRemaining: playerState.finesseTicksRemaining 
+            },
+            combatState.activeRitualModifiers,
             resonance,
-            activeRituals
+            combatState.activeRituals,
+            enemy
         );
+
+        setEnemy(enemy);
+        
         startSession();
         setRunning(true);
-    }, [skills, equipment, trainingMode, food, autoEatEnabled, autoEatThreshold, setEnemy, setRunning, resetCombat, initPlayer, setZone, startSession, isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining, currentVitae]);
+    }, [setEnemy, setRunning, resetCombat, initPlayer, setZone, startSession]);
 
     const stopCombat = useCallback(() => {
         sharedEngine.stop();
@@ -376,23 +397,33 @@ export function useCombatEngine() {
     }, [setRunning, resetCombat, endSession]);
 
     // Keep engine in sync if any relevant state changes mid-session
+    // We subscribe to specific changes to update the engine without re-rendering the hook
     useEffect(() => {
-        if (sharedEngine.running) {
-            const { activeRituals, activeRitualModifiers } = useCombatStore.getState();
-            const resonance = calculatePathResonance(equipment);
+        const unsub = usePlayerStore.subscribe((state) => {
+            if (sharedEngine.running) {
+                const combatState = useCombatStore.getState();
+                const resonance = calculatePathResonance(state.equipment);
 
-            sharedEngine.updatePlayerState(
-                skills, equipment, food, trainingMode, autoEatEnabled, autoEatThreshold,
-                { isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining },
-                activeRitualModifiers,
-                resonance,
-                activeRituals
-            );
-        }
-    }, [skills, equipment, food, trainingMode, autoEatEnabled, autoEatThreshold, isBraced, permanentArmorBonus, bloodShards, finesseTicksRemaining]);
+                sharedEngine.updatePlayerState(
+                    state.skills, state.equipment, state.food, state.trainingMode, 
+                    state.autoEatEnabled, state.autoEatThreshold,
+                    { 
+                        isBraced: state.isBraced, 
+                        permanentArmorBonus: state.permanentArmorBonus, 
+                        bloodShards: state.bloodShards, 
+                        finesseTicksRemaining: state.finesseTicksRemaining 
+                    },
+                    combatState.activeRitualModifiers,
+                    resonance,
+                    combatState.activeRituals
+                );
+            }
+        });
+        return unsub;
+    }, []);
 
     /** Manual consumption from UI */
-    const useConsumable = useCallback((item: InventoryItem) => {
+    const handleUseConsumable = useCallback((item: InventoryItem) => {
         if (item.type !== 'food' || !item.healAmount) return;
         if (item.quantity <= 0) return;
 
@@ -425,5 +456,5 @@ export function useCombatEngine() {
         }
     }, [addSplat, removeSplat]);
 
-    return { startCombat, startCombatWithEnemy, stopCombat, fleeFromCombat, useConsumable };
+    return { startCombat, startCombatWithEnemy, stopCombat, fleeFromCombat, handleUseConsumable };
 }

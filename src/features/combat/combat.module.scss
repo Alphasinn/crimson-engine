@@ -595,6 +595,26 @@
     }
 }
 
+.playerStatsGroup {
+    @include flex-col;
+    gap: $space-2;
+    width: 100%;
+}
+
+.consumableArea {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.bottomConsumableBar {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding-top: $space-6;
+    margin-top: auto;
+}
+
 .playerCardHeader {
     font-family: $font-heading;
     font-size: $font-size-md;

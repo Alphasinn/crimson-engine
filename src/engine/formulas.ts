@@ -249,7 +249,7 @@ export function calcCritChance(agilityLevel: number): number {
 /**
  * Flat critical multiplier as defined in constants.
  */
-export function calcCritMultiplier(_agilityLevel: number): number {
+export function calcCritMultiplier(): number {
     return CRIT_MULTIPLIER_DEFAULT;
 }
 
@@ -622,7 +622,7 @@ export function computeDerivedStats(
         weaponSubStyle: subStyle,
         // Phase 2C: Scent refinement
         critChance: calcCritChance(skills.fangMastery.level), // Agility = Fang Mastery currently
-        critMultiplier: calcCritMultiplier(skills.fangMastery.level),
+        critMultiplier: calcCritMultiplier(),
         // Phase 4: Resonance data
         resonance: calculatePathResonance(equipment)
     };

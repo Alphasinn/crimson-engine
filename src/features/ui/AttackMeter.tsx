@@ -1,24 +1,26 @@
 import { useRef, useEffect } from 'react';
-import styles from '../combat/combat.module.scss'; // Reusing existing styles for now
+import styles from '../combat/combat.module.scss';
 
 interface AttackMeterProps {
     value: number;
-    label: string;
+    label?: string;
     color: string;
 }
 
 export function AttackMeter({ value, label, color }: AttackMeterProps) {
     const safeValue = Number.isNaN(value) ? 0 : value;
     const pct = Math.min(safeValue * 100, 100);
+    
+    // We use a ref to track the previous value without triggering re-renders
     const prevValueRef = useRef(safeValue);
     
-    // Disable transition when resetting (e.g. 100% -> 0%)
-    const isIncreasing = safeValue > prevValueRef.current;
-    const transition = isIncreasing ? 'width 0.1s linear' : 'none';
+    // Determine if we should animate. 
+    // We don't animate when the bar resets (0.99 -> 0.0)
+    const isResetting = safeValue < prevValueRef.current;
     
     useEffect(() => {
         prevValueRef.current = safeValue;
-    }, [safeValue]);
+    });
 
     return (
         <div className={styles.meterWrap}>
@@ -29,7 +31,7 @@ export function AttackMeter({ value, label, color }: AttackMeterProps) {
                     style={{
                         width: `${pct}%`,
                         backgroundColor: color,
-                        transition
+                        transition: isResetting ? 'none' : 'width 100ms linear'
                     }}
                 />
             </div>

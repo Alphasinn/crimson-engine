@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useCombatStore } from '../../store/combatStore';
 import { calculateRates } from '../../engine/statsUtils';
 import styles from './idleGain.module.scss';
@@ -10,11 +10,18 @@ interface Props {
 export const IdleGainPanel: React.FC<Props> = ({ onClose }) => {
     const { statsWindow, statsStartTime, isRunning, selectedZone } = useCombatStore();
 
+    const [now, setNow] = useState(Date.now());
+    
+    useEffect(() => {
+        const timer = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
     const rates = useMemo(() => {
         if (!statsStartTime) return null;
-        const timeSpanMs = Date.now() - statsStartTime;
+        const timeSpanMs = now - statsStartTime;
         return calculateRates(statsWindow, timeSpanMs);
-    }, [statsWindow, statsStartTime]);
+    }, [statsWindow, statsStartTime, now]);
 
     if (!isRunning || !rates || !selectedZone) {
         return null;
