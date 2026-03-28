@@ -1,93 +1,141 @@
-# Crimson Engine v1.1 (Phase 2A)
+# Crimson Engine
 
-**Crimson Engine** is a dark fantasy, tick-based idle RPG engine focusing on automated combat, deep resource management, and high-tension decision loops. 
+**Crimson Engine** is a dark fantasy, tick-based idle RPG running entirely in the browser. It features automated vampire-versus-hunter combat, a layered resource economy, and a deep gear progression system across 6 zones and 6 gear tiers.
 
-Phase 2A (The Foundational Prototype) establishes the core "Hunt → Harvest → Evaluate → Distill" loop, featuring the **Scent of Fear** and **Red Mist** mechanics.
+## 🎯 Who It's For
+
+- A solo developer or small team building a browser-based idle RPG
+- No backend required — all state persists in `localStorage`
+
+## ✨ Key Features
+
+- **100ms tick-based combat** — deterministic, formula-driven, zero server dependency
+- **Scent of Fear** — evasion pressure mechanic; the longer you dodge, the more accurate enemies become
+- **Red Mist** — high-risk sub-30% HP state with +20% damage and bonus item drops
+- **Blood Echoes** — elite boss manifestations triggered at peak Scent (100%)
+- **13 skills** — 7 combat + 6 idle skilling (Grave Harvesting, Night Foraging, Forging, Corpse Harvesting, Alchemy, Distillation)
+- **6 zones** — levels 1–120, T1–T6 gear drops
+- **Gear Refinement & Tier-Shifting** — Sanguine and Vile specialization paths
+- **Ritual system** — pre-hunt modifiers that affect scent, loot, HP, and speed
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js v18+
+- npm v9+
+
+### Install & Run
+
+```bash
+git clone https://github.com/Alphasinn/crimson-engine combat_system
+cd combat_system
+npm install
+npm run dev
+# Open http://localhost:5173
+```
+
+### Build for Production
+
+```bash
+npm run build
+# Output in dist/ — deploy as a static site (Netlify, Vercel, Nginx)
+```
+
+### Run Tests
+
+```bash
+npm test
+```
+
+### Run Balance Simulator
+
+```bash
+npm run sim
+```
+
+---
+
+## 🗂️ Documentation
+
+| Document | Description |
+|----------|-------------|
+| [docs/installation.md](./docs/installation.md) | Full install & env setup |
+| [docs/usage.md](./docs/usage.md) | Gameplay guide & workflows |
+| [docs/architecture.md](./docs/architecture.md) | System design, component map, diagrams |
+| [docs/api.md](./docs/api.md) | CombatEngine, formulas, store actions |
+| [docs/configuration.md](./docs/configuration.md) | All game constants & config |
+| [docs/deployment.md](./docs/deployment.md) | Build & deploy guide |
+| [docs/troubleshooting.md](./docs/troubleshooting.md) | Common issues & diagnostics |
+| [docs/adr/decisions.md](./docs/adr/decisions.md) | Architecture Decision Records |
+| [docs/contributor.md](./docs/contributor.md) | Contributor & onboarding guide |
+| [docs/changelog.md](./docs/changelog.md) | Release history |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | Branching workflow |
 
 ---
 
 ## 🩸 Core Gameplay Loop
 
-The engine operates on a continuous, automated cycle:
-1. **Hunt**: Automatic combat against enemies in various zones.
-2. **Harvest**: Loot resources like Blood Shards, Cursed Ichor, and Grave-Steel.
-3. **Evaluate**: Monitor your HP and current "Scent" to decide when to retreat.
-4. **Distill**: Use accumulated resources in the Sanctum to empower your character for the next hunt.
-
----
-
-## ⚙️ Key Mechanics
-
-### 🧬 Scent of Fear (Evasion Pressure)
-The longer you avoid damage, the more "Scent of Fear" you build.
-- **Buildup**: +0.01 enemy accuracy bonus every 4 seconds (40 ticks).
-- **Reset**: Scent resets to 0 instantly when you take damage.
-- **Siphoning**: Reduces your current scent by 50% (multiplicative).
-- **Goal**: Keeps evasion-heavy builds from becoming untouchable.
-
-### 🌫️ Red Mist (Risk & Reward)
-When your health falls below **30%**, you enter the Red Mist.
-- **Bonus**: +20% Damage dealt.
-- **Loot**: +10% Cursed Ichor drop rate.
-- **Danger**: You are one miscalculated hit away from a heavy death penalty.
-
-### 💉 Siphoning (Sustainable Attrition)
-Allows you to heal mid-combat using Blood Shards.
-- **Heal**: 20% of Max HP.
-- **Cost**: Starts at 10 Shards and scales exponentially per use during a single hunt.
-- **Strategy**: Deciding whether to use your last shards to stay in the Red Mist or retreat to safety.
-
----
-
-## 💎 Resource System
-
-| Resource | Purpose | Penalty on Death |
-| :--- | :--- | :--- |
-| **Blood Shards** | Main currency; used for siphoning and distilling. | 50% Lost (Unbanked) |
-| **Cursed Ichor** | Rare reagent; used for stabilization. | 100% Lost (Unbanked) |
-| **Grave-Steel** | Durable material; used for armor and gear. | **Retained** |
-| **Stabilized Ichor** | High-tier material for progression. | **Retained** |
-
----
-
-## 🛠️ Distill Actions (Sanctum)
-
-Invest your hard-earned resources into permanent or tactical advantages:
-- **Sanguine Finesse**: Costs 15 Shards. Grants +5% Accuracy Rating and double lifesteal (if <50% HP) for 200 attack ticks.
-- **Vile Reinforcement**: Costs 30 Shards + 10 Steel. Grants permanent +5 Flat Armor and the **Braced** status.
-- **Ichor Stabilization**: Costs 125 Shards + 1 Cursed Ichor. Produces 1 Stabilized Ichor.
-- **Prototype Tier-Shift**: Costs 200 Shards + 3 Stabilized Ichor + 25 Steel. Unlocks Tier 2 Weapon Frames.
-
----
-
-## 🚀 Development & Setup
-
-### Requirements
-- Node.js (v18+)
-- npm
-
-### Installation
-```bash
-npm install
+```
+Hunt → Harvest → Evaluate → Distill
 ```
 
-### Run Locally
-```bash
-npm run dev
-```
-
-### Build for Production
-```bash
-npm run build
-```
+1. **Hunt** — Automatic combat in a chosen zone
+2. **Harvest** — Collect Blood Shards, Cursed Ichor, Grave Steel
+3. **Evaluate** — Decide when to flee based on HP and Scent level
+4. **Distill** — Spend resources in the Sanctum for permanent upgrades
 
 ---
 
-## 🏗️ Architecture
-- **Engine**: Pure TypeScript, tick-based (100ms heartbeat).
-- **State**: Managed via [Zustand](https://github.com/pmndrs/zustand) for high-performance reactivity.
-- **UI**: React components styled with modern Vanilla CSS.
-- **Formulas**: Centralized in `formulas.ts` for deterministic combat math.
+## 💎 Resource Economy
+
+| Resource | Purpose | Death Penalty (unbanked) |
+|----------|---------|--------------------------|
+| Blood Shards | Main currency | −50% (−25% if Braced) |
+| Cursed Ichor | Rare reagent | −100% (−50% if Braced) |
+| Grave Steel | Crafting material | Retained |
+| Stabilized Ichor | High-tier material | Retained |
+
+---
+
+## 🏗️ Architecture Summary
+
+```
+React UI → Zustand Stores → CombatEngine (pure TS) → formulas.ts
+                                    ↓
+                            localStorage (persist)
+```
+
+- **No backend** — pure SPA
+- **No router library** — tab state in `useState`
+- **Persist schema version**: 6 (migration logic included)
+
+---
+
+## ⚠️ Known Limitations
+
+- Save data is `localStorage` only for now — planned to migrate to a proper persistence layer as the game matures
+- No error tracking or analytics integrated
+- No `.env` configuration — all constants are compile-time
+- No static hosting chosen yet; deploy target TBD
+- No export/import save data feature
+- Blood Echoes not yet implemented for all 6 zones — content will expand with game updates
+
+---
+
+## 🔧 Troubleshooting (Quick Reference)
+
+| Problem | Fix |
+|---------|-----|
+| Won't start | `node -v` must be v18+; run `npm install` |
+| Lost save data | Clear localStorage: `localStorage.removeItem('crimson-engine-player')` |
+| Skills not gaining XP | Check Training Mode matches weapon type |
+| Auto-eat not working | Unlock `auto_eat` upgrade in Sanctum first |
+| Build fails | Run `npx tsc --noEmit` to find type errors |
+
+See [docs/troubleshooting.md](./docs/troubleshooting.md) for full diagnostics.
 
 ---
 

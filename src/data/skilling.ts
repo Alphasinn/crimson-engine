@@ -36,7 +36,7 @@ export const FORGING_RECIPES: SkillingNode[] = [
     },
     { 
         id: 'forge_steel_rivets', name: 'Steel Rivets', skill: 'forging', levelReq: 15, timeMs: 6000, xp: 70, 
-        ingredients: [{ id: '铁_scrap', quantity: 2 }, { id: 'grave_dust', quantity: 5 }], // Replaced iron_scrap with rusty_scrap
+        ingredients: [{ id: 'rusty_scrap', quantity: 2 }, { id: 'grave_dust', quantity: 5 }],
         output: { id: 'steel_rivets', name: 'Steel Rivets', quantity: 2, type: 'material' } 
     },
     { 

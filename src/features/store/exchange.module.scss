@@ -138,7 +138,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: radial-gradient(circle, rgba(139, 0, 0, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(139, 0, 0, 0.04) 0%, transparent 70%);
     position: relative;
     border-radius: 8px;
     overflow: hidden;
@@ -160,7 +160,7 @@
     max-width: 90%;
     object-fit: contain;
     z-index: 1;
-    filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.6));
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
 }
 
 .placeholderIcon {
