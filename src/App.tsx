@@ -11,9 +11,14 @@ import { GRAVE_NODES, FORAGING_NODES, FORGING_RECIPES, CORPSE_RECIPES, ALCHEMY_R
 
 import { ResourceHUD } from './features/ui/ResourceHUD';
 import './styles/main.scss';
-import iconMagic from './assets/icons/blood_magic.png';
 import iconDistill from './assets/skills/distillation/distillation.png';
 import iconBlood from './assets/skills/bloodletting/bloodletting.png';
+import iconMagic from './assets/icons/blood_magic.png';
+import iconGrave from './assets/skills/graveHarvesting/graveHarvesting.png';
+import iconForaging from './assets/skills/nightForaging/nightForaging.png';
+import iconForging from './assets/skills/forging/forging.png';
+import iconCorpse from './assets/skills/corpseHarvesting/corpseHarvesting.png';
+import iconAlchemy from './assets/skills/alchemy/alchemy.png';
 import iconAttack from './assets/icons/attack.png';
 import styles from './App.module.scss';
 
@@ -33,12 +38,12 @@ function App() {
       case 'inventory': return <InventoryView />;
       case 'store': return <SanguineExchangeView />;
       case 'bloodletting': return <BloodlettingView />;
-      case 'graveHarvesting': return <SkillingView skill="graveHarvesting" nodes={GRAVE_NODES} title="Grave Harvesting" description="Mine the ruins of the old world for dust, ore, and ancient relics." icon="⛏️" />;
-      case 'nightForaging': return <SkillingView skill="nightForaging" nodes={FORAGING_NODES} title="Night Foraging" description="Scavenge the dark woods for rare herbs and moon-touched flora." icon="🌿" />;
+      case 'graveHarvesting': return <SkillingView skill="graveHarvesting" nodes={GRAVE_NODES} title="Grave Harvesting" description="Mine the ruins of the old world for dust, ore, and ancient relics." iconUrl={iconGrave} />;
+      case 'nightForaging': return <SkillingView skill="nightForaging" nodes={FORAGING_NODES} title="Night Foraging" description="Scavenge the dark woods for rare herbs and moon-touched flora." iconUrl={iconForaging} />;
       case 'distillation': return <DistillationView />;
-      case 'forging': return <SkillingView skill="forging" nodes={FORGING_RECIPES} title="Forging" description="Hammer raw materials into reinforced components and gear upgrades." icon="🔨" />;
-      case 'corpseHarvesting': return <SkillingView skill="corpseHarvesting" nodes={CORPSE_RECIPES} title="Corpse Harvesting" description="Process enemy remains into usable crafting materials like sinew and hide." icon="🦴" />;
-      case 'alchemy': return <SkillingView skill="alchemy" nodes={ALCHEMY_RECIPES} title="Alchemy" description="Transmute blood and flora into potent consumables and support oils." icon="⚗️" />;
+      case 'forging': return <SkillingView skill="forging" nodes={FORGING_RECIPES} title="Forging" description="Hammer raw materials into reinforced components and gear upgrades." iconUrl={iconForging} />;
+      case 'corpseHarvesting': return <SkillingView skill="corpseHarvesting" nodes={CORPSE_RECIPES} title="Corpse Harvesting" description="Process enemy remains into usable crafting materials like sinew and hide." iconUrl={iconCorpse} />;
+      case 'alchemy': return <SkillingView skill="alchemy" nodes={ALCHEMY_RECIPES} title="Alchemy" description="Transmute blood and flora into potent consumables and support oils." iconUrl={iconAlchemy} />;
       default: return <CombatView />;
     }
   };
@@ -115,7 +120,7 @@ function App() {
             className={`${styles.navBtn} ${activeTab === 'graveHarvesting' ? styles.active : ''}`}
             onClick={() => setActiveTab('graveHarvesting')}
           >
-            <span className={styles.navEmoji}>⛏️</span>
+            <img src={iconGrave} alt="" className={styles.navIcon} />
             <span>Grave Harvesting</span>
           </button>
 
@@ -123,7 +128,7 @@ function App() {
             className={`${styles.navBtn} ${activeTab === 'nightForaging' ? styles.active : ''}`}
             onClick={() => setActiveTab('nightForaging')}
           >
-            <span className={styles.navEmoji}>🌿</span>
+            <img src={iconForaging} alt="" className={styles.navIcon} />
             <span>Night Foraging</span>
           </button>
 
@@ -141,7 +146,7 @@ function App() {
             className={`${styles.navBtn} ${activeTab === 'forging' ? styles.active : ''}`}
             onClick={() => setActiveTab('forging')}
           >
-            <span className={styles.navEmoji}>🔨</span>
+            <img src={iconForging} alt="" className={styles.navIcon} />
             <span>Forging</span>
           </button>
 
@@ -149,7 +154,7 @@ function App() {
             className={`${styles.navBtn} ${activeTab === 'corpseHarvesting' ? styles.active : ''}`}
             onClick={() => setActiveTab('corpseHarvesting')}
           >
-            <span className={styles.navEmoji}>🦴</span>
+            <img src={iconCorpse} alt="" className={styles.navIcon} />
             <span>Corpse Harvesting</span>
           </button>
 
@@ -157,7 +162,7 @@ function App() {
             className={`${styles.navBtn} ${activeTab === 'alchemy' ? styles.active : ''}`}
             onClick={() => setActiveTab('alchemy')}
           >
-            <span className={styles.navEmoji}>⚗️</span>
+            <img src={iconAlchemy} alt="" className={styles.navIcon} />
             <span>Alchemy</span>
           </button>
         </nav>

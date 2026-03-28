@@ -10,10 +10,10 @@ interface SkillingViewProps {
     nodes: SkillingNode[];
     title: string;
     description: string;
-    icon?: string;
+    iconUrl?: string;
 }
 
-export const SkillingView: React.FC<SkillingViewProps> = ({ skill, nodes, title, description, icon }) => {
+export const SkillingView: React.FC<SkillingViewProps> = ({ skill, nodes, title, description, iconUrl }) => {
     const { skills, inventory } = usePlayerStore();
     const { activeNodeId, activeSkill, isActive, progressTimer, requiredTicks, startAction, stopAction } = useSkillingStore();
 
@@ -24,7 +24,7 @@ export const SkillingView: React.FC<SkillingViewProps> = ({ skill, nodes, title,
         <div className={styles.container}>
             <header className={styles.header}>
                 <div className={styles.titleArea}>
-                    {icon && <span className={styles.mainIcon}>{icon}</span>}
+                    {iconUrl && <img src={iconUrl} alt="" className={styles.mainIcon} />}
                     <h2 className={styles.title}>{title}</h2>
                 </div>
                 <div className={styles.skillBadge}>

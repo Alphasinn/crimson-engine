@@ -11,12 +11,11 @@ import iconMagic from '../../assets/icons/blood_magic.png';
 import iconHp from '../../assets/icons/hp.png';
 import iconDistill from '../../assets/skills/distillation/distillation.png';
 import iconBlood from '../../assets/skills/bloodletting/bloodletting.png';
-// Use existing icons as placeholders for new skills
-const iconGrave = iconStrength; 
-const iconForaging = iconHp;
-const iconForging = iconStrength;
-const iconCorpse = iconBlood;
-const iconAlchemy = iconMagic;
+import iconGrave from '../../assets/skills/graveHarvesting/graveHarvesting.png';
+import iconForaging from '../../assets/skills/nightForaging/nightForaging.png';
+import iconForging from '../../assets/skills/forging/forging.png';
+import iconCorpse from '../../assets/skills/corpseHarvesting/corpseHarvesting.png';
+import iconAlchemy from '../../assets/skills/alchemy/alchemy.png';
 
 const CATEGORIES = [
     {
