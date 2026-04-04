@@ -1,0 +1,371 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.root {
+    display: flex;
+    flex-direction: column;
+    padding: $space-6;
+    height: 100%;
+    color: $color-text-primary;
+    gap: $space-5;
+    background: radial-gradient(circle at center, rgba(20, 10, 10, 0.95), rgba(10, 5, 5, 1));
+    position: relative;
+    overflow: hidden;
+    animation: contentFade 0.5s ease-out;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at center, rgba(139, 0, 0, 0.05), transparent 70%);
+        pointer-events: none;
+        opacity: 0.3;
+    }
+}
+
+@keyframes contentFade {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+    border-bottom: 1px solid $color-border-accent;
+    padding-bottom: $space-4;
+    position: relative;
+    z-index: 10;
+
+    .title {
+        margin: 0;
+        font-family: $font-heading;
+        font-size: $font-size-2xl;
+        color: $color-crimson;
+        text-shadow: $glow-crimson;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+
+    .subtitle {
+        margin: 0;
+        font-size: $font-size-sm;
+        color: $color-text-muted;
+        font-style: italic;
+    }
+}
+
+.nav {
+    display: flex;
+    gap: $space-3;
+    background: rgba(0, 0, 0, 0.3);
+    padding: $space-2;
+    border-radius: $radius-md;
+    border: 1px solid $color-border-accent;
+    position: relative;
+    z-index: 10;
+    width: fit-content;
+
+    .navBtn {
+        background: none;
+        border: 1px solid transparent;
+        color: $color-text-muted;
+        padding: $space-2 $space-5;
+        cursor: pointer;
+        transition: all $transition-normal;
+        border-radius: $radius-sm;
+        font-family: $font-heading;
+        font-weight: $font-weight-bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: $font-size-sm;
+
+        &:hover {
+            color: $color-text-primary;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        &.active {
+            color: $color-text-primary;
+            background: rgba(196, 30, 58, 0.2);
+            border-color: rgba(196, 30, 58, 0.4);
+            box-shadow: 0 0 15px rgba(196, 30, 58, 0.1);
+        }
+    }
+}
+
+.tabContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: $space-6;
+    overflow-y: auto;
+    position: relative;
+    z-index: 10;
+}
+
+// Domicile Tab Styles
+.domicileGrid {
+    display: flex;
+    flex-direction: column;
+    gap: $space-6;
+}
+
+.statusPanel {
+    @include glass-card;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $space-4;
+    padding: $space-4;
+
+    .statusItem {
+        display: flex;
+        flex-direction: column;
+        gap: $space-1;
+        
+        .label {
+            font-size: $font-size-xs;
+            color: $color-text-muted;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .value {
+            font-family: $font-heading;
+            font-size: $font-size-lg;
+            color: $color-text-primary;
+        }
+    }
+}
+
+.fixtureGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: $space-4;
+
+    .fixtureSlot {
+        @include glass-card;
+        height: 120px;
+        @include flex-center;
+        flex-direction: column;
+        gap: $space-2;
+        border: 1px dashed rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.2);
+        color: $color-text-muted;
+        transition: all $transition-normal;
+
+        &:hover {
+            border-color: rgba(196, 30, 58, 0.3);
+            background: rgba(196, 30, 58, 0.05);
+            color: $color-text-primary;
+        }
+
+        .slotIcon {
+            font-size: 24px;
+            opacity: 0.5;
+        }
+    }
+}
+
+.effectsSummary {
+    @include glass-card;
+    padding: $space-4;
+
+    h3 {
+        margin: 0 0 $space-4 0;
+        font-family: $font-heading;
+        font-size: $font-size-md;
+        color: $color-crimson;
+        text-transform: uppercase;
+    }
+
+    .effectsList {
+        display: flex;
+        flex-direction: column;
+        gap: $space-2;
+
+        .effectItem {
+            display: flex;
+            align-items: center;
+            gap: $space-3;
+            font-size: $font-size-sm;
+            color: $color-text-secondary;
+
+            &::before {
+                content: '◈';
+                color: $color-crimson;
+                font-size: 10px;
+            }
+        }
+    }
+}
+
+// Collective Tab Styles
+.collectiveLayout {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    gap: $space-5;
+    height: 100%;
+}
+
+.panel {
+    @include glass-card;
+    display: flex;
+    flex-direction: column;
+    gap: $space-4;
+    padding: $space-4;
+    height: fit-content;
+
+    .panelTitle {
+        margin: 0;
+        font-family: $font-heading;
+        font-size: $font-size-md;
+        color: $color-crimson;
+        text-transform: uppercase;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: $space-2;
+    }
+}
+
+.objectiveCard {
+    @include glass-card;
+    padding: $space-3;
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+
+    .objHeader {
+        font-weight: $font-weight-bold;
+        font-size: $font-size-sm;
+    }
+
+    .progressContainer {
+        height: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 3px;
+        overflow: hidden;
+
+        .progressBar {
+            height: 100%;
+            background: linear-gradient(to right, $color-crimson, #ff4d4d);
+            box-shadow: 0 0 8px rgba(196, 30, 58, 0.5);
+        }
+    }
+
+    .objDesc {
+        font-size: $font-size-xs;
+        color: $color-text-muted;
+    }
+
+    .objReward {
+        font-size: $font-size-xs;
+        color: $color-text-primary;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        
+        span { color: $color-crimson; }
+    }
+}
+
+.contributionsSection {
+    display: flex;
+    flex-direction: column;
+    gap: $space-4;
+}
+
+.contributionStats {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+
+    .statRow {
+        display: flex;
+        justify-content: space-between;
+        font-size: $font-size-sm;
+        color: $color-text-secondary;
+        
+        .statVal { color: $color-text-primary; font-family: $font-mono; }
+    }
+}
+
+.rankedList {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+
+    .rankItem {
+        display: flex;
+        justify-content: space-between;
+        padding: $space-2;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: $radius-sm;
+        font-size: $font-size-xs;
+
+        &.isPlayer {
+            background: rgba(196, 30, 58, 0.1);
+            border-left: 2px solid $color-crimson;
+        }
+
+        .name { color: $color-text-secondary; }
+        .score { font-family: $font-mono; color: $color-text-primary; }
+    }
+}
+
+.contributeBtn {
+    @include flex-center;
+    background: linear-gradient(to bottom, #991b1b, $color-crimson);
+    color: white;
+    border: none;
+    padding: $space-3;
+    border-radius: $radius-md;
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all $transition-normal;
+    margin-top: $space-2;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(196, 30, 58, 0.4);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+.unlocksList {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+
+    .unlockItem {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: $space-2 $space-3;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: $radius-md;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+
+        .unlockName {
+            font-size: $font-size-sm;
+            color: $color-text-secondary;
+        }
+
+        .statusTag {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+
+            &.unlocked { color: #4ade80; background: rgba(74, 222, 128, 0.1); }
+            &.inProgress { color: #fbbf24; background: rgba(251, 191, 36, 0.1); }
+            &.locked { color: #94a3b8; background: rgba(148, 163, 184, 0.1); }
+        }
+    }
+}

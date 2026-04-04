@@ -27,8 +27,10 @@ const iconRelicScavenging = iconGrave;
 const iconRunecraft = iconMagic;
 import styles from './App.module.scss';
 
+import { CovenView } from './features/coven/CovenView';
+
 type Tab = 
-  | 'combat' | 'sanctum' | 'profile' | 'inventory' | 'store' 
+  | 'combat' | 'sanctum' | 'profile' | 'inventory' | 'store' | 'coven'
   | 'bloodletting' | 'graveHarvesting' | 'nightForaging' | 'butchery' | 'relicScavenging'
   | 'distillation' | 'forging' | 'corpseHarvesting' | 'alchemy' | 'runecraft';
 
@@ -42,6 +44,7 @@ function App() {
       case 'profile': return <ProfileView />;
       case 'inventory': return <InventoryView />;
       case 'store': return <SanguineExchangeView />;
+      case 'coven': return <CovenView />;
       case 'bloodletting': return <BloodlettingView />;
       case 'graveHarvesting': return <SkillingView skill="graveHarvesting" nodes={GRAVE_NODES} title="Grave Harvesting" description="Mine the ruins of the old world for dust, ore, and ancient relics." iconUrl={iconGrave} />;
       case 'nightForaging': return <SkillingView skill="nightForaging" nodes={FORAGING_NODES} title="Night Foraging" description="Scavenge the dark woods for rare herbs and moon-touched flora." iconUrl={iconForaging} />;
@@ -89,6 +92,14 @@ function App() {
           </button>
 
           <div className={styles.navDivider} />
+
+          <button 
+            className={`${styles.navBtn} ${activeTab === 'coven' ? styles.active : ''}`}
+            onClick={() => setActiveTab('coven')}
+          >
+            <img src={iconMagic} alt="" className={styles.navIcon} />
+            <span>Coven</span>
+          </button>
           
           <button 
             className={`${styles.navBtn} ${activeTab === 'store' ? styles.active : ''}`}
