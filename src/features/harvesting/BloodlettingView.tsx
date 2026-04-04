@@ -3,6 +3,7 @@ import { usePlayerStore } from '../../store/playerStore';
 import { BLOOD_TIERS } from '../../data/harvesting';
 import styles from './BloodlettingView.module.scss';
 import React from 'react';
+import iconBlood from '../../assets/skills/bloodletting/bloodletting.png';
 
 export const BloodlettingView: React.FC = () => {
     const { skills, inventory } = usePlayerStore();
@@ -14,7 +15,10 @@ export const BloodlettingView: React.FC = () => {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <h2 className={styles.title}>Bloodletting</h2>
+                <div className={styles.titleArea}>
+                    <img src={iconBlood} alt="" className={styles.mainIcon} />
+                    <h2 className={styles.title}>Bloodletting</h2>
+                </div>
                 <div className={styles.skillBadge}>
                     <span>Level {bloodlettingLevel}</span>
                 </div>

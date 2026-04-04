@@ -7,7 +7,7 @@ import { SanguineExchangeView } from './features/store/SanguineExchangeView';
 import { BloodlettingView } from './features/harvesting/BloodlettingView';
 import { DistillationView } from './features/harvesting/DistillationView';
 import { SkillingView } from './features/skilling/SkillingView';
-import { GRAVE_NODES, FORAGING_NODES, FORGING_RECIPES, CORPSE_RECIPES, ALCHEMY_RECIPES } from './data/skilling';
+import { GRAVE_NODES, FORAGING_NODES, FORGING_RECIPES, CORPSE_RECIPES, ALCHEMY_RECIPES, BUTCHERY_NODES, RELIC_NODES, RUNECRAFT_RECIPES } from './data/skilling';
 
 import { ResourceHUD } from './features/ui/ResourceHUD';
 import './styles/main.scss';
@@ -20,12 +20,17 @@ import iconForging from './assets/skills/forging/forging.png';
 import iconCorpse from './assets/skills/corpseHarvesting/corpseHarvesting.png';
 import iconAlchemy from './assets/skills/alchemy/alchemy.png';
 import iconAttack from './assets/icons/attack.png';
+
+// Placeholder icons for new skills
+const iconButchery = iconCorpse;
+const iconRelicScavenging = iconGrave;
+const iconRunecraft = iconMagic;
 import styles from './App.module.scss';
 
 type Tab = 
   | 'combat' | 'sanctum' | 'profile' | 'inventory' | 'store' 
-  | 'bloodletting' | 'graveHarvesting' | 'nightForaging'
-  | 'distillation' | 'forging' | 'corpseHarvesting' | 'alchemy';
+  | 'bloodletting' | 'graveHarvesting' | 'nightForaging' | 'butchery' | 'relicScavenging'
+  | 'distillation' | 'forging' | 'corpseHarvesting' | 'alchemy' | 'runecraft';
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
@@ -40,10 +45,13 @@ function App() {
       case 'bloodletting': return <BloodlettingView />;
       case 'graveHarvesting': return <SkillingView skill="graveHarvesting" nodes={GRAVE_NODES} title="Grave Harvesting" description="Mine the ruins of the old world for dust, ore, and ancient relics." iconUrl={iconGrave} />;
       case 'nightForaging': return <SkillingView skill="nightForaging" nodes={FORAGING_NODES} title="Night Foraging" description="Scavenge the dark woods for rare herbs and moon-touched flora." iconUrl={iconForaging} />;
+      case 'butchery': return <SkillingView skill="butchery" nodes={BUTCHERY_NODES} title="Butchery" description="Expertly carve beast remains for prime cuts and usable materials." iconUrl={iconButchery} />;
+      case 'relicScavenging': return <SkillingView skill="relicScavenging" nodes={RELIC_NODES} title="Relic Scavenging" description="Sift through ancient debris for fragments of the old world's power." iconUrl={iconRelicScavenging} />;
       case 'distillation': return <DistillationView />;
       case 'forging': return <SkillingView skill="forging" nodes={FORGING_RECIPES} title="Forging" description="Hammer raw materials into reinforced components and gear upgrades." iconUrl={iconForging} />;
       case 'corpseHarvesting': return <SkillingView skill="corpseHarvesting" nodes={CORPSE_RECIPES} title="Corpse Harvesting" description="Process enemy remains into usable crafting materials like sinew and hide." iconUrl={iconCorpse} />;
       case 'alchemy': return <SkillingView skill="alchemy" nodes={ALCHEMY_RECIPES} title="Alchemy" description="Transmute blood and flora into potent consumables and support oils." iconUrl={iconAlchemy} />;
+      case 'runecraft': return <SkillingView skill="runecraft" nodes={RUNECRAFT_RECIPES} title="Runecraft" description="Inscribe potent sigils and glyphs to empower your equipment." iconUrl={iconRunecraft} />;
       default: return <CombatView />;
     }
   };
@@ -132,6 +140,22 @@ function App() {
             <span>Night Foraging</span>
           </button>
 
+          <button 
+            className={`${styles.navBtn} ${activeTab === 'butchery' ? styles.active : ''}`}
+            onClick={() => setActiveTab('butchery')}
+          >
+            <img src={iconButchery} alt="" className={styles.navIcon} />
+            <span>Butchery</span>
+          </button>
+
+          <button 
+            className={`${styles.navBtn} ${activeTab === 'relicScavenging' ? styles.active : ''}`}
+            onClick={() => setActiveTab('relicScavenging')}
+          >
+            <img src={iconRelicScavenging} alt="" className={styles.navIcon} />
+            <span>Relic Scavenging</span>
+          </button>
+
           <div className={styles.navDivider} />
 
           <button 
@@ -164,6 +188,14 @@ function App() {
           >
             <img src={iconAlchemy} alt="" className={styles.navIcon} />
             <span>Alchemy</span>
+          </button>
+
+          <button 
+            className={`${styles.navBtn} ${activeTab === 'runecraft' ? styles.active : ''}`}
+            onClick={() => setActiveTab('runecraft')}
+          >
+            <img src={iconRunecraft} alt="" className={styles.navIcon} />
+            <span>Runecraft</span>
           </button>
         </nav>
 

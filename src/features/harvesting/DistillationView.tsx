@@ -3,6 +3,7 @@ import { usePlayerStore } from '../../store/playerStore';
 import { BLOOD_TIERS } from '../../data/harvesting';
 import styles from './DistillationView.module.scss';
 import React from 'react';
+import iconDistill from '../../assets/skills/distillation/distillation.png';
 
 export const DistillationView: React.FC = () => {
     const { skills, inventory } = usePlayerStore();
@@ -14,7 +15,10 @@ export const DistillationView: React.FC = () => {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <h2 className={styles.title}>Distillation</h2>
+                <div className={styles.titleArea}>
+                    <img src={iconDistill} alt="" className={styles.mainIcon} />
+                    <h2 className={styles.title}>Distillation</h2>
+                </div>
                 <div className={styles.skillBadge}>
                     <span>Level {distillationLevel}</span>
                 </div>

@@ -12,10 +12,13 @@ export type SkillName =
     | 'bloodletting'
     | 'graveHarvesting'
     | 'nightForaging'
+    | 'butchery'
+    | 'relicScavenging'
     | 'distillation'
     | 'forging'
     | 'corpseHarvesting'
-    | 'alchemy';
+    | 'alchemy'
+    | 'runecraft';
 
 export type CombatStyle = 'melee' | 'archery' | 'sorcery';
 

@@ -82,12 +82,33 @@ export const ALCHEMY_RECIPES: SkillingNode[] = [
     },
 ];
 
+export const BUTCHERY_NODES: SkillingNode[] = [
+    { id: 'butcher_basic_remains', name: 'Process Basic Remains', skill: 'butchery', levelReq: 1, timeMs: 3000, xp: 15, output: { id: 'raw_meat_scraps', name: 'Raw Meat Scraps', quantity: 1, type: 'material' } },
+    { id: 'butcher_beast_carcass', name: 'Carve Beast Carcass', skill: 'butchery', levelReq: 15, timeMs: 5000, xp: 40, output: { id: 'prime_beast_cuts', name: 'Prime Beast Cuts', quantity: 1, type: 'material' } },
+    { id: 'butcher_marrow_bones', name: 'Extract Marrow Bones', skill: 'butchery', levelReq: 30, timeMs: 7000, xp: 80, output: { id: 'bone_marrow', name: 'Bone Marrow', quantity: 1, type: 'material' } },
+];
+
+export const RELIC_NODES: SkillingNode[] = [
+    { id: 'scavenge_ruins', name: 'Sift Through Ruins', skill: 'relicScavenging', levelReq: 1, timeMs: 4000, xp: 20, output: { id: 'rusted_token', name: 'Rusted Token', quantity: 1, type: 'material' } },
+    { id: 'scavenge_crypt_relics', name: 'Loot Crypt Relics', skill: 'relicScavenging', levelReq: 20, timeMs: 6000, xp: 55, output: { id: 'crypt_relic_shard', name: 'Crypt Relic Shard', quantity: 1, type: 'material' } },
+    { id: 'scavenge_sealed_vault', name: 'Breach Sealed Vault', skill: 'relicScavenging', levelReq: 40, timeMs: 9000, xp: 130, output: { id: 'sealed_artifact', name: 'Sealed Artifact', quantity: 1, type: 'material' } },
+];
+
+export const RUNECRAFT_RECIPES: SkillingNode[] = [
+    { id: 'inscribe_minor_ward', name: 'Inscribe Minor Ward', skill: 'runecraft', levelReq: 1, timeMs: 5000, xp: 35, output: { id: 'minor_ward_rune', name: 'Minor Ward Rune', quantity: 1, type: 'material' } },
+    { id: 'inscribe_blood_sigil', name: 'Inscribe Blood Sigil', skill: 'runecraft', levelReq: 20, timeMs: 7000, xp: 80, ingredients: [{ id: 'grave_dust', quantity: 5 }], output: { id: 'blood_sigil', name: 'Blood Sigil', quantity: 1, type: 'material' } },
+    { id: 'inscribe_sanguine_glyph', name: 'Sanguine Glyph', skill: 'runecraft', levelReq: 40, timeMs: 10000, xp: 160, ingredients: [{ id: 'bloodstone_shard', quantity: 2 }, { id: 'grave_dust', quantity: 10 }], output: { id: 'sanguine_glyph', name: 'Sanguine Glyph', quantity: 1, type: 'material' } },
+];
+
 export const ALL_SKILLING_NODES: Record<string, SkillingNode> = [
     ...GRAVE_NODES,
     ...FORAGING_NODES,
     ...FORGING_RECIPES,
     ...CORPSE_RECIPES,
-    ...ALCHEMY_RECIPES
+    ...ALCHEMY_RECIPES,
+    ...BUTCHERY_NODES,
+    ...RELIC_NODES,
+    ...RUNECRAFT_RECIPES,
 ].reduce((acc, node) => {
     acc[node.id] = node;
     return acc;

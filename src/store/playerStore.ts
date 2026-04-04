@@ -36,10 +36,13 @@ const DEFAULT_SKILLS: PlayerSkills = {
     bloodletting: { level: 1, xp: 0 },
     nightForaging: { level: 1, xp: 0 },
     graveHarvesting: { level: 1, xp: 0 },
+    butchery: { level: 1, xp: 0 },
+    relicScavenging: { level: 1, xp: 0 },
     distillation: { level: 1, xp: 0 },
     forging: { level: 1, xp: 0 },
     corpseHarvesting: { level: 1, xp: 0 },
     alchemy: { level: 1, xp: 0 },
+    runecraft: { level: 1, xp: 0 },
 };
 
 interface PlayerState {
@@ -635,7 +638,7 @@ export const usePlayerStore = create<PlayerState>()(
         }),
         {
             name: 'crimson-engine-player',
-            version: 6,
+            version: 7,
             migrate: (persistedState: any, version: number) => {
                 if (version < 4) {
                     if (!persistedState.food || persistedState.food.length === 0) {
@@ -655,13 +658,21 @@ export const usePlayerStore = create<PlayerState>()(
                     };
                 }
                 if (version < 6) {
-                    // Initialize new skills if they don't exist
                     const skills = persistedState.skills || {};
                     const newSkills = [
                         'nightForaging', 'graveHarvesting', 'forging', 
                         'corpseHarvesting', 'alchemy'
                     ];
-                    newSkills.forEach(s => {
+                    newSkills.forEach((s: string) => {
+                        if (!skills[s]) skills[s] = { level: 1, xp: 0 };
+                    });
+                    persistedState.skills = skills;
+                }
+                if (version < 7) {
+                    // Initialize the 3 new non-combat skills
+                    const skills = persistedState.skills || {};
+                    const newSkills = ['butchery', 'relicScavenging', 'runecraft'];
+                    newSkills.forEach((s: string) => {
                         if (!skills[s]) skills[s] = { level: 1, xp: 0 };
                     });
                     persistedState.skills = skills;
