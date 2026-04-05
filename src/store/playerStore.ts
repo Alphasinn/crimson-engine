@@ -5,7 +5,6 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { useCombatStore } from './combatStore';
 import type { PlayerSkills, PlayerEquipment, EquipmentItem, CombatStyle, InventoryItem, SkillName, TrainingMode, LootHistoryItem, UpgradeId, RitualDefinition } from '../engine/types';
 import { getLevelFromXp, getXpForLevel } from '../engine/xpTable';
 import {
@@ -106,13 +105,12 @@ interface PlayerState {
     addUnbankedLoot: (shards: number, steel: number, ichor: number, isRedMist?: boolean) => void;
     withdraw: () => void;
     applyDeathPenalties: (isBraced: boolean, isRedMist?: boolean) => void;
-    stabilizeIchor: () => void;
     setFinesseTicks: (ticks: number) => void;
-    // Distill Actions
-    sanguineFinesse: () => void;
-    vileReinforcement: () => void;
+    // Resource Helpers
+    getResourceQuantity: (id: string) => number;
+    consumeResource: (id: string, quantity: number) => void;
+    // Crucible Actions
     tierShift: (slot: keyof PlayerEquipment, path: 'sanguine' | 'vile') => void;
-    // Phase 2B Crucible
     refineGear: (slot: keyof PlayerEquipment) => void;
     resetCrucibleSeal: () => void;
     // Phase 4 Actions
@@ -354,11 +352,18 @@ export const usePlayerStore = create<PlayerState>()(
 
             clearLootHistory: () => set({ lootHistory: [] }),
 
-            toggleAutoLoot: () => set((state) => {
-                const isUnlocked = state.unlockedUpgrades.includes('auto_loot');
-                if (!isUnlocked) return { autoLootEnabled: false };
-                return { autoLootEnabled: !state.autoLootEnabled };
-            }),
+            toggleAutoLoot: () => {
+                const isUnlocked = get().unlockedUpgrades.includes('auto_loot');
+                if (!isUnlocked) return set({ autoLootEnabled: false });
+
+                const nextState = !get().autoLootEnabled;
+                set({ autoLootEnabled: nextState });
+
+                // If toggled ON, immediately bank current unbanked loot
+                if (nextState) {
+                    get().withdraw();
+                }
+            },
 
             unlockUpgrade: (upgradeId: UpgradeId) => set((state) => {
                 const alreadyUnlocked = state.unlockedUpgrades.includes(upgradeId);
@@ -390,6 +395,18 @@ export const usePlayerStore = create<PlayerState>()(
                 const allowedShards = Math.max(0, SHARD_CAP - currentTotal);
                 const finalShards = Math.min(shards, allowedShards);
                 
+                if (state.autoLootEnabled) {
+                    return {
+                        bloodShards: state.bloodShards + state.unbankedShards + finalShards,
+                        graveSteel: state.graveSteel + state.unbankedSteel + steel,
+                        cursedIchor: state.cursedIchor + state.unbankedIchor + ichor,
+                        unbankedShards: 0,
+                        unbankedSteel: 0,
+                        unbankedIchor: 0,
+                        redMistIchorDrops: isRedMist ? state.redMistIchorDrops + ichor : state.redMistIchorDrops
+                    };
+                }
+
                 return {
                     unbankedShards: state.unbankedShards + finalShards,
                     unbankedSteel: state.unbankedSteel + steel,
@@ -425,48 +442,30 @@ export const usePlayerStore = create<PlayerState>()(
 
             setFinesseTicks: (ticks) => set({ finesseTicksRemaining: ticks }),
 
-            stabilizeIchor: () => set((state) => {
-                if (state.crucibleSealed) return state;
-                if (state.bloodShards >= 125 && state.cursedIchor >= 1) {
-                    const lastSession = useCombatStore.getState().lastSession;
-                    const lastRisk = (lastSession && !lastSession.wasSlain) ? (lastSession.lastScentIntensity ?? 0) : 0;
-                    const yieldMult = 1 + lastRisk;
+            getResourceQuantity: (id: string) => {
+                const state = get();
+                if (id === 'blood_shard') return state.bloodShards;
+                if (id === 'cursed_ichor') return state.cursedIchor;
+                if (id === 'grave_steel') return state.graveSteel;
+                if (id === 'stabilized_ichor') return state.stabilizedIchor;
+                const invItem = state.inventory.find(i => i.id === id);
+                return invItem?.quantity || 0;
+            },
+
+            consumeResource: (id: string, quantity: number) => {
+                set((state) => {
+                    if (id === 'blood_shard') return { bloodShards: state.bloodShards - quantity };
+                    if (id === 'cursed_ichor') return { cursedIchor: state.cursedIchor - quantity };
+                    if (id === 'grave_steel') return { graveSteel: state.graveSteel - quantity };
+                    if (id === 'stabilized_ichor') return { stabilizedIchor: state.stabilizedIchor - quantity };
                     
-                    return {
-                        bloodShards: state.bloodShards - 125,
-                        cursedIchor: state.cursedIchor - 1,
-                        stabilizedIchor: state.stabilizedIchor + yieldMult,
-                        crucibleSealed: true
-                    };
-                }
-                return state;
-            }),
-
-            sanguineFinesse: () => set((state) => {
-                if (state.crucibleSealed) return state;
-                if (state.bloodShards >= 15) {
-                    return { 
-                        bloodShards: state.bloodShards - 15,
-                        finesseTicksRemaining: 200,
-                        crucibleSealed: true
-                    };
-                }
-                return state;
-            }),
-
-            vileReinforcement: () => set((state) => {
-                if (state.crucibleSealed) return state;
-                if (state.bloodShards >= 30 && state.graveSteel >= 10) {
-                    return { 
-                        bloodShards: state.bloodShards - 30,
-                        graveSteel: state.graveSteel - 10,
-                        permanentArmorBonus: state.permanentArmorBonus + 5,
-                        isBraced: true,
-                        crucibleSealed: true
-                    };
-                }
-                return state;
-            }),
+                    const newInv = state.inventory.map(item => 
+                        item.id === id ? { ...item, quantity: item.quantity - quantity } : item
+                    ).filter(item => item.quantity > 0);
+                    
+                    return { inventory: newInv };
+                });
+            },
 
             tierShift: (slot, path) => set((state) => {
                 if (state.crucibleSealed) return state;
@@ -478,11 +477,16 @@ export const usePlayerStore = create<PlayerState>()(
 
                 // 2. Resource Check
                 const cost = getTierShiftCost(item.tier);
-                if (
-                    state.bloodShards < cost.shards || 
-                    state.stabilizedIchor < cost.stabilizedIchor || 
-                    state.graveSteel < cost.steel
-                ) {
+                
+                const hasShards = state.bloodShards >= cost.shards;
+                const hasIchor = state.stabilizedIchor >= cost.stabilizedIchor;
+                const hasComponents = cost.components.every(comp => {
+                    const invItem = state.inventory.find(i => i.id === comp.id);
+                    return invItem && invItem.quantity >= comp.quantity;
+                });
+
+                if (!hasShards || !hasIchor || !hasComponents) {
+                    console.warn("Missing materials for Tier Shift", cost);
                     return state;
                 }
 
@@ -499,10 +503,18 @@ export const usePlayerStore = create<PlayerState>()(
                 // 4. Final Validation
                 if (!validateShiftResult(item, newItem)) return state;
 
+                // Consume components
+                let nextInventory = [...state.inventory];
+                cost.components.forEach(comp => {
+                    nextInventory = nextInventory.map(invItem => 
+                        invItem.id === comp.id ? { ...invItem, quantity: invItem.quantity - comp.quantity } : invItem
+                    ).filter(i => i.quantity > 0);
+                });
+
                 return {
                     bloodShards: state.bloodShards - cost.shards,
                     stabilizedIchor: state.stabilizedIchor - cost.stabilizedIchor,
-                    graveSteel: state.graveSteel - cost.steel,
+                    inventory: nextInventory,
                     equipment: { ...state.equipment, [slot]: newItem },
                     crucibleSealed: true
                 };
@@ -638,7 +650,7 @@ export const usePlayerStore = create<PlayerState>()(
         }),
         {
             name: 'crimson-engine-player',
-            version: 7,
+            version: 8,
             migrate: (persistedState: any, version: number) => {
                 if (version < 4) {
                     if (!persistedState.food || persistedState.food.length === 0) {
@@ -668,11 +680,15 @@ export const usePlayerStore = create<PlayerState>()(
                     });
                     persistedState.skills = skills;
                 }
-                if (version < 7) {
-                    // Initialize the 3 new non-combat skills
+                if (version < 8) {
+                    // Initialize all missing skill keys to prevent runtime crashes
                     const skills = persistedState.skills || {};
-                    const newSkills = ['butchery', 'relicScavenging', 'runecraft'];
-                    newSkills.forEach((s: string) => {
+                    const allSkillKeys = [
+                        'fangMastery', 'predatorForce', 'obsidianWard', 'shadowArchery', 'bloodSorcery', 'vitae',
+                        'bloodletting', 'graveHarvesting', 'nightForaging', 'butchery', 'relicScavenging',
+                        'distillation', 'forging', 'corpseHarvesting', 'alchemy', 'runecraft'
+                    ];
+                    allSkillKeys.forEach((s: string) => {
                         if (!skills[s]) skills[s] = { level: 1, xp: 0 };
                     });
                     persistedState.skills = skills;

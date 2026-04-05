@@ -4,10 +4,10 @@ import { InventoryView } from './features/inventory/InventoryView';
 import { SanctumView } from './features/sanctum/SanctumView';
 import { ProfileView } from './features/character/ProfileView';
 import { SanguineExchangeView } from './features/store/SanguineExchangeView';
-import { BloodlettingView } from './features/harvesting/BloodlettingView';
-import { DistillationView } from './features/harvesting/DistillationView';
 import { SkillingView } from './features/skilling/SkillingView';
 import { GRAVE_NODES, FORAGING_NODES, FORGING_RECIPES, CORPSE_RECIPES, ALCHEMY_RECIPES, BUTCHERY_NODES, RELIC_NODES, RUNECRAFT_RECIPES } from './data/skilling';
+import { BLOOD_TIERS } from './data/harvesting';
+import type { SkillingNode } from './data/skilling';
 
 import { ResourceHUD } from './features/ui/ResourceHUD';
 import './styles/main.scss';
@@ -45,12 +45,35 @@ function App() {
       case 'inventory': return <InventoryView />;
       case 'store': return <SanguineExchangeView />;
       case 'coven': return <CovenView />;
-      case 'bloodletting': return <BloodlettingView />;
+      case 'bloodletting': {
+        const mappedNodes: SkillingNode[] = BLOOD_TIERS.map(node => ({
+          id: node.id,
+          name: node.name,
+          skill: 'bloodletting',
+          levelReq: node.levelReq,
+          timeMs: node.baseHarvestTimeMs,
+          xp: node.harvestXp,
+          output: { id: node.rawItem.id, name: node.rawItem.name, quantity: 1, type: 'material', icon: node.icon }
+        }));
+        return <SkillingView skill="bloodletting" nodes={mappedNodes} title="Bloodletting" description="Harvest raw blood from the world's denizens to fuel your dark arts." iconUrl={iconBlood} />;
+      }
+      case 'distillation': {
+        const mappedNodes: SkillingNode[] = BLOOD_TIERS.map(node => ({
+          id: node.id,
+          name: node.distillItem.name,
+          skill: 'distillation',
+          levelReq: node.levelReq,
+          timeMs: node.baseDistillTimeMs,
+          xp: node.distillXp,
+          ingredients: [{ id: node.rawItem.id, quantity: 1, icon: node.icon }],
+          output: { id: node.distillItem.id, name: node.distillItem.name, quantity: 1, type: 'food', icon: node.distillIcon }
+        }));
+        return <SkillingView skill="distillation" nodes={mappedNodes} title="Distillation" description="Refine raw blood into potent vials of vitae. Consumable for HP and energy." iconUrl={iconDistill} />;
+      }
       case 'graveHarvesting': return <SkillingView skill="graveHarvesting" nodes={GRAVE_NODES} title="Grave Harvesting" description="Mine the ruins of the old world for dust, ore, and ancient relics." iconUrl={iconGrave} />;
       case 'nightForaging': return <SkillingView skill="nightForaging" nodes={FORAGING_NODES} title="Night Foraging" description="Scavenge the dark woods for rare herbs and moon-touched flora." iconUrl={iconForaging} />;
       case 'butchery': return <SkillingView skill="butchery" nodes={BUTCHERY_NODES} title="Butchery" description="Expertly carve beast remains for prime cuts and usable materials." iconUrl={iconButchery} />;
       case 'relicScavenging': return <SkillingView skill="relicScavenging" nodes={RELIC_NODES} title="Relic Scavenging" description="Sift through ancient debris for fragments of the old world's power." iconUrl={iconRelicScavenging} />;
-      case 'distillation': return <DistillationView />;
       case 'forging': return <SkillingView skill="forging" nodes={FORGING_RECIPES} title="Forging" description="Hammer raw materials into reinforced components and gear upgrades." iconUrl={iconForging} />;
       case 'corpseHarvesting': return <SkillingView skill="corpseHarvesting" nodes={CORPSE_RECIPES} title="Corpse Harvesting" description="Process enemy remains into usable crafting materials like sinew and hide." iconUrl={iconCorpse} />;
       case 'alchemy': return <SkillingView skill="alchemy" nodes={ALCHEMY_RECIPES} title="Alchemy" description="Transmute blood and flora into potent consumables and support oils." iconUrl={iconAlchemy} />;

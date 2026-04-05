@@ -95,17 +95,28 @@ export function isEligibleForTierShift(item: EquipmentItem): boolean {
  * MVP: Static cost model with a simple tier-based multiplier.
  */
 export function getTierShiftCost(current: GearTier) {
-    const baseShards = 200;
-    const baseIchor = 3;
-    const baseSteel = 25;
-
     const tierValue = parseInt(current.replace('T', ''), 10);
     const mult = tierValue; // T1: 1x, T2: 2x, T3: 3x, etc.
+
+    const baseShards = 500;
+    const baseIchor = 1; // Stabilized Ichor
+    const components: { id: string, quantity: number }[] = [];
+
+    // Map forged components based on tier
+    if (tierValue === 1) { // T1 -> T2
+        components.push({ id: 'iron_plate', quantity: 5 * mult });
+        components.push({ id: 'steel_rivets', quantity: 10 * mult });
+        components.push({ id: 'cursed_ingot', quantity: 2 * mult });
+    } else { // T2+ (scaling placeholders)
+        components.push({ id: 'iron_plate', quantity: 10 * mult });
+        components.push({ id: 'steel_rivets', quantity: 20 * mult });
+        components.push({ id: 'cursed_ingot', quantity: 5 * mult });
+    }
 
     return {
         shards: Math.floor(baseShards * mult),
         stabilizedIchor: Math.floor(baseIchor * mult),
-        steel: Math.floor(baseSteel * mult)
+        components
     };
 }
 

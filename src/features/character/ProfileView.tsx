@@ -83,7 +83,7 @@ export function ProfileView() {
                         <div className={styles.skillsGrid}>
                             {cat.skills.map(skillKey => {
                                 const config = SKILL_MAP[skillKey as SkillName];
-                                const skill = skills[skillKey as SkillName];
+                                const skill = skills[skillKey as SkillName] || { level: 1, xp: 0 };
                                 const progress = getXpProgress(skill.xp);
                                 
                                 return (

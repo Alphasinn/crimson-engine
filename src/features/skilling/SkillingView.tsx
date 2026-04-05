@@ -14,7 +14,7 @@ interface SkillingViewProps {
 }
 
 export const SkillingView: React.FC<SkillingViewProps> = ({ skill, nodes, title, description, iconUrl }) => {
-    const { skills, inventory } = usePlayerStore();
+    const { skills, getResourceQuantity } = usePlayerStore();
     const { activeNodeId, activeSkill, isActive, progressTimer, requiredTicks, startAction, stopAction } = useSkillingStore();
 
     const skillLevel = skills[skill]?.level || 1;
@@ -40,12 +40,9 @@ export const SkillingView: React.FC<SkillingViewProps> = ({ skill, nodes, title,
                     const isThisNodeActive = isThisSkillActive && activeNodeId === node.id;
                     const pPct = isThisNodeActive && requiredTicks > 0 ? (progressTimer / requiredTicks) * 100 : 0;
                     
-                    // Ingredient check
                     const hasIngredients = !node.ingredients || node.ingredients.every(ing => {
-                        const invItem = inventory.find(i => i.id === ing.id);
-                        return invItem && invItem.quantity >= ing.quantity;
+                        return getResourceQuantity(ing.id) >= ing.quantity;
                     });
-
                     const canStart = isUnlocked && hasIngredients;
 
                     return (
@@ -58,60 +55,60 @@ export const SkillingView: React.FC<SkillingViewProps> = ({ skill, nodes, title,
                                 else if (canStart) startAction(node.id, skill);
                             }}
                         >
-                            <div className={styles.cardHeader}>
-                                <h3 className={styles.nodeName}>{node.name}</h3>
-                                {isUnlocked ? (
-                                    <span className={styles.reqBadge}>Lv {node.levelReq}</span>
-                                ) : (
-                                    <span className={styles.lockBadge}>Requires Lv {node.levelReq}</span>
-                                )}
+                            <div className={styles.premiumHeader}>
+                                <h3 className={styles.premiumNodeName}>{node.name}</h3>
+                                <div className={styles.premiumHeaderDetails}>
+                                    <div className={styles.premiumLevelReq}>Level requirement: {node.levelReq}</div>
+                                    <div className={styles.premiumXpTimeInfo}>
+                                        {node.xp} XP / {(node.timeMs / 1000).toFixed(1)} Seconds
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className={styles.cardBody}>
-                                {node.ingredients && node.ingredients.length > 0 && (
-                                    <div className={styles.ingredientsSection}>
-                                        <div className={styles.sectionLabel}>Requires:</div>
-                                        {node.ingredients.map(ing => {
-                                            const invItem = inventory.find(i => i.id === ing.id);
-                                            const owned = invItem?.quantity || 0;
+                            <div className={styles.cardBodySplit}>
+                                <div className={styles.requirementSection}>
+                                    {node.ingredients && node.ingredients.length > 0 ? (
+                                        node.ingredients.map(ing => {
+                                            const owned = getResourceQuantity(ing.id);
+                                            const isMissing = owned < ing.quantity;
                                             return (
-                                                <div key={ing.id} className={`${styles.ingredientRow} ${owned < ing.quantity ? styles.missing : ''}`}>
-                                                    <span>• {ing.id.replace(/_/g, ' ')}</span>
-                                                    <span className={styles.stockCount}>{owned} / {ing.quantity}</span>
+                                                <div key={ing.id} className={styles.requirementIconContainer}>
+                                                    <div className={styles.requirementQtyBadge}>{ing.quantity}</div>
+                                                    {ing.icon ? (
+                                                        <img src={ing.icon} alt={ing.id} className={styles.requirementIcon} />
+                                                    ) : (
+                                                        <span style={{fontSize: '24px', opacity: 0.3}}>?</span>
+                                                    )}
+                                                    <div className={`${styles.requirementStockBadge} ${isMissing ? styles.insufficient : ''}`}>
+                                                        {owned}
+                                                    </div>
                                                 </div>
                                             );
-                                        })}
-                                    </div>
-                                )}
-                                
-                                <div className={styles.rewardRow}>
-                                    <span className={styles.rewardLabel}>Yield:</span>
-                                    <span className={styles.rewardName}>{node.output.name} x{node.output.quantity}</span>
+                                        })
+                                    ) : (
+                                        <div className={styles.requirementIconContainer} style={{opacity: 0.2, borderStyle: 'dashed'}}>
+                                            <span style={{fontSize: '10px'}}>NO REQS</span>
+                                        </div>
+                                    )}
                                 </div>
 
-                                <div className={styles.statsPanel}>
-                                    <div className={styles.statRow}>
-                                        <span>XP</span>
-                                        <span className={styles.highlight}>+{node.xp}</span>
-                                    </div>
-                                    <div className={styles.statRow}>
-                                        <span>Time</span>
-                                        <span>{(node.timeMs / 1000).toFixed(1)}s</span>
-                                    </div>
+                                <div className={styles.resultSection}>
+                                    {node.output.icon ? (
+                                        <img src={node.output.icon} alt={node.output.name} className={styles.resultImage} />
+                                    ) : (
+                                        <div className={styles.resultImage} style={{background: 'rgba(255,255,255,0.05)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                            <span style={{fontSize: '32px', opacity: 0.2}}>?</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
-                            {isThisNodeActive && (
-                                <div className={styles.progressTrack}>
-                                    <div className={styles.progressBar} style={{ width: `${pPct}%` }} />
-                                    <div className={styles.progressLabel}>Processing...</div>
+                            {isThisNodeActive ? (
+                                <div className={styles.progressTrackBottom}>
+                                    <div className={styles.progressBarPremium} style={{ width: `${pPct}%` }} />
                                 </div>
-                            )}
-
-                            {(!isThisNodeActive && isUnlocked) && (
-                                <div className={styles.cardFooter}>
-                                    {canStart ? 'Click to start' : 'Insufficient Materials'}
-                                </div>
+                            ) : (
+                                <div className={styles.progressTrackEmpty} />
                             )}
                         </div>
                     );

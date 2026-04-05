@@ -56,10 +56,9 @@ export const useSkillingStore = create<SkillingState>((set, get) => ({
 
         // Ingredient check (if refining)
         if ('ingredients' in node && node.ingredients) {
-            const inventory = usePlayerStore.getState().inventory;
+            const pStore = usePlayerStore.getState();
             const hasMaterials = node.ingredients.every(ing => {
-                const invItem = inventory.find(i => i.id === ing.id);
-                return invItem && invItem.quantity >= ing.quantity;
+                return pStore.getResourceQuantity(ing.id) >= ing.quantity;
             });
 
             if (!hasMaterials) {
@@ -119,8 +118,7 @@ export const useSkillingStore = create<SkillingState>((set, get) => ({
             if ('ingredients' in node && node.ingredients) {
                 // Secondary check mid-tick
                 const canConsume = node.ingredients.every(ing => {
-                    const invItem = pStore.inventory.find(i => i.id === ing.id);
-                    return invItem && invItem.quantity >= ing.quantity;
+                    return pStore.getResourceQuantity(ing.id) >= ing.quantity;
                 });
 
                 if (!canConsume) {
@@ -130,8 +128,7 @@ export const useSkillingStore = create<SkillingState>((set, get) => ({
 
                 // Consume
                 node.ingredients.forEach(ing => {
-                    const invItem = pStore.inventory.find(i => i.id === ing.id);
-                    pStore.updateInventoryItem(ing.id, invItem!.quantity - ing.quantity);
+                    pStore.consumeResource(ing.id, ing.quantity);
                 });
             } else if ('rawItem' in node && activeSkill === 'distillation') {
                 // Legacy logic for Distillation

@@ -6,8 +6,10 @@ import type { EquipmentItem } from '../../engine/types';
 import iconShard from '../../assets/icons/blood_magic.png';
 import styles from './exchange.module.scss';
 
+import { SanguineMasteryPanel } from '../mastery/SanguineMasteryPanel';
+
 export const SanguineExchangeView: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'blood_merchant' | 'soul_broker'>('blood_merchant');
+    const [activeTab, setActiveTab] = useState<'blood_merchant' | 'soul_broker' | 'sanguine_mastery'>('blood_merchant');
     const [selectedTiers, setSelectedTiers] = useState<Record<string, string>>({
         melee: 'T1',
         archery: 'T1',
@@ -15,11 +17,7 @@ export const SanguineExchangeView: React.FC = () => {
     });
     const { bloodShards, buyItem } = usePlayerStore();
 
-    const merchant = MERCHANTS[activeTab];
-
-    if (!merchant) {
-        return <div className={styles.root}>Merchant not found.</div>;
-    }
+    const merchant = MERCHANTS[activeTab as keyof typeof MERCHANTS];
 
     const tiers = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'];
 
@@ -38,7 +36,11 @@ export const SanguineExchangeView: React.FC = () => {
         <div className={styles.root}>
             <div className={styles.header}>
                 <h2 className={styles.title}>Sanguine Exchange</h2>
-                <p className={styles.subtitle}>{merchant.description}</p>
+                <p className={styles.subtitle}>
+                    {activeTab === 'sanguine_mastery' 
+                        ? 'Awaken your dormant vampiric bloodlines.' 
+                        : (merchant?.description || 'Trade with the denizens of the night.')}
+                </p>
             </div>
 
             <div className={styles.tabs}>
@@ -54,9 +56,17 @@ export const SanguineExchangeView: React.FC = () => {
                 >
                     SOUL BROKER
                 </button>
+                <button 
+                    className={`${styles.tab} ${activeTab === 'sanguine_mastery' ? styles.active : ''}`}
+                    onClick={() => setActiveTab('sanguine_mastery')}
+                >
+                    SANGUINE MASTERY
+                </button>
             </div>
 
-            {merchant.inventory.length > 0 ? (
+            {activeTab === 'sanguine_mastery' ? (
+                <SanguineMasteryPanel />
+            ) : merchant && merchant.inventory.length > 0 ? (
                 <div className={styles.merchantContainer}>
                     {['melee', 'archery', 'sorcery'].map(style => {
                         const styleInventory = merchant.inventory.filter(item => {

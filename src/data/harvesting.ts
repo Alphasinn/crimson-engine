@@ -2,6 +2,10 @@ import type { InventoryItem } from '../engine/types';
 import iconRat from '../assets/skills/bloodletting/plagued_rat.png';
 import iconDistillRat from '../assets/items/distill/rat_blood_vial.png';
 
+// Global Blood Icons (Packs)
+import iconRawBlood from '../assets/items/skilling/raw_blood.png';
+import iconVials from '../assets/items/skilling/vials.png';
+
 export interface HarvestingNode {
     id: string;
     name: string;
@@ -39,7 +43,9 @@ export const BLOOD_TIERS: HarvestingNode[] = [
         baseHarvestTimeMs: 3000,
         baseDistillTimeMs: 2000,
         harvestXp: 25,
-        distillXp: 35
+        distillXp: 35,
+        icon: iconRawBlood,
+        distillIcon: iconVials
     },
     {
         id: 'node_livestock',
@@ -50,7 +56,9 @@ export const BLOOD_TIERS: HarvestingNode[] = [
         baseHarvestTimeMs: 4000,
         baseDistillTimeMs: 2500,
         harvestXp: 45,
-        distillXp: 60
+        distillXp: 60,
+        icon: iconRawBlood,
+        distillIcon: iconVials
     },
     {
         id: 'node_peasant',
@@ -61,7 +69,9 @@ export const BLOOD_TIERS: HarvestingNode[] = [
         baseHarvestTimeMs: 5000,
         baseDistillTimeMs: 3000,
         harvestXp: 70,
-        distillXp: 90
+        distillXp: 90,
+        icon: iconRawBlood,
+        distillIcon: iconVials
     },
     {
         id: 'node_vagrant',
@@ -72,7 +82,9 @@ export const BLOOD_TIERS: HarvestingNode[] = [
         baseHarvestTimeMs: 6000,
         baseDistillTimeMs: 3500,
         harvestXp: 100,
-        distillXp: 125
+        distillXp: 125,
+        icon: iconRawBlood,
+        distillIcon: iconVials
     },
     {
         id: 'node_beast',
@@ -83,7 +95,9 @@ export const BLOOD_TIERS: HarvestingNode[] = [
         baseHarvestTimeMs: 7500,
         baseDistillTimeMs: 4000,
         harvestXp: 140,
-        distillXp: 170
+        distillXp: 170,
+        icon: iconRawBlood,
+        distillIcon: iconVials
     },
     {
         id: 'node_commoner',
@@ -94,7 +108,9 @@ export const BLOOD_TIERS: HarvestingNode[] = [
         baseHarvestTimeMs: 9000,
         baseDistillTimeMs: 5000,
         harvestXp: 190,
-        distillXp: 220
+        distillXp: 220,
+        icon: iconRawBlood,
+        distillIcon: iconVials
     },
     {
         id: 'node_clergy',
@@ -105,7 +121,9 @@ export const BLOOD_TIERS: HarvestingNode[] = [
         baseHarvestTimeMs: 11000,
         baseDistillTimeMs: 6000,
         harvestXp: 250,
-        distillXp: 280
+        distillXp: 280,
+        icon: iconRawBlood,
+        distillIcon: iconVials
     },
     {
         id: 'node_noble',
@@ -116,7 +134,9 @@ export const BLOOD_TIERS: HarvestingNode[] = [
         baseHarvestTimeMs: 13000,
         baseDistillTimeMs: 7000,
         harvestXp: 320,
-        distillXp: 360
+        distillXp: 360,
+        icon: iconRawBlood,
+        distillIcon: iconVials
     },
     {
         id: 'node_tainted',
@@ -127,7 +147,9 @@ export const BLOOD_TIERS: HarvestingNode[] = [
         baseHarvestTimeMs: 15000,
         baseDistillTimeMs: 8500,
         harvestXp: 400,
-        distillXp: 450
+        distillXp: 450,
+        icon: iconRawBlood,
+        distillIcon: iconVials
     },
     {
         id: 'node_royal',
@@ -138,7 +160,9 @@ export const BLOOD_TIERS: HarvestingNode[] = [
         baseHarvestTimeMs: 18000,
         baseDistillTimeMs: 10000,
         harvestXp: 500,
-        distillXp: 550
+        distillXp: 550,
+        icon: iconRawBlood,
+        distillIcon: iconVials
     },
     {
         id: 'node_elder',
@@ -149,7 +173,9 @@ export const BLOOD_TIERS: HarvestingNode[] = [
         baseHarvestTimeMs: 22000,
         baseDistillTimeMs: 12000,
         harvestXp: 650,
-        distillXp: 700
+        distillXp: 700,
+        icon: iconRawBlood,
+        distillIcon: iconVials
     }
 ];
 

@@ -59,19 +59,20 @@
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: $space-6;
 }
 
 .card {
     @include glass-card(rgba(255, 255, 255, 0.03));
-    padding: $space-6;
+    padding: $space-6 $space-6 $space-8 $space-6;
     @include flex-col;
     gap: $space-4;
     position: relative;
     cursor: pointer;
     transition: all $transition-normal;
     border: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
 
     &:hover:not(.locked) {
         background: rgba(255, 255, 255, 0.06);
@@ -221,4 +222,153 @@
     letter-spacing: 1px;
     padding-top: $space-2;
     border-top: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* --- Premium Card Styles (Distillation Mirror) --- */
+.premiumHeader {
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: $space-3;
+    margin-bottom: $space-2;
+}
+
+.premiumNodeName {
+    font-family: $font-heading;
+    font-size: $font-size-lg;
+    color: white;
+    margin: 0 0 $space-1 0;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.premiumHeaderDetails {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.premiumLevelReq {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+}
+
+.premiumXpTimeInfo {
+    font-size: $font-size-md;
+    color: white;
+    font-weight: 500;
+}
+
+.cardBodySplit {
+    display: grid;
+    grid-template-columns: 1.8fr 1fr;
+    align-items: center;
+    padding: $space-4 0;
+    min-height: 100px;
+}
+
+.requirementSection {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: $space-5;
+    padding: 0 $space-2;
+}
+
+.requirementIconContainer {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    background: rgba($color-crimson, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: $radius-md;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all $transition-fast;
+
+    &:hover {
+        border-color: rgba($color-gold, 0.4);
+        background: rgba($color-crimson, 0.15);
+    }
+}
+
+.requirementIcon {
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+}
+
+.requirementQtyBadge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: rgba(0, 0, 0, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: $radius-sm;
+    z-index: 2;
+    font-family: $font-mono;
+}
+
+.requirementStockBadge {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: $color-gold;
+    color: black;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: $radius-sm;
+    z-index: 2;
+    font-family: $font-mono;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+
+    &.insufficient {
+        background: #ef4444;
+        color: white;
+    }
+}
+
+.resultSection {
+    display: flex;
+    justify-content: center;
+}
+
+.resultImage {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 15px rgba($color-crimson, 0.4));
+}
+
+.progressTrackBottom {
+    height: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: hidden;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.progressTrackEmpty {
+    height: 10px;
+    background: rgba($color-crimson, 0.1);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.progressBarPremium {
+    height: 100%;
+    background: linear-gradient(90deg, #7f1d1d, #ef4444);
+    box-shadow: 0 0 15px rgba($color-crimson, 0.5);
+    transition: width 0.1s linear;
 }
