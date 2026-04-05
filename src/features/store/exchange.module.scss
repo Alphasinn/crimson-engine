@@ -71,12 +71,49 @@
 
 .sectionTitle {
     color: #ff3355;
-    font-size: 1.25rem;
-    letter-spacing: 2px;
+    font-size: 1.5rem;
+    letter-spacing: 3px;
     margin: 0;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 51, 85, 0.2);
+    padding-bottom: 12px;
+    border-bottom: 2px solid rgba(255, 51, 85, 0.3);
+    width: 100%;
+    margin-bottom: 16px;
+    font-family: inherit;
+    text-transform: uppercase;
+}
+
+.tierTabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    padding: 4px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
     width: fit-content;
+}
+
+.tierTab {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 6px 16px;
+    border-radius: 4px;
+    color: #9a8fa0;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: all 0.2s;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: #e5e7eb;
+    }
+
+    &.active {
+        background: rgba(139, 0, 0, 0.4);
+        border-color: #ff3355;
+        color: #fff;
+        box-shadow: 0 0 10px rgba(255, 51, 85, 0.3);
+    }
 }
 
 .merchantGrid {
@@ -155,12 +192,11 @@
 }
 
 .itemIcon {
-    width: auto;
-    height: 90%;
-    max-width: 90%;
+    width: 64px;
+    height: 64px;
     object-fit: contain;
     z-index: 1;
-    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
 }
 
 .placeholderIcon {
