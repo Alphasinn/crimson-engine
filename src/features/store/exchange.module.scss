@@ -180,15 +180,7 @@
     border-radius: 8px;
     overflow: hidden;
 
-    &::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: url('../../assets/icons/blood_magic.png') no-repeat center;
-        background-size: 80%;
-        opacity: 0.03;
-        filter: grayscale(1);
-    }
+    overflow: hidden;
 }
 
 .itemIcon {
