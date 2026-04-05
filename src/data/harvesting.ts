@@ -1,5 +1,6 @@
 import type { InventoryItem } from '../engine/types';
 import iconRat from '../assets/skills/bloodletting/plagued_rat.png';
+import iconDistillRat from '../assets/items/distill/rat_blood_vial.png';
 
 export interface HarvestingNode {
     id: string;
@@ -12,6 +13,7 @@ export interface HarvestingNode {
     harvestXp: number;
     distillXp: number;
     icon?: string;
+    distillIcon?: string;
 }
 
 export const BLOOD_TIERS: HarvestingNode[] = [
@@ -25,7 +27,8 @@ export const BLOOD_TIERS: HarvestingNode[] = [
         baseDistillTimeMs: 1500,
         harvestXp: 10,
         distillXp: 15,
-        icon: iconRat
+        icon: iconRat,
+        distillIcon: iconDistillRat
     },
     {
         id: 'node_stray',

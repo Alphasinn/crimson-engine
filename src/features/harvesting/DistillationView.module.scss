@@ -93,93 +93,128 @@
 
     &.active {
         border-color: #4a90e2;
-        background: rgba(10, 25, 40, 0.8);
-        box-shadow: 0 0 15px rgba(74, 144, 226, 0.15);
+        background: rgba(10, 25, 40, 0.9);
+        box-shadow: 0 0 20px rgba(74, 144, 226, 0.2);
     }
 }
 
-.cardHeader {
-    @include flex-between();
+.centeredHeader {
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: $space-3;
     margin-bottom: $space-2;
 }
 
 .nodeName {
     font-family: $font-heading;
-    font-size: $font-size-md;
-    color: $color-text-primary;
-    margin: 0;
+    font-size: $font-size-lg;
+    color: white;
+    margin: 0 0 $space-1 0;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
 }
 
-.reqBadge, .lockBadge {
-    font-size: $font-size-xs;
-    padding: 2px 6px;
-    border-radius: $radius-sm;
-    font-family: $font-mono;
-}
-.reqBadge {
-    background: rgba(255, 255, 255, 0.1);
-    color: $color-text-secondary;
-}
-.lockBadge {
-    background: rgba(255, 0, 0, 0.2);
-    color: #ffcccc;
-}
-
-.cardBody {
+.headerDetails {
     display: flex;
     flex-direction: column;
-    gap: $space-2;
-    background: rgba(0, 0, 0, 0.3);
-    padding: $space-3;
-    border-radius: $radius-sm;
+    gap: 2px;
 }
 
-.rewardRow {
+.levelReq {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+}
+
+.xpTimeInfo {
+    font-size: $font-size-md;
+    color: white;
+    font-weight: 500;
+}
+
+.cardBodySplit {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: $space-4 0;
+    min-height: 100px;
+}
+
+.requirementSection {
+    display: flex;
+    justify-content: center;
+}
+
+.requirementIconContainer {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    background: rgba(45, 120, 110, 0.6); // Teal-ish background for reqs
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: $radius-md;
     display: flex;
     align-items: center;
-    gap: $space-2;
-    font-weight: bold;
-    color: $color-text-primary;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    padding-bottom: $space-2;
-    margin-bottom: $space-1;
+    justify-content: center;
 }
 
-.stockCount {
-    margin-left: auto;
-    color: $color-gold;
-    font-size: $font-size-xs;
+.requirementIcon {
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+}
+
+.requirementQtyBadge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: transparent;
+    border: 1px solid white;
+    color: white;
+    font-size: 10px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    background: rgba(45, 120, 110, 0.9);
+    z-index: 2;
+}
+
+.requirementStockBadge {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #d97706; // Amber/Gold badge
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    z-index: 2;
     font-family: $font-mono;
 }
 
-.statRow {
-    @include flex-between();
-    font-size: $font-size-sm;
-    color: $color-text-secondary;
+.resultSection {
+    display: flex;
+    justify-content: center;
 }
 
-.healRow {
-    @include flex-between();
-    font-size: $font-size-sm;
-    color: $color-text-secondary;
+.resultImage {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
 }
 
-.healHighlight {
-    color: #4ade80;
-    font-weight: bold;
-}
-
-.highlight {
-    color: #4a90e2;
-    font-weight: bold;
-}
-
-.progressTrack {
-    height: 24px;
+.progressTrackCompact {
+    height: 8px;
     background: rgba(0, 0, 0, 0.5);
-    border-radius: $radius-sm;
+    border-radius: 4px;
     position: relative;
     overflow: hidden;
+    margin-top: auto;
+}
+
+.progressTrackEmpty {
+    height: 8px;
+    background: rgba(255, 0, 0, 0.3); // "Bar" indicating requirement or ready state
+    border-radius: 4px;
     margin-top: auto;
 }
 
@@ -188,28 +223,9 @@
     top: 0;
     left: 0;
     height: 100%;
-    background: linear-gradient(90deg, #0f2a4a, #4a90e2);
+    background: $color-crimson;
     transition: width 0.1s linear;
 }
 
-.progressLabel {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: $font-size-xs;
-    color: white;
-    font-weight: bold;
-    text-shadow: 0 0 2px black;
-    z-index: 2;
-}
-
-.cardFooter {
-    text-align: center;
-    font-size: $font-size-xs;
-    color: $color-text-muted;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-top: auto;
-}
+.placeholderIconTiny { font-size: 24px; }
+.placeholderIconLarge { color: $color-text-muted; font-size: $font-size-xs; font-style: italic; }

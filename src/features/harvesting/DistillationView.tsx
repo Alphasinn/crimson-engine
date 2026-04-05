@@ -48,46 +48,44 @@ export const DistillationView: React.FC = () => {
                                 else if (canStart) startAction(node.id, 'distillation');
                             }}
                         >
-                            <div className={styles.cardHeader}>
+                            <div className={styles.centeredHeader}>
                                 <h3 className={styles.nodeName}>{node.distillItem.name}</h3>
-                                {isUnlocked ? (
-                                    <span className={styles.reqBadge}>Lv {node.levelReq}</span>
-                                ) : (
-                                    <span className={styles.lockBadge}>Requires Lv {node.levelReq}</span>
-                                )}
+                                <div className={styles.headerDetails}>
+                                    <div className={styles.levelReq}>Level requirement: {node.levelReq}</div>
+                                    <div className={styles.xpTimeInfo}>
+                                        {node.distillXp} XP / {(node.baseDistillTimeMs / 1000).toFixed(1)} Seconds
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className={styles.cardBody}>
-                                <div className={styles.rewardRow}>
-                                    <span className={styles.rewardIcon}>⚗️</span>
-                                    <span>{node.rawItem.name}</span>
-                                    <span className={styles.stockCount}>({stock} owned)</span>
+                            <div className={styles.cardBodySplit}>
+                                <div className={styles.requirementSection}>
+                                    <div className={styles.requirementIconContainer}>
+                                        <div className={styles.requirementQtyBadge}>{node.rawItem.quantity || 1}</div>
+                                        {node.icon ? (
+                                            <img src={node.icon} alt={node.rawItem.name} className={styles.requirementIcon} />
+                                        ) : (
+                                            <span className={styles.placeholderIconTiny}>⚗️</span>
+                                        )}
+                                        <div className={styles.requirementStockBadge}>{stock}</div>
+                                    </div>
                                 </div>
-                                <div className={styles.healRow}>
-                                    <span>Heals</span>
-                                    <span className={styles.healHighlight}>+{node.distillItem.healAmount} HP</span>
-                                </div>
-                                <div className={styles.statRow}>
-                                    <span>XP/Action</span>
-                                    <span className={styles.highlight}>+{node.distillXp}</span>
-                                </div>
-                                <div className={styles.statRow}>
-                                    <span>Time</span>
-                                    <span>{(node.baseDistillTimeMs / 1000).toFixed(1)}s</span>
+
+                                <div className={styles.resultSection}>
+                                    {node.distillIcon ? (
+                                        <img src={node.distillIcon} alt={node.distillItem.name} className={styles.resultImage} />
+                                    ) : (
+                                        <div className={styles.placeholderIconLarge}>No Visual</div>
+                                    )}
                                 </div>
                             </div>
 
                             {isThisActive && (
-                                <div className={styles.progressTrack}>
+                                <div className={styles.progressTrackCompact}>
                                     <div className={styles.progressBar} style={{ width: `${pPct}%` }} />
-                                    <div className={styles.progressLabel}>Distilling...</div>
                                 </div>
-                            )}
-
-                            {(!isThisActive && isUnlocked) && (
-                                <div className={styles.cardFooter}>
-                                    {stock > 0 ? 'Click to distill' : 'Requires Raw Blood'}
-                                </div>
+                            ) || (
+                                <div className={styles.progressTrackEmpty} />
                             )}
                         </div>
                     );
