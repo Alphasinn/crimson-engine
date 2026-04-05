@@ -159,6 +159,76 @@ export const MERCHANTS: Record<string, Merchant> = {
             { id: 'void_conduit_legs', price: 120000, currency: 'bloodShards', tier: 'T6' },
             { id: 'void_conduit_gloves', price: 50000, currency: 'bloodShards', tier: 'T6' },
             { id: 'void_conduit_boots', price: 50000, currency: 'bloodShards', tier: 'T6' },
+
+            // --- T2 Weapons: Melee ---
+            { id: 'iron_stiletto', price: 150, currency: 'bloodShards', tier: 'T2' },
+            { id: 'serrated_falchion', price: 150, currency: 'bloodShards', tier: 'T2' },
+            { id: 'iron_war_maul', price: 150, currency: 'bloodShards', tier: 'T2' },
+            { id: 'iron_flanged_mace', price: 150, currency: 'bloodShards', tier: 'T2' },
+
+            // --- T2 Weapons: Archery ---
+            { id: 'recurve_longbow', price: 150, currency: 'bloodShards', tier: 'T2' },
+            { id: 'ironwind_crossbow', price: 150, currency: 'bloodShards', tier: 'T2' },
+
+            // --- T2 Weapons: Sorcery ---
+            { id: 'ember_wand', price: 150, currency: 'bloodShards', tier: 'T2' },
+            { id: 'ritual_staff', price: 150, currency: 'bloodShards', tier: 'T2' },
+
+            // --- T3 Weapons: Melee ---
+            { id: 'blood_etched_dirk', price: 750, currency: 'bloodShards', tier: 'T3' },
+            { id: 'crimson_reaver', price: 750, currency: 'bloodShards', tier: 'T3' },
+            { id: 'gravebreaker', price: 750, currency: 'bloodShards', tier: 'T3' },
+            { id: 'bloodforged_mace', price: 750, currency: 'bloodShards', tier: 'T3' },
+
+            // --- T3 Weapons: Archery ---
+            { id: 'bloodstring_bow', price: 750, currency: 'bloodShards', tier: 'T3' },
+            { id: 'bloodbolt_launcher', price: 750, currency: 'bloodShards', tier: 'T3' },
+
+            // --- T3 Weapons: Sorcery ---
+            { id: 'hemowand', price: 750, currency: 'bloodShards', tier: 'T3' },
+            { id: 'bloodcaller_staff', price: 750, currency: 'bloodShards', tier: 'T3' },
+
+            // --- T4 Weapons: Melee ---
+            { id: 'sanguine_piercer', price: 4000, currency: 'bloodShards', tier: 'T4' },
+            { id: 'bloodstorm_saber', price: 4000, currency: 'bloodShards', tier: 'T4' },
+            { id: 'bloodquake_hammer', price: 4000, currency: 'bloodShards', tier: 'T4' },
+            { id: 'sanguine_war_mace', price: 4000, currency: 'bloodShards', tier: 'T4' },
+
+            // --- T4 Weapons: Archery ---
+            { id: 'nightwind_longbow', price: 4000, currency: 'bloodShards', tier: 'T4' },
+            { id: 'dreadspike_arbalest', price: 4000, currency: 'bloodShards', tier: 'T4' },
+
+            // --- T4 Weapons: Sorcery ---
+            { id: 'sanguine_focus_wand', price: 4000, currency: 'bloodShards', tier: 'T4' },
+            { id: 'sanguine_archstaff', price: 4000, currency: 'bloodShards', tier: 'T4' },
+
+            // --- T5 Weapons: Melee ---
+            { id: 'nightfang_ritual_blade', price: 20000, currency: 'bloodShards', tier: 'T5' },
+            { id: 'veincarver_blade', price: 20000, currency: 'bloodShards', tier: 'T5' },
+            { id: 'skullcrusher_relic', price: 20000, currency: 'bloodShards', tier: 'T5' },
+            { id: 'tyrants_breaker', price: 20000, currency: 'bloodShards', tier: 'T5' },
+
+            // --- T5 Weapons: Archery ---
+            { id: 'whispering_veilbow', price: 20000, currency: 'bloodShards', tier: 'T5' },
+            { id: 'widowmaker_engine', price: 20000, currency: 'bloodShards', tier: 'T5' },
+
+            // --- T5 Weapons: Sorcery ---
+            { id: 'veilchannel_wand', price: 20000, currency: 'bloodShards', tier: 'T5' },
+            { id: 'voidblood_scepter', price: 20000, currency: 'bloodShards', tier: 'T5' },
+
+            // --- T6 Weapons: Melee ---
+            { id: 'heartseeker_of_the_veil', price: 100000, currency: 'bloodShards', tier: 'T6' },
+            { id: 'eclipse_edge', price: 100000, currency: 'bloodShards', tier: 'T6' },
+            { id: 'colossus_of_ruin', price: 100000, currency: 'bloodShards', tier: 'T6' },
+            { id: 'crownshatter_mace', price: 100000, currency: 'bloodShards', tier: 'T6' },
+
+            // --- T6 Weapons: Archery ---
+            { id: 'phantom_rain_bow', price: 100000, currency: 'bloodShards', tier: 'T6' },
+            { id: 'judgment_ballista', price: 100000, currency: 'bloodShards', tier: 'T6' },
+
+            // --- T6 Weapons: Sorcery ---
+            { id: 'bloodstorm_conduit', price: 100000, currency: 'bloodShards', tier: 'T6' },
+            { id: 'staff_eternal_thirst', price: 100000, currency: 'bloodShards', tier: 'T6' },
         ]
     },
     soul_broker: {
