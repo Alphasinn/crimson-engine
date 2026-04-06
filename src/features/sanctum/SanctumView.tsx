@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { CruciblePanel } from '../ui/CruciblePanel';
-import { VaultPanel } from '../ui/VaultPanel';
 import { RitualPanel } from './RitualPanel';
 import { usePlayerStore } from '../../store/playerStore';
 import styles from './sanctum.module.scss';
 
-type SanctumTab = 'crucible' | 'vault' | 'rituals' | 'summary';
+type SanctumTab = 'crucible' | 'rituals';
 
 export function SanctumView() {
     const [activeTab, setActiveTab] = useState<SanctumTab>('crucible');
@@ -42,35 +41,16 @@ export function SanctumView() {
                     Crucible
                 </button>
                 <button 
-                    className={`${styles.navBtn} ${activeTab === 'vault' ? styles.active : ''}`}
-                    onClick={() => setActiveTab('vault')}
-                >
-                    Vault
-                </button>
-                <button 
                     className={`${styles.navBtn} ${activeTab === 'rituals' ? styles.active : ''}`}
                     onClick={() => setActiveTab('rituals')}
                 >
                     Rituals
                 </button>
-                <button 
-                    className={`${styles.navBtn} ${activeTab === 'summary' ? styles.active : ''}`}
-                    onClick={() => setActiveTab('summary')}
-                >
-                    Progression Summary
-                </button>
             </nav>
 
             <main className={styles.content}>
                 {activeTab === 'crucible' && <CruciblePanel />}
-                {activeTab === 'vault' && <VaultPanel />}
                 {activeTab === 'rituals' && <RitualPanel />}
-                {activeTab === 'summary' && (
-                    <div className={styles.summaryPlaceholder}>
-                        <h3>Hunt Progression Summary</h3>
-                        <p>Detailed performance analytics and tier mastery metrics will appear here.</p>
-                    </div>
-                )}
             </main>
         </div>
     );

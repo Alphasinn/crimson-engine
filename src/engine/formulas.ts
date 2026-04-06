@@ -537,15 +537,15 @@ export function computeDerivedStats(
     let magicMaxHit = calcMaxHit(calcBaseMaxHit(skills.bloodSorcery.level), weapon?.powerModifier ?? 1.0, 0);
 
     // --- Defense ---
-    const drPercent = Math.min(
+    let drPercent = Math.min(
         MAX_DAMAGE_REDUCTION,
         Object.values(equipment).reduce((sum, item) => sum + (item?.drPercent ?? 0), 0) + specBonuses.dr
     );
-    const blockChance = Math.min(
+    let blockChance = Math.min(
         MAX_BLOCK_CHANCE,
         Object.values(equipment).reduce((sum, item) => sum + (item?.blockChance ?? 0), 0) + specBonuses.block
     );
-    const flatArmor = Object.values(equipment).reduce(
+    let flatArmor = Object.values(equipment).reduce(
         (sum, item) => sum + (item?.flatArmor ?? 0), 0
     ) + (meta?.permanentArmorBonus ?? 0);
 
@@ -601,6 +601,21 @@ export function computeDerivedStats(
                 if (weaponStyle === 'archery') rangedMaxHit = Math.floor(rangedMaxHit * mult);
                 if (weaponStyle === 'sorcery') magicMaxHit = Math.floor(magicMaxHit * mult);
             }
+        }
+
+        // Defensive items (Helmet/Chest/Legs/Gloves/Boots)
+        if (['helmet', 'chest', 'legs', 'gloves', 'boots'].includes(slot)) {
+            // DR and Flat Armor
+            drPercent = drPercent * mult;
+            flatArmor = Math.floor(flatArmor * mult);
+            // Evasion (relevant for some pieces)
+            evasionRating = Math.floor(evasionRating * mult);
+        }
+
+        // Accessories (Ring/Amulet) already handled in Offensive block for Accuracy,
+        // but let's also give them an Evasion nudge.
+        if (['ring', 'amulet'].includes(slot)) {
+            evasionRating = Math.floor(evasionRating * mult);
         }
     });
 

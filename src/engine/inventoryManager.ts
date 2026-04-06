@@ -26,9 +26,10 @@ export class InventoryManager {
         
         return {
             id: template.id,
-            name: template.name, // Display name for convenience, but ID is the source of truth
+            name: template.name, 
             type: isEquipment ? 'equipment' : (template as InventoryItem).type,
             quantity: quantity,
+            icon: (template as any).icon,
             ...(template as any).healAmount ? { healAmount: (template as InventoryItem).healAmount } : {}
         };
     }

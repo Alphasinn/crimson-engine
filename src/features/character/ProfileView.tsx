@@ -1,6 +1,7 @@
 import styles from './profile.module.scss';
 import { usePlayerStore } from '../../store/playerStore';
-import { getXpProgress } from '../../engine/xpTable';
+import { getXpProgress, getXpForLevel } from '../../engine/xpTable';
+import { MAX_LEVEL } from '../../engine/constants';
 import type { SkillName } from '../../engine/types';
 
 import iconAttack from '../../assets/icons/attack.png';
@@ -87,8 +88,19 @@ export function ProfileView() {
                                 const progress = getXpProgress(skill.xp);
                                 
                                 return (
-                                    <div key={skillKey} className={styles.skillCard} title={`XP: ${Math.floor(skill.xp).toLocaleString()}`}>
-                                        <div className={styles.skillLabel}>{config.label}</div>
+                                    <div key={skillKey} className={styles.skillCard}>
+                                        <div className={styles.skillTooltip}>
+                                            <div className={styles.tooltipName}>{config.label}</div>
+                                            <div className={styles.tooltipRow}>
+                                                <span>Exp:</span>
+                                                <span>{Math.floor(skill.xp).toLocaleString()} / {getXpForLevel(Math.min(MAX_LEVEL, skill.level + 1)).toLocaleString()}</span>
+                                            </div>
+                                            <div className={styles.tooltipRow}>
+                                                <span>Exp. to lvl:</span>
+                                                <span>{Math.max(0, getXpForLevel(Math.min(MAX_LEVEL, skill.level + 1)) - Math.floor(skill.xp)).toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                        
                                         <img src={config.iconUrl} alt={config.label} className={styles.skillIcon} />
                                         <div className={styles.levelWrap}>
                                             <span className={styles.skillLevel}>Lv. {skill.level}</span>

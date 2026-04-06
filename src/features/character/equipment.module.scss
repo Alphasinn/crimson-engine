@@ -169,6 +169,13 @@
     height: 100%;
 }
 
+.foodIcon {
+    width: 60%;
+    height: 60%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.6));
+}
+
 .foodName {
     font-family: $font-heading;
     font-size: $font-size-2xl;

@@ -25,10 +25,11 @@ const getItemVisual = (item: any) => {
 
 export function InventoryView() {
     const { 
-        inventory, equipItem, consumeFoodItem, 
+        inventory, food, equipItem, consumeFoodItem, 
         skills, equipment, permanentArmorBonus, finesseTicksRemaining 
     } = usePlayerStore(useShallow(s => ({
         inventory: s.inventory,
+        food: s.food,
         equipItem: s.equipItem,
         consumeFoodItem: s.consumeFoodItem,
         skills: s.skills,
@@ -45,7 +46,8 @@ export function InventoryView() {
         isFlickerActive: false
     });
 
-    const selectedItem = inventory.find(i => i.id === selectedId);
+    const allItems = [...inventory, ...food];
+    const selectedItem = allItems.find(i => i.id === selectedId);
 
     const handleAction = (type: 'equip' | 'consume') => {
         if (!selectedId) return;
@@ -70,13 +72,13 @@ export function InventoryView() {
                         RESET PROFILE
                     </button>
                 </div>
-                {inventory.length === 0 ? (
+                {allItems.length === 0 ? (
                     <p className={styles.empty}>Your inventory is empty.</p>
                 ) : (
                     <div className={styles.grid}>
-                        {inventory.map(item => (
+                        {allItems.map((item, idx) => (
                             <div 
-                                key={item.id} 
+                                key={`${item.id}-${idx}`} 
                                 className={`${styles.itemCard} ${selectedId === item.id ? styles.selected : ''}`} 
                                 onClick={() => setSelectedId(item.id === selectedId ? null : item.id)}
                                 title={item.name}

@@ -144,28 +144,3 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-.summaryPlaceholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 400px;
-    color: #94a3b8;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px dashed rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 40px;
-    text-align: center;
-
-    h3 { 
-        color: #f8fafc; 
-        margin-bottom: 16px; 
-        font-family: 'Crimson Text', serif;
-        font-size: 1.5rem;
-    }
-    
-    p {
-        max-width: 400px;
-        line-height: 1.6;
-    }
-}

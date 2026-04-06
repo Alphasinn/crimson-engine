@@ -309,6 +309,7 @@ export interface InventoryItem {
     quantity: number;
     type: 'food' | 'material' | 'equipment' | 'misc' | 'raw_blood';
     healAmount?: number; // For food items
+    icon?: string;
 }
 
 // =============================================================================

@@ -19,13 +19,14 @@ const SKILLING_ITEMS: InventoryItem[] = Object.values(ALL_SKILLING_NODES).map(no
     name: node.output.name,
     type: node.output.type,
     quantity: 0,
+    icon: node.output.icon,
     ...(node.output.healAmount ? { healAmount: node.output.healAmount } : {})
 }));
 
 // 3. Gather all raw blood and distilled vials
 const HARVESTING_ITEMS: InventoryItem[] = BLOOD_TIERS.flatMap(tier => [
-    { ...tier.rawItem, quantity: 0 },
-    { ...tier.distillItem, quantity: 0 }
+    { ...tier.rawItem, quantity: 0, icon: tier.icon },
+    { ...tier.distillItem, quantity: 0, icon: tier.distillIcon }
 ]);
 
 // 4. Starter food (previously hardcoded in store)

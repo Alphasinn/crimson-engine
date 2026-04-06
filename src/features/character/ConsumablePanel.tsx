@@ -1,6 +1,7 @@
 import { usePlayerStore } from '../../store/playerStore';
 import { useCombatEngine } from '../combat/useCombatEngine';
 import styles from './equipment.module.scss'; // Share glassmorphic styling
+import { ITEM_MAP } from '../../data/items';
 
 export function ConsumablePanel() {
     const { food } = usePlayerStore();
@@ -24,7 +25,14 @@ export function ConsumablePanel() {
                 >
                     {item ? (
                         <div className={styles.foodInfo}>
-                            <span className={styles.foodName}>{item.name.charAt(0)}</span>
+                            {(() => {
+                                const template = ITEM_MAP.get(item.id);
+                                const icon = (template as any)?.icon || item.icon;
+                                if (icon) {
+                                    return <img src={icon} alt={item.name} className={styles.foodIcon} />;
+                                }
+                                return <span className={styles.foodName}>{item.name.charAt(0)}</span>;
+                            })()}
                             <span className={styles.foodQuantity}>{item.quantity}</span>
                         </div>
                     ) : (
