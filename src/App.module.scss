@@ -198,3 +198,77 @@
         background: linear-gradient(to bottom, transparent, rgba(139, 0, 0, 0.4), transparent);
     }
 }
+
+@keyframes combatPulse {
+    0% { 
+        border-color: rgba(196, 30, 58, 0.4); 
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 5px rgba(196, 30, 58, 0.2); 
+    }
+    50% { 
+        border-color: rgba(255, 30, 58, 0.8); 
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 15px rgba(255, 30, 58, 0.5); 
+    }
+    100% { 
+        border-color: rgba(196, 30, 58, 0.4); 
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 5px rgba(196, 30, 58, 0.2); 
+    }
+}
+
+.combatPill {
+    position: fixed;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: $space-4;
+    padding: $space-3 $space-5;
+    background: linear-gradient(135deg, rgba(12, 12, 24, 0.9) 0%, rgba(45, 10, 15, 0.9) 100%);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(196, 30, 58, 0.4);
+    border-radius: 50px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 15px rgba(196, 30, 58, 0.3);
+    cursor: grab;
+    user-select: none;
+    animation: combatPulse 2s infinite ease-in-out;
+    transition: transform 0.2s;
+
+    &:active {
+        cursor: grabbing;
+        transform: scale(0.98);
+    }
+}
+
+.pillBtn {
+    padding: $space-1 $space-4;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 50px;
+    color: $color-text-primary;
+    font-family: $font-heading;
+    font-size: $font-size-xs;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+
+    &:hover {
+        background: rgba(196, 30, 58, 0.25);
+        border-color: rgba(255, 30, 58, 0.6);
+        text-shadow: 0 0 8px rgba(255, 30, 58, 0.8);
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    &.flee {
+        &:hover {
+            background: rgba(212, 175, 55, 0.25);
+            border-color: rgba(212, 175, 55, 0.6);
+            text-shadow: 0 0 8px rgba(212, 175, 55, 0.8);
+            color: $color-gold;
+        }
+    }
+}

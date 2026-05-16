@@ -220,12 +220,12 @@ export const PrepArea = React.memo(({ showZoneGrid }: PrepAreaProps) => {
             </div>
 
             {/* Return to Arena Button */}
-            {viewMode === 'home' && isRunning && (
+            {isRunning && viewMode === 'home' && (
                 <button 
                     className={styles.returnToArenaBtn}
                     onClick={() => setViewMode('arena')}
                 >
-                    ⚔️ RETURN TO ARENA
+                    ⚔️ RETURN TO COMBAT
                 </button>
             )}
         </div>

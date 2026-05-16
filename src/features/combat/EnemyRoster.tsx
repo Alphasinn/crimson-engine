@@ -45,7 +45,10 @@ function StatBox({ icon, value, color }: { icon: string; value: number; color?: 
 
 function EnemyCard({ enemy, onFight }: { enemy: Enemy; onFight: (e: Enemy) => void }) {
     return (
-        <div className={`${styles.enemyCard} ${enemy.isElite ? styles.elite : ''}`}>
+        <div 
+            className={`${styles.enemyCard} ${enemy.isElite ? styles.elite : ''}`}
+            onClick={() => onFight(enemy)}
+        >
             {enemy.isElite && <div className={styles.eliteBadge}>⚔ ELITE</div>}
 
             <div className={styles.cardMain}>
@@ -84,9 +87,7 @@ function EnemyCard({ enemy, onFight }: { enemy: Enemy; onFight: (e: Enemy) => vo
                                 <span className={styles.neutralBadge}>— balanced</span>
                             )}
                         </div>
-                        <button className={styles.fightBtn} onClick={() => onFight(enemy)}>
-                            ⚔ Fight!
-                        </button>
+
                     </div>
                 </div>
             </div>

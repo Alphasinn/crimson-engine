@@ -8,6 +8,7 @@ import {
     calcHitChance,
     applyMitigation,
     calcBaseMaxHit,
+    calcMaxHit,
     calcMaxHp,
     rollDamage,
 } from '../engine/formulas';
@@ -71,14 +72,27 @@ describe('calcBaseMaxHit', () => {
         expect(calcBaseMaxHit(1)).toBe(1);
     });
 
-    it('returns correct value at level 20 (should be ~24)', () => {
-        // floor(20 + 20^1.5 * 0.05) = floor(20 + 89.44 * 0.05) = floor(20 + 4.47) = 24
-        expect(calcBaseMaxHit(20)).toBe(24);
+    it('returns correct value at level 20 (Low Fantasy model)', () => {
+        // floor(20 / 8) + 1 = 2 + 1 = 3
+        expect(calcBaseMaxHit(20)).toBe(3);
     });
 
-    it('returns 185 at level 120 (floor(120 + 120^1.5 * 0.05))', () => {
-        // 120 + Math.pow(120, 1.5) * 0.05 = 120 + 65.76 = 185.76 → floor = 185
-        expect(calcBaseMaxHit(120)).toBe(185);
+    it('returns 16 at level 120 (floor(120 / 8) + 1)', () => {
+        // floor(120 / 8) + 1 = 15 + 1 = 16
+        expect(calcBaseMaxHit(120)).toBe(16);
+    });
+});
+
+// --- Max Hit (Additive) ---
+describe('calcMaxHit', () => {
+    it('adds weapon power to base hit', () => {
+        // Base 6 + Power 14 = 20
+        expect(calcMaxHit(6, 14, 0)).toBe(20);
+    });
+
+    it('applies bonus percentage to the sum', () => {
+        // (6 + 14) * 1.05 = 20 * 1.05 = 21
+        expect(calcMaxHit(6, 14, 0.05)).toBe(21);
     });
 });
 

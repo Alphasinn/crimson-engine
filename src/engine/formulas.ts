@@ -170,7 +170,7 @@ export function calcMaxHit(
     weaponPowerModifier: number,
     bonusPct: number
 ): number {
-    return Math.floor(baseMaxHit * weaponPowerModifier * (1 + bonusPct));
+    return Math.floor((baseMaxHit + weaponPowerModifier) * (1 + bonusPct));
 }
 
 /**
@@ -626,7 +626,7 @@ export function computeDerivedStats(
         meleeMaxHit,
         rangedMaxHit,
         magicMaxHit,
-        damageReduction: drPercent,
+        damageReduction: Math.min(MAX_DAMAGE_REDUCTION, drPercent),
         attackInterval,
         blockChance,
         flatArmor,

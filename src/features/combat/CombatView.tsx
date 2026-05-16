@@ -222,15 +222,7 @@ export function CombatView() {
                 )}
             </div>
 
-            <NotificationContainer />
-
             {showGains && <IdleGainPanel onClose={() => setShowGains(false)} />}
-            {showHuntingGains && (
-                <SessionSummaryModal 
-                    active={isRunning} 
-                    onClose={() => setShowHuntingGains(false)} 
-                />
-            )}
 
             {unsealToast && (
                 <div className={styles.unsealToast}>

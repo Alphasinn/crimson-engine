@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { CombatView } from './features/combat/CombatView';
 import { InventoryView } from './features/inventory/InventoryView';
 import { SanctumView } from './features/sanctum/SanctumView';
@@ -28,14 +28,87 @@ const iconRunecraft = iconMagic;
 import styles from './App.module.scss';
 
 import { CovenView } from './features/coven/CovenView';
+import { useCombatStore } from './store/combatStore';
+import { useCombatEngine } from './features/combat/useCombatEngine';
+import { NotificationContainer } from './features/ui/NotificationContainer';
+import { SessionSummaryModal } from './features/ui/SessionSummaryModal';
 
 type Tab = 
   | 'combat' | 'sanctum' | 'profile' | 'inventory' | 'store' | 'coven'
   | 'bloodletting' | 'graveHarvesting' | 'nightForaging' | 'butchery' | 'relicScavenging'
   | 'distillation' | 'forging' | 'corpseHarvesting' | 'alchemy' | 'runecraft';
 
+function CombatPill({ setActiveTab, activeTab }: { setActiveTab: (tab: Tab) => void, activeTab: Tab }) {
+  const isRunning = useCombatStore(s => s.isRunning);
+  const { fleeFromCombat } = useCombatEngine();
+  
+  const [pos, setPos] = useState({ x: window.innerWidth - 220, y: window.innerHeight - 80 });
+  const [isDragging, setIsDragging] = useState(false);
+  const relPos = useRef({ x: 0, y: 0 });
+  const pillRef = useRef<HTMLDivElement>(null);
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    if (pillRef.current) {
+      const rect = pillRef.current.getBoundingClientRect();
+      relPos.current = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    }
+  };
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      setPos({
+        x: Math.max(0, Math.min(window.innerWidth - 200, e.clientX - relPos.current.x)),
+        y: Math.max(0, Math.min(window.innerHeight - 60, e.clientY - relPos.current.y))
+      });
+    };
+    const onMouseUp = () => setIsDragging(false);
+
+    if (isDragging) {
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [isDragging]);
+
+  if (!isRunning || activeTab === 'combat') return null;
+
+  return (
+    <div 
+      ref={pillRef}
+      className={styles.combatPill}
+      style={{ left: pos.x, top: pos.y }}
+      onMouseDown={onMouseDown}
+    >
+      <button 
+        className={styles.pillBtn}
+        onClick={() => setActiveTab('combat')}
+      >
+        ⚔️ Return
+      </button>
+      <button 
+        className={`${styles.pillBtn} ${styles.flee}`}
+        onClick={() => {
+          fleeFromCombat();
+        }}
+      >
+        🏃 Flee
+      </button>
+    </div>
+  );
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
+  const isRunning = useCombatStore(s => s.isRunning);
+  const { fleeFromCombat } = useCombatEngine();
 
   const renderActiveView = () => {
     switch (activeTab) {
@@ -231,6 +304,8 @@ function App() {
             <img src={iconRunecraft} alt="" className={styles.navIcon} />
             <span>Runecraft</span>
           </button>
+
+
         </nav>
 
         {/* Dynamic Center Content */}
@@ -238,6 +313,9 @@ function App() {
           {renderActiveView()}
         </section>
       </main>
+      <NotificationContainer />
+      <SessionSummaryModal />
+      <CombatPill setActiveTab={setActiveTab} activeTab={activeTab} />
     </div>
   );
 }

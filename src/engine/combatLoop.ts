@@ -756,9 +756,6 @@ export class CombatEngine {
 
         // XP is now awarded per-hit — roll other loot
         const loot = rollLootEntry(enemy.lootTable);
-        if (loot) {
-            this.log('loot', `Looted: ${loot.itemName}`);
-        }
 
         this.callbacks.onEnemyDeath(enemy, {
             killedEnemyId: this.enemy.id,

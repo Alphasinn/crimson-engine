@@ -1,31 +1,26 @@
-# Developer Handoff: Combat System & Loot Fixes
+## Crucible UI Overhaul & Sanctum Refinement
 
-This document summarizes the changes made to resolve the combat interaction bugs and loot system corruption.
+This update introduces the premium "Requirement Card" system to the Crucible and streamlines the Sanctum navigation by removing redundant modules.
 
-## Core Engine Changes (`src/engine/combatLoop.ts`)
-- **Fixed HP Initialization**: Corrected `CombatEngine.start` to properly initialize `playerMaxHp` from derived stats. This resolves the bug where manual healing was capped at 10 HP (the old default).
-- **Loot Signature Refactor**: Refactored `onLoot` and `spawnLoot` to pass structured payloads (`{ itemId, itemName, quantity }`) instead of simple strings. This ensures data consistency with the UI.
-- **Grave Steel Logic**: 
-    - Elites now have a 100% chance to drop 1-2 Grave Steel.
-    - Regular enemies in Tier 2+ zones HAVE a 10% chance to drop 1 Grave Steel.
+### UI Pattern: Requirement Cards (`src/features/ui/CruciblePanel`)
+- **New Pattern**: Costs are no longer text-based. They are now visual "Item Cards" using the `requirementContainer` class.
+- **Badging Logic**:
+    - **Top-Right**: The `qtyBadge` shows the required amount for the action.
+    - **Bottom-Middle**: The `stockBadge` shows the player's current inventory.
+    - **Validation**: Added the `.insufficient` class to turn the stock badge red if the player lacks resources.
 
-## Store & Hook Logic
-- **`src/store/playerStore.ts`**: Added a validation layer to the `addFood` action. It now filters all incoming items, ensuring only those with `type === 'food'` enter the consumable array.
-- **`src/features/combat/useCombatEngine.ts`**:
-    - Updated all `sharedEngine.start` calls to ensure full state synchronization (skills, equipment, rituals, etc.).
-    - Updated `onLoot` handler to process the new object-based payloads.
-    - Cleaned up `onPlayerDeath` logic to avoid redundant engine restarts.
+### Altar of Flesh (Tier Shifting)
+- **Evolution Preview**: The "Evolving to" text has been moved to the top-right of the card header (`evolveIntoHeader`) to maximize space.
+- **2-Row Constraint**: Requirements are strictly grouped into two rows:
+    - **Row 1**: Main currencies (Shards/Ichor).
+    - **Row 2**: Crafting components (Forge items).
+- **Styling**: Cards are set to `min-width: 320px` to handle the horizontal spread of icons.
 
-## UI & Layout Enhancements
-- **Consumable Bar Position**: Moved the `ConsumablePanel` from the player card/absolute bottom into a dedicated `bottomConsumableBar` at the bottom center of the arena.
-- **UI Data Integrity**: Added a proactive filter to `ConsumablePanel.tsx` to ensure only food items are rendered, even if the underlying state contains rogue loot items.
-- **Fight Arena Layout**: 
-    - Grouped HP and consumables into a `playerStatsGroup` for tighter spacing.
-    - Removed redundant navigation buttons that were overlapping with the sidebars.
-- **Crucible Refactor**: Updated `CruciblePanel` to a horizontal, multi-column layout for better readability.
+### Sanctum Streamlining (`src/features/sanctum/SanctumView.tsx`)
+- **Removed Vault**: The "Vault" tab and all associated code have been deleted.
+- **Removed Progression Summary**: The "Progression Summary" placeholder has been removed to reduce UI clutter.
+- **Outcome**: The Sanctum now only contains the **Crucible** and **Rituals**.
 
-## Formula & Stat Updates (`src/engine/formulas.ts`)
-- Refactored derived stat calculations to provide a cleaner breakdown of Melee Power, DR%, and Armor. 
-- Ensured specific power bonuses (Melee/Archery/Magic) only apply when the corresponding weapon type is equipped.
-
-## Status: Ready for playtesting and merge.
+### 🛠️ Tasks for Jr Dev
+1. **Asset Integration**: In `CruciblePanel.tsx` (lines 197-202), current forged components use a simple fallback (the first letters of their ID, e.g., "IP" for Iron Plate). Once specific icons are added to the assets folder, replace these fallback `div` elements with proper `img` tags.
+2. **Tab Re-mapping**: If we ever decide to bring back a Summary or Vault, ensure they are placed in a side-panel or a separate view entirely to keep the Sanctum dashboard focused on actions.
