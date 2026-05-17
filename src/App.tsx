@@ -32,6 +32,10 @@ import { useCombatStore } from './store/combatStore';
 import { useCombatEngine } from './features/combat/useCombatEngine';
 import { NotificationContainer } from './features/ui/NotificationContainer';
 import { SessionSummaryModal } from './features/ui/SessionSummaryModal';
+import { usePlayerStore } from './store/playerStore';
+import { calculateOfflineProgress } from './engine/offlineProgression';
+import type { OfflineProgressResult } from './engine/offlineProgression';
+import { OfflineSummaryModal } from './features/ui/OfflineSummaryModal';
 
 type Tab = 
   | 'combat' | 'sanctum' | 'profile' | 'inventory' | 'store' | 'coven'
@@ -42,7 +46,7 @@ function CombatPill({ setActiveTab, activeTab }: { setActiveTab: (tab: Tab) => v
   const isRunning = useCombatStore(s => s.isRunning);
   const { fleeFromCombat } = useCombatEngine();
   
-  const [pos, setPos] = useState({ x: window.innerWidth - 220, y: window.innerHeight - 80 });
+  const [pos, setPos] = useState({ x: 240, y: window.innerHeight - 80 });
   const [isDragging, setIsDragging] = useState(false);
   const relPos = useRef({ x: 0, y: 0 });
   const pillRef = useRef<HTMLDivElement>(null);
@@ -110,11 +114,47 @@ function App() {
   const isRunning = useCombatStore(s => s.isRunning);
   const { fleeFromCombat } = useCombatEngine();
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Only update the timestamp if the player is actively looking at the tab!
+      // This ensures that if the browser throttles the tab, we treat it as offline progress.
+      if (document.visibilityState === 'visible') {
+        usePlayerStore.getState().updateLastSessionTimestamp();
+      }
+    }, 10000); // Every 10 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  const [offlineResult, setOfflineResult] = useState<OfflineProgressResult | null>(null);
+
+  useEffect(() => {
+    // Check on mount
+    const resultOnMount = calculateOfflineProgress();
+    if (resultOnMount) {
+      setOfflineResult(resultOnMount);
+      usePlayerStore.getState().addOfflineGains(resultOnMount);
+    }
+
+    // Check on visibility change (tab minimized/maximized)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const result = calculateOfflineProgress();
+        if (result) {
+          setOfflineResult(result);
+          usePlayerStore.getState().addOfflineGains(result);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   const renderActiveView = () => {
     switch (activeTab) {
       case 'combat': return <CombatView />;
       case 'sanctum': return <SanctumView />;
-      case 'profile': return <ProfileView />;
+      case 'profile': return <ProfileView onNavigate={setActiveTab} />;
       case 'inventory': return <InventoryView />;
       case 'store': return <SanguineExchangeView />;
       case 'coven': return <CovenView />;
@@ -157,6 +197,9 @@ function App() {
 
   return (
     <div className={styles.app}>
+      {offlineResult && (
+        <OfflineSummaryModal result={offlineResult} onClose={() => setOfflineResult(null)} />
+      )}
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerLogo}>

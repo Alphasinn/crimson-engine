@@ -8,44 +8,67 @@
     overflow-y: auto;
 }
 
-.header {
-    @include flex-between;
+.premiumPillHeader {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.5fr;
     align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50px; /* Pill shape */
+    padding: $space-4 $space-8;
     margin-bottom: $space-8;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    padding-bottom: $space-4;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
 }
 
-.titleArea {
+.skillNameArea {
     display: flex;
     align-items: center;
     gap: $space-4;
 }
 
-.mainIcon {
-    width: 64px;
-    height: 64px;
+.pillIcon {
+    width: 32px;
+    height: 32px;
     object-fit: contain;
-    filter: drop-shadow(0 0 10px rgba($color-crimson, 0.5));
+    filter: drop-shadow(0 0 5px rgba($color-crimson, 0.5));
 }
 
-.title {
-    @include heading-style;
-    font-size: $font-size-2xl;
-    color: $color-crimson;
-    margin: 0;
+.pillSkillName {
+    font-family: $font-heading;
+    font-size: $font-size-xl;
+    color: white;
 }
 
-.skillBadge {
-    padding: $space-2 $space-4;
-    background: rgba($color-gold, 0.1);
-    border: 1px solid rgba($color-gold, 0.3);
-    border-radius: $radius-full;
+.skillLevelArea {
+    text-align: center;
+    font-family: $font-heading;
+    font-size: $font-size-lg;
     color: $color-gold;
+}
+
+.skillXpArea {
+    text-align: right;
     font-family: $font-mono;
-    font-size: 0.9rem;
-    font-weight: bold;
-    box-shadow: 0 0 15px rgba($color-gold, 0.1);
+    font-size: $font-size-sm;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.pillProgressTrack {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.pillProgressBar {
+    height: 100%;
+    background: linear-gradient(90deg, $color-crimson, $color-blood-light);
+    box-shadow: 0 0 10px rgba($color-crimson, 0.5);
+    transition: width 0.3s ease;
 }
 
 .description {
@@ -72,7 +95,10 @@
     cursor: pointer;
     transition: all $transition-normal;
     border: 1px solid rgba(255, 255, 255, 0.05);
-    overflow: hidden;
+
+    &:hover {
+        z-index: 50; /* Bring hovered card to front for tooltips */
+    }
 
     &:hover:not(.locked) {
         background: rgba(255, 255, 255, 0.06);
@@ -226,10 +252,46 @@
 
 /* --- Premium Card Styles (Distillation Mirror) --- */
 .premiumHeader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding-bottom: $space-3;
     margin-bottom: $space-2;
+}
+
+.alchemyHeader {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+}
+
+.premiumHeaderLeft {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.alchemyHeader .premiumHeaderLeft {
+    align-items: flex-start;
+    text-align: left;
+}
+
+.premiumHeaderRight {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.headerResultImage {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 10px rgba($color-crimson, 0.4));
 }
 
 .premiumNodeName {
@@ -261,17 +323,18 @@
 .cardBodySplit {
     display: grid;
     grid-template-columns: 1.8fr 1fr;
-    align-items: center;
+    align-items: flex-end;
     padding: $space-4 0;
     min-height: 100px;
+    flex: 1;
 }
 
 .requirementSection {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     flex-wrap: nowrap;
-    gap: $space-5;
+    gap: $space-2;
     padding: 0 $space-2;
 }
 
@@ -336,7 +399,20 @@
 
 .resultSection {
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    text-align: center;
+}
+
+.resultSectionCentered {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
+    flex: 1;
+    position: relative;
+    width: 100%;
 }
 
 .resultImage {
@@ -344,6 +420,14 @@
     height: 80px;
     object-fit: contain;
     filter: drop-shadow(0 0 15px rgba($color-crimson, 0.4));
+}
+
+.nodeDescription {
+    color: #9ca3af;
+    font-size: 0.8rem;
+    margin-top: 8px;
+    max-width: 150px;
+    line-height: 1.2;
 }
 
 .progressTrackBottom {
@@ -355,6 +439,8 @@
     right: 0;
     overflow: hidden;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
 }
 
 .progressTrackEmpty {
@@ -364,6 +450,8 @@
     bottom: 0;
     left: 0;
     right: 0;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
 }
 
 .progressBarPremium {
@@ -371,4 +459,102 @@
     background: linear-gradient(90deg, #7f1d1d, #ef4444);
     box-shadow: 0 0 15px rgba($color-crimson, 0.5);
     transition: width 0.1s linear;
+}
+
+.nodeQty {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    font-size: 11px;
+    font-family: $font-mono;
+    color: rgba(255, 255, 255, 0.5);
+    background: rgba(0, 0, 0, 0.5);
+    padding: 2px 6px;
+    border-radius: $radius-sm;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.requirementIconContainer:hover .tooltip,
+.resultSection:hover .tooltip,
+.premiumHeaderRight:hover .tooltip {
+    display: flex !important;
+}
+
+.tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 10px); /* Position above */
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0d0d0d;
+    border: 1px solid rgba($color-crimson, 0.3);
+    border-radius: $radius-md;
+    padding: $space-3;
+    z-index: 100;
+    width: 220px;
+    gap: $space-3;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.8), 0 0 15px rgba($color-crimson, 0.2);
+    pointer-events: none; /* Don't block mouse events */
+
+    /* Arrow pointing down */
+    &::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 6px;
+        border-style: solid;
+        border-color: #0d0d0d transparent transparent transparent;
+    }
+}
+
+.tooltipLeft {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.tooltipImg {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.tooltipQty {
+    font-size: 10px;
+    font-family: $font-mono;
+    color: $color-gold;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 1px 4px;
+    border-radius: 2px;
+}
+
+.tooltipRight {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    flex: 1;
+}
+
+.tooltipName {
+    font-family: $font-heading;
+    font-size: $font-size-md;
+    color: white;
+    text-transform: uppercase;
+}
+
+.tooltipPrice {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tooltipMarket {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.3);
 }

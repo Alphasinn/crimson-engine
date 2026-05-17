@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 import { usePlayerStore } from './playerStore';
 import { useCombatStore } from './combatStore';
+import { useNotificationStore } from './notificationStore';
 import { HARVESTING_NODES } from '../data/harvesting';
 import { ALL_SKILLING_NODES } from '../data/skilling';
 import type { SkillName } from '../engine/types';
@@ -35,12 +36,6 @@ export const useSkillingStore = create<SkillingState>((set, get) => ({
     intervalId: null,
 
     startAction: (nodeId: string, skill: SkillName) => {
-        // Prevent running if in combat (Global Lock)
-        if (useCombatStore.getState().isRunning) {
-            console.warn("Cannot start skilling while combat is running.");
-            return;
-        }
-
         // Look up node in both legacy and new data
         const node = ALL_SKILLING_NODES[nodeId] || HARVESTING_NODES[nodeId];
         if (!node) return;
@@ -79,6 +74,7 @@ export const useSkillingStore = create<SkillingState>((set, get) => ({
             progressTimer: 0,
             requiredTicks: timeMs / TICK_MS,
             isActive: true,
+            totalTicksSpent: 0,
             intervalId: setInterval(() => get().tick(), TICK_MS),
         });
     },
@@ -94,11 +90,15 @@ export const useSkillingStore = create<SkillingState>((set, get) => ({
             activeSkill: null,
             progressTimer: 0,
             requiredTicks: 0,
+            totalTicksSpent: 0,
         });
     },
 
     tick: () => {
-        const { activeNodeId, activeSkill, progressTimer, requiredTicks, isActive } = get();
+        // Skip execution if the tab is minimized
+        if (document.visibilityState === 'hidden') return;
+
+        const { activeNodeId, activeSkill, progressTimer, requiredTicks, isActive, totalTicksSpent } = get();
         
         // Safety lock
         if (useCombatStore.getState().isRunning) {
@@ -152,20 +152,39 @@ export const useSkillingStore = create<SkillingState>((set, get) => ({
                 } else {
                     pStore.addInventoryItem({ id: out.id, name: out.name, quantity: out.quantity, type: out.type });
                 }
+                
+                useNotificationStore.getState().addNotification({
+                    type: 'loot',
+                    label: out.name,
+                    amount: out.quantity,
+                    icon: out.icon
+                });
             } else {
                 // Legacy output
                 const legacy = node as any;
                 if (activeSkill === 'bloodletting') {
                     pStore.addInventoryItem({ ...legacy.rawItem, quantity: 1 });
+                    useNotificationStore.getState().addNotification({
+                        type: 'loot',
+                        label: legacy.rawItem.name,
+                        amount: '1',
+                        icon: legacy.rawItem.icon
+                    });
                 } else {
                     pStore.addFood({ ...legacy.distillItem, quantity: 1 });
+                    useNotificationStore.getState().addNotification({
+                        type: 'loot',
+                        label: legacy.distillItem.name,
+                        amount: '1',
+                        icon: legacy.distillItem.icon
+                    });
                 }
             }
 
             // Loop back to 0
-            set({ progressTimer: 0 });
+            set({ progressTimer: 0, totalTicksSpent: (totalTicksSpent || 0) + 1 });
         } else {
-            set({ progressTimer: nextTimer });
+            set({ progressTimer: nextTimer, totalTicksSpent: (totalTicksSpent || 0) + 1 });
         }
     }
 }));

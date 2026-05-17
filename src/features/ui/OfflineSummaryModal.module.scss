@@ -1,0 +1,152 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modal {
+    background: linear-gradient(135deg, #1a1a1a 0%, #111 100%);
+    border: 1px solid #ff3e3e44;
+    border-radius: 12px;
+    width: 500px;
+    max-width: 90vw;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 62, 62, 0.1);
+    animation: modalAppear 0.3s ease-out;
+}
+
+@keyframes modalAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.header {
+    padding: 20px;
+    border-bottom: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    h2 {
+        margin: 0;
+        color: #ff3e3e;
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.5rem;
+    }
+
+    .timeAway {
+        color: #aaa;
+        font-size: 0.9rem;
+    }
+
+    .capped {
+        color: #ffaa00;
+        font-size: 0.85rem;
+    }
+}
+
+.content {
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 3px;
+    }
+}
+
+.defeatBanner {
+    background: rgba(255, 62, 62, 0.15);
+    border: 1px solid #ff3e3e;
+    color: #ff4d4d;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.section {
+    h3 {
+        margin: 0 0 10px 0;
+        font-size: 1rem;
+        color: #ddd;
+        border-bottom: 1px solid #222;
+        padding-bottom: 4px;
+    }
+
+    p {
+        margin: 0;
+        color: #aaa;
+        font-size: 0.95rem;
+    }
+
+    ul {
+        margin: 0;
+        padding-left: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        li {
+            color: #aaa;
+            font-size: 0.9rem;
+
+            .skillName {
+                color: #fff;
+                font-weight: 500;
+                text-transform: capitalize;
+            }
+        }
+    }
+}
+
+.footer {
+    padding: 15px 20px;
+    border-top: 1px solid #333;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.closeBtn {
+    background: #ff3e3e;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+
+    &:hover {
+        background: #ff5555;
+        box-shadow: 0 0 10px rgba(255, 62, 62, 0.3);
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}

@@ -329,6 +329,16 @@
     letter-spacing: 1px;
 }
 
+.cancelRed {
+    background: rgba(220, 53, 69, 0.2) !important;
+    border-color: #dc3545 !important;
+    color: #ff4d4d !important;
+    
+    &:hover {
+        background: rgba(220, 53, 69, 0.4) !important;
+    }
+}
+
 .transmuteArea {
     display: flex;
     justify-content: space-between;
@@ -472,10 +482,18 @@
     padding: 8px;
     font-size: 11px;
     font-weight: bold;
+    position: relative; // For tooltip!
+    overflow: visible !important; // Prevent clipping the tooltip!
 
     &:hover:not(:disabled) {
         background: rgba(139, 0, 0, 0.4);
         box-shadow: 0 0 10px rgba(255, 51, 85, 0.3);
+        
+        .btnTooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
     }
     
     &.readyGreen {
@@ -492,16 +510,53 @@
     padding: 8px;
     font-size: 11px;
     font-weight: bold;
+    position: relative; // For tooltip!
+    overflow: visible !important; // Prevent clipping the tooltip!
 
     &:hover:not(:disabled) {
         background: rgba(40, 40, 60, 0.4);
         box-shadow: 0 0 10px rgba(147, 112, 219, 0.3);
+        
+        .btnTooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
     }
+}
 
-    &.readyGreen {
-        background: rgba(147, 112, 219, 0.2) !important;
-        border-color: #9370db !important;
-    }
+.btnTooltip {
+    position: absolute;
+    bottom: 125%; // Position above the button
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(12, 6, 6, 0.95); // Dark blood theme
+    border: 1px solid rgba(255, 77, 77, 0.4); // Soft red border
+    border-radius: $radius-sm;
+    padding: $space-3;
+    width: 220px;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition: all $transition-normal;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(196, 30, 58, 0.3);
+    backdrop-filter: blur(5px);
+    
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+    pointer-events: none; // Don't block mouse events
+    text-align: left;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: $font-size-xs;
+}
+
+.tooltipTitle {
+    font-weight: $font-weight-bold;
+    color: #fff;
+    font-size: $font-size-sm;
+    font-family: $font-heading;
+    margin-bottom: $space-1;
 }
 
 .sealOverlay {
@@ -558,4 +613,74 @@
         background: rgba(34, 197, 94, 0.25) !important;
         box-shadow: 0 0 15px rgba(34, 197, 94, 0.5) !important;
     }
+}
+
+.progressArea {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 8px 12px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+
+    .progressHeader {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        color: #9a8fa0;
+        font-family: $font-mono;
+    }
+
+    .progressBar {
+        width: 100%;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 3px;
+        overflow: hidden;
+
+        .progressFill {
+            height: 100%;
+            background: linear-gradient(to right, #ff3355, #ff6688);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(255, 51, 85, 0.5);
+        }
+    }
+}
+
+.targetActionArea {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px;
+}
+
+.targetBtn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f0e6d3;
+    padding: 6px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+    width: 100%;
+
+    &:hover:not(:disabled) {
+        background: rgba(255, 51, 85, 0.1);
+        border-color: #ff3355;
+        color: #ff3355;
+    }
+
+    &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+}
+
+.targetedCard {
+    border-color: #ff3355 !important;
+    background: rgba(40, 10, 15, 0.8) !important;
+    box-shadow: 0 0 20px rgba(255, 51, 85, 0.2) !important;
 }

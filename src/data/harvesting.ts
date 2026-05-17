@@ -88,7 +88,7 @@ export const BLOOD_TIERS: HarvestingNode[] = [
     },
     {
         id: 'node_beast',
-        name: 'Dire Woods',
+        name: 'Beastwoods',
         levelReq: 50,
         rawItem: { id: 'raw_beastblood', name: 'Beastblood', quantity: 0, type: 'raw_blood' },
         distillItem: { id: 'vial_beastblood', name: 'Beastblood Vial', quantity: 0, type: 'food', healAmount: 180 },
@@ -114,7 +114,7 @@ export const BLOOD_TIERS: HarvestingNode[] = [
     },
     {
         id: 'node_clergy',
-        name: 'Holy Orders',
+        name: 'Clergy Orders',
         levelReq: 70,
         rawItem: { id: 'raw_clergy_blood', name: 'Clergy Blood', quantity: 0, type: 'raw_blood' },
         distillItem: { id: 'vial_clergy_blood', name: 'Clergy Blood Vial', quantity: 0, type: 'food', healAmount: 350 },
@@ -140,7 +140,7 @@ export const BLOOD_TIERS: HarvestingNode[] = [
     },
     {
         id: 'node_tainted',
-        name: 'Occult Covens',
+        name: 'Tainted Covens',
         levelReq: 90,
         rawItem: { id: 'raw_tainted_blood', name: 'Tainted Blood', quantity: 0, type: 'raw_blood' },
         distillItem: { id: 'vial_tainted_blood', name: 'Tainted Blood Vial', quantity: 0, type: 'food', healAmount: 700 },
@@ -166,10 +166,10 @@ export const BLOOD_TIERS: HarvestingNode[] = [
     },
     {
         id: 'node_elder',
-        name: 'Slumbering Gods',
+        name: 'Elder Gods',
         levelReq: 99,
         rawItem: { id: 'raw_elder_blood', name: 'Elder Blood', quantity: 0, type: 'raw_blood' },
-        distillItem: { id: 'vial_elder_blood', name: 'Mythic Vitae Phial', quantity: 0, type: 'food', healAmount: 1500 },
+        distillItem: { id: 'vial_elder_blood', name: 'Elder God Phial', quantity: 0, type: 'food', healAmount: 1500 },
         baseHarvestTimeMs: 22000,
         baseDistillTimeMs: 12000,
         harvestXp: 650,

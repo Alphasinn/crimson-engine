@@ -19,6 +19,17 @@
     font-size: 0.9rem;
 }
 
+.currentTask {
+    color: #9ca3af;
+    font-size: 0.9rem;
+    margin-top: 4px;
+}
+
+.taskName {
+    color: #ef4444;
+    font-weight: bold;
+}
+
 .categoriesSection {
     display: flex;
     flex-direction: column;

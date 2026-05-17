@@ -347,6 +347,11 @@ export class CombatEngine {
 
     private tick(): void {
         if (!this.isRunning) return;
+        
+        // Skip execution if the tab is minimized.
+        // This forces the Offline Progression Engine to handle the gap when you return.
+        if (document.visibilityState === 'hidden') return;
+        
         this.currentTick++;
 
         // --- Phase 4 S4: Constant Lifecycle Logic ---

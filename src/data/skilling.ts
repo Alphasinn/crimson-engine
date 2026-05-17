@@ -22,11 +22,12 @@ export interface SkillingNode {
     xp: number;
     ingredients?: { id: string; quantity: number; icon?: string }[];
     output: { id: string; name: string; quantity: number; type: InventoryItem['type']; healAmount?: number; icon?: string };
+    description?: string;
 }
 
 export const GRAVE_NODES: SkillingNode[] = [
-    { id: 'grave_dust_piles', name: 'Dusty Grave Piles', skill: 'graveHarvesting', levelReq: 1, timeMs: 3000, xp: 15, output: { id: 'grave_dust', name: 'Grave Dust', quantity: 1, type: 'material', icon: iconGraveSteel } },
-    { id: 'rusty_relics', name: 'Rusty Relics', skill: 'graveHarvesting', levelReq: 10, timeMs: 4000, xp: 30, output: { id: 'rusty_scrap', name: 'Rusty Scrap', quantity: 1, type: 'material', icon: iconGraveSteel } },
+    { id: 'grave_dust_piles', name: 'Grave Dust Piles', skill: 'graveHarvesting', levelReq: 1, timeMs: 3000, xp: 15, output: { id: 'grave_dust', name: 'Grave Dust', quantity: 1, type: 'material', icon: iconGraveSteel } },
+    { id: 'rusty_relics', name: 'Rusty Scrap', skill: 'graveHarvesting', levelReq: 10, timeMs: 4000, xp: 30, output: { id: 'rusty_scrap', name: 'Rusty Scrap', quantity: 1, type: 'material', icon: iconGraveSteel } },
     { id: 'cursed_ore_vein', name: 'Cursed Ore Vein', skill: 'graveHarvesting', levelReq: 20, timeMs: 5000, xp: 50, output: { id: 'cursed_ore', name: 'Cursed Ore', quantity: 1, type: 'material', icon: iconGraveSteel } },
     { id: 'bone_fragment_heap', name: 'Bone Fragment Heap', skill: 'graveHarvesting', levelReq: 30, timeMs: 6500, xp: 80, output: { id: 'bone_fragment', name: 'Bone Fragment', quantity: 1, type: 'material', icon: iconGraveSteel } },
     { id: 'bloodstone_deposit', name: 'Bloodstone Deposit', skill: 'graveHarvesting', levelReq: 45, timeMs: 8000, xp: 120, output: { id: 'bloodstone_shard', name: 'Bloodstone Shard', quantity: 1, type: 'material', icon: iconBloodShard } },
@@ -43,7 +44,7 @@ export const FORAGING_NODES: SkillingNode[] = [
 
 export const FORGING_RECIPES: SkillingNode[] = [
     { 
-        id: 'forge_iron_plates', name: 'Iron Reinforcement', skill: 'forging', levelReq: 1, timeMs: 5000, xp: 40, 
+        id: 'forge_iron_plates', name: 'Iron Plate', skill: 'forging', levelReq: 1, timeMs: 5000, xp: 40, 
         ingredients: [{ id: 'rusty_scrap', quantity: 3, icon: iconGraveSteel }],
         output: { id: 'iron_plate', name: 'Iron Plate', quantity: 1, type: 'material', icon: iconHero1 } 
     },
@@ -81,24 +82,27 @@ export const ALCHEMY_RECIPES: SkillingNode[] = [
     { 
         id: 'brew_minor_vitae', name: 'Minor Vitae Extract', skill: 'alchemy', levelReq: 1, timeMs: 4000, xp: 30, 
         ingredients: [{ id: 'raw_rat_blood', quantity: 1, icon: iconRat }, { id: 'thornvine', quantity: 2, icon: iconHero1 }],
-        output: { id: 'minor_vitae_extract', name: 'Minor Vitae Extract', quantity: 1, type: 'food', healAmount: 25, icon: iconHero2 } 
+        output: { id: 'minor_vitae_extract', name: 'Minor Vitae Extract', quantity: 1, type: 'food', healAmount: 25, icon: iconHero2 },
+        description: "Heals 25 health when consumed."
     },
     { 
         id: 'brew_scent_mask', name: 'Scent Mask Oil', skill: 'alchemy', levelReq: 15, timeMs: 6000, xp: 60, 
         ingredients: [{ id: 'nightshade_berry', quantity: 3, icon: iconHero1 }, { id: 'grave_dust', quantity: 5, icon: iconGraveSteel }],
-        output: { id: 'scent_mask_oil', name: 'Scent Mask Oil', quantity: 1, type: 'material', icon: iconHero2 } // Pre-combat buff item
+        output: { id: 'scent_mask_oil', name: 'Scent Mask Oil', quantity: 1, type: 'material', icon: iconHero2 },
+        description: "Reduces monster detection range for safer exploration."
     },
     { 
         id: 'brew_greater_vitae', name: 'Greater Vitae Serum', skill: 'alchemy', levelReq: 35, timeMs: 8000, xp: 150, 
         ingredients: [{ id: 'raw_livestock_blood', quantity: 1, icon: iconRat }, { id: 'moonleaf', quantity: 3, icon: iconHero1 }, { id: 'bone_meal', quantity: 2, icon: iconHero2 }],
-        output: { id: 'greater_vitae_serum', name: 'Greater Vitae Serum', quantity: 1, type: 'food', healAmount: 75, icon: iconHero2 } 
+        output: { id: 'greater_vitae_serum', name: 'Greater Vitae Serum', quantity: 1, type: 'food', healAmount: 75, icon: iconHero2 },
+        description: "Heals 75 health when consumed."
     },
 ];
 
 export const BUTCHERY_NODES: SkillingNode[] = [
-    { id: 'butcher_basic_remains', name: 'Process Basic Remains', skill: 'butchery', levelReq: 1, timeMs: 3000, xp: 15, output: { id: 'raw_meat_scraps', name: 'Raw Meat Scraps', quantity: 1, type: 'material', icon: iconHero2 } },
-    { id: 'butcher_beast_carcass', name: 'Carve Beast Carcass', skill: 'butchery', levelReq: 15, timeMs: 5000, xp: 40, output: { id: 'prime_beast_cuts', name: 'Prime Beast Cuts', quantity: 1, type: 'material', icon: iconHero2 } },
-    { id: 'butcher_marrow_bones', name: 'Extract Marrow Bones', skill: 'butchery', levelReq: 30, timeMs: 7000, xp: 80, output: { id: 'bone_marrow', name: 'Bone Marrow', quantity: 1, type: 'material', icon: iconHero1 } },
+    { id: 'butcher_basic_remains', name: 'Process Meaty Remains', skill: 'butchery', levelReq: 1, timeMs: 3000, xp: 15, output: { id: 'raw_meat_scraps', name: 'Raw Meat Scraps', quantity: 1, type: 'material', icon: iconHero2 } },
+    { id: 'butcher_beast_carcass', name: 'Carve Prime Beast', skill: 'butchery', levelReq: 15, timeMs: 5000, xp: 40, output: { id: 'prime_beast_cuts', name: 'Prime Beast Cuts', quantity: 1, type: 'material', icon: iconHero2 } },
+    { id: 'butcher_marrow_bones', name: 'Extract Bone Marrow', skill: 'butchery', levelReq: 30, timeMs: 7000, xp: 80, output: { id: 'bone_marrow', name: 'Bone Marrow', quantity: 1, type: 'material', icon: iconHero1 } },
 ];
 
 export const RELIC_NODES: SkillingNode[] = [

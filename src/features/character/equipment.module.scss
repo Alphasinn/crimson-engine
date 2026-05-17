@@ -70,6 +70,7 @@
     background: linear-gradient(135deg, rgba(8,8,16,0.8), rgba(20,20,30,0.8));
     border-radius: $radius-md;
     box-shadow: inset 0 0 10px rgba(196, 30, 58, 0.1);
+    position: relative; // For tooltip!
 
     .slotImage {
         width: 100%;
@@ -78,6 +79,68 @@
         padding: 4px;
         filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.6));
     }
+    
+    &:hover .tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.tooltip {
+    position: absolute;
+    top: 115%; // Position BELOW the slot to avoid cutting off at the top
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    background: rgba(12, 6, 6, 0.95); // Dark blood theme
+    border: 1px solid rgba(255, 77, 77, 0.4); // Soft red border
+    border-radius: $radius-sm;
+    padding: $space-3;
+    width: 180px;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition: all $transition-normal;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(196, 30, 58, 0.3);
+    backdrop-filter: blur(5px);
+    
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+    pointer-events: none; // Don't block mouse events
+    text-align: left;
+}
+
+.tooltipName {
+    font-weight: $font-weight-bold;
+    color: #fff;
+    font-size: $font-size-sm;
+    font-family: $font-heading;
+}
+
+.tooltipSpec {
+    color: #ffc107; // Amber for spec
+    font-size: $font-size-xs;
+    font-weight: $font-weight-bold;
+}
+
+.tooltipBonus {
+    color: #4ade80; // Green for bonus
+    font-size: $font-size-xs;
+}
+
+.tooltipStats {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: $font-size-xs;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: $space-1;
+    margin-top: $space-1;
+}
+
+.statsTitle {
+    color: #eee;
+    font-weight: $font-weight-bold;
+    margin-bottom: $space-1;
 }
 
 .itemInitial {

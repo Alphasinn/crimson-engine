@@ -3,6 +3,16 @@ import { usePlayerStore } from '../../store/playerStore';
 import { getXpProgress, getXpForLevel } from '../../engine/xpTable';
 import { MAX_LEVEL } from '../../engine/constants';
 import type { SkillName } from '../../engine/types';
+import { useSkillingStore } from '../../store/skillingStore';
+import { useCombatStore } from '../../store/combatStore';
+import { ALL_SKILLING_NODES } from '../../data/skilling';
+import { HARVESTING_NODES } from '../../data/harvesting';
+
+function formatTime(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
 
 import iconAttack from '../../assets/icons/attack.png';
 import iconStrength from '../../assets/icons/strength.png';
@@ -59,11 +69,26 @@ const SKILL_MAP: Record<SkillName, { label: string; iconUrl: string; color: stri
     runecraft: { label: 'Runecraft', iconUrl: iconRunecraft, color: '#7e22ce' },
 };
 
-export function ProfileView() {
-    const { skills } = usePlayerStore();
+export function ProfileView({ onNavigate }: { onNavigate?: (tab: any) => void }) {
+    const { skills, offlineProgressTiers = 0 } = usePlayerStore();
+    const { activeNodeId, isActive, activeSkill, totalTicksSpent } = useSkillingStore() as any;
+    const isCombatRunning = useCombatStore(s => s.isRunning);
     
     const totalLevel = Object.values(skills).reduce((sum, s) => sum + s.level, 0);
     const totalXp = Object.values(skills).reduce((sum, s) => sum + s.xp, 0);
+
+    let currentTaskName = "Idle";
+    let currentTaskDuration = "00:00";
+
+    if (isCombatRunning) {
+        currentTaskName = "Combat";
+        currentTaskDuration = "--:--";
+    } else if (isActive && activeNodeId) {
+        const node = ALL_SKILLING_NODES[activeNodeId] || HARVESTING_NODES[activeNodeId];
+        currentTaskName = node ? node.name : "Active Task";
+        const secondsSpent = Math.floor(totalTicksSpent / 10);
+        currentTaskDuration = formatTime(secondsSpent);
+    }
 
     return (
         <div className={styles.root}>
@@ -71,6 +96,18 @@ export function ProfileView() {
                 <div className={styles.titleInfo}>
                     <h2>Vampire Profile</h2>
                     <p>Total Level: {totalLevel} ({Math.floor(totalXp).toLocaleString()} XP)</p>
+                    <p className={styles.currentTask}>
+                        Current Task: <span 
+                            className={styles.taskName} 
+                            onClick={() => {
+                                if (isCombatRunning) onNavigate?.('combat');
+                                else if (isActive && activeSkill) onNavigate?.(activeSkill);
+                            }}
+                            style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                        >{currentTaskName}</span> | Duration: {currentTaskDuration}</p>
+                    <p className={styles.currentTask}>
+                        Offline Progress: {12 + offlineProgressTiers * 2} hrs / 24 hrs
+                    </p>
                 </div>
             </div>
 
@@ -88,7 +125,19 @@ export function ProfileView() {
                                 const progress = getXpProgress(skill.xp);
                                 
                                 return (
-                                    <div key={skillKey} className={styles.skillCard}>
+                                    <div 
+                                        key={skillKey} 
+                                        className={styles.skillCard}
+                                        onClick={() => {
+                                            const combatSkills = ['fangMastery', 'predatorForce', 'obsidianWard', 'shadowArchery', 'bloodSorcery', 'vitae'];
+                                            if (combatSkills.includes(skillKey)) {
+                                                onNavigate?.('combat');
+                                            } else {
+                                                onNavigate?.(skillKey);
+                                            }
+                                        }}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         <div className={styles.skillTooltip}>
                                             <div className={styles.tooltipName}>{config.label}</div>
                                             <div className={styles.tooltipRow}>

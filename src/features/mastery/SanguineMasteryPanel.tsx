@@ -28,7 +28,9 @@ export const SanguineMasteryPanel: React.FC = () => {
         autoLootEnabled, 
         autoEatEnabled,
         toggleAutoLoot,
-        toggleAutoEat
+        toggleAutoEat,
+        offlineProgressTiers = 0,
+        incrementOfflineTier
     } = usePlayerStore();
 
     const handleUnlock = (upgradeId: string, cost: number) => {
@@ -107,6 +109,62 @@ export const SanguineMasteryPanel: React.FC = () => {
                         </div>
                     );
                 })}
+
+                {/* Offline Progress Card */}
+                {(() => {
+                    const offlineCosts = [100000, 500000, 1000000, 3000000, 5000000, 15000000];
+                    const isMaxed = offlineProgressTiers >= 6;
+                    const currentCost = isMaxed ? 0 : offlineCosts[offlineProgressTiers];
+                    const canAffordOffline = bloodShards >= currentCost;
+                    const currentHours = 12 + offlineProgressTiers * 2;
+
+                    return (
+                        <div className={`${styles.masteryCard} ${offlineProgressTiers > 0 ? styles.unlocked : ''}`}>
+                            <div className={styles.cardHeader}>
+                                <div className={styles.iconCircle}>
+                                    <span className={styles.upgradeIcon}>⏳</span>
+                                </div>
+                                <div className={styles.titleGroup}>
+                                    <h4 className={styles.upgradeTitle}>Offline Progress</h4>
+                                    <span className={styles.statusBadge}>
+                                        {isMaxed ? 'MAXED' : `TIER ${offlineProgressTiers}/6`}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <p className={styles.upgradeDesc}>
+                                Adds two hours to your offline progress cap. Current cap: {currentHours} hours.
+                            </p>
+
+                            <div className={styles.cardAction}>
+                                {!isMaxed ? (
+                                    <div className={styles.unlockArea}>
+                                        <div className={styles.costBadge}>
+                                            <img src={iconShard} alt="" className={styles.costIcon} />
+                                            <span>{currentCost.toLocaleString()}</span>
+                                        </div>
+                                        <button 
+                                            className={styles.unlockBtn}
+                                            disabled={!canAffordOffline}
+                                            onClick={() => {
+                                                usePlayerStore.setState((state) => ({
+                                                    bloodShards: state.bloodShards - currentCost
+                                                }));
+                                                incrementOfflineTier();
+                                            }}
+                                        >
+                                            {canAffordOffline ? 'UPGRADE' : 'INSUFFICIENT SHARDS'}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className={styles.controlArea}>
+                                        <span style={{color: '#888', fontStyle: 'italic'}}>Maximum capacity reached</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })()}
             </div>
 
             <div className={styles.footerNote}>

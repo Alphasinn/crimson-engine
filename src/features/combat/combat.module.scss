@@ -724,6 +724,11 @@
         color: #44ff44;
         text-shadow: 0 0 8px rgba(68, 255, 68, 0.4);
     }
+
+    &.critText {
+        color: #ff4d4d;
+        text-shadow: 0 0 8px rgba(255, 77, 77, 0.4);
+    }
 }
 
 .miniAutoEat {
@@ -2473,6 +2478,7 @@
     transition: all 0.3s ease;
     height: 24px;
     box-sizing: border-box;
+    position: relative; // For tooltip!
 
     .statusIcon {
         font-size: 12px;
@@ -2484,10 +2490,57 @@
         background: rgba(96, 165, 250, 0.1);
         box-shadow: 0 0 8px rgba(96, 165, 250, 0.2);
     }
+    
+    &:hover .tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+    }
+}
 
+.tooltip {
+    position: absolute;
+    bottom: 125%; // Position above the badge
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(12, 6, 6, 0.95); // Dark blood theme
+    border: 1px solid rgba(255, 77, 77, 0.4); // Soft red border
+    border-radius: $radius-sm;
+    padding: $space-3;
+    width: 200px;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition: all $transition-normal;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(196, 30, 58, 0.3);
+    backdrop-filter: blur(5px);
+    
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+    pointer-events: none; // Don't block mouse events
+    text-align: left;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 11px;
+    font-family: $font-body;
+}
+
+.tooltipTitle {
+    font-weight: $font-weight-bold;
+    color: #fff;
+    font-size: $font-size-sm;
+    font-family: $font-heading;
+    margin-bottom: $space-1;
+    letter-spacing: 1px;
+}
+
+.statusBadge {
     &.dashCooldown {
-        opacity: 0.6;
-        color: $color-text-muted;
+        color: rgba(255, 255, 255, 0.4);
+        
+        .statusIcon {
+            opacity: 0.5;
+        }
     }
 
     &.flickerActive {
@@ -2585,5 +2638,126 @@
 @keyframes bloodEchoFloat {
     0% { transform: translateY(0) scale(1); }
     100% { transform: translateY(-10px) scale(1.02); }
+}
+
+// --- Loot Modal & Icon ---
+.lootIcon {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    margin-left: 8px;
+    vertical-align: middle;
+    transition: transform 0.2s ease;
+    mix-blend-mode: screen; // Hides the black background!
+
+    &:hover {
+        transform: scale(1.2);
+    }
+}
+
+.lootChestLarge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 64px;
+    height: 64px;
+    cursor: pointer;
+    mix-blend-mode: screen;
+    transition: transform 0.2s ease;
+    z-index: 10;
+
+    &:hover {
+        transform: scale(1.1);
+    }
+}
+
+.modalOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modal {
+    background: rgba(12, 6, 6, 0.95);
+    border: 2px solid rgba(255, 77, 77, 0.4);
+    border-radius: $radius-lg;
+    width: 300px;
+    max-width: 90%;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(196, 30, 58, 0.3);
+    overflow: hidden;
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: $space-4;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(196, 30, 58, 0.1);
+}
+
+.modalTitle {
+    font-family: $font-heading;
+    font-size: $font-size-lg;
+    color: $color-gold;
+    margin: 0;
+    letter-spacing: 1px;
+}
+
+.closeBtn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 24px;
+    cursor: pointer;
+    transition: color 0.2s;
+    
+    &:hover {
+        color: #ff4d4d;
+    }
+}
+
+.modalBody {
+    padding: $space-4;
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.lootRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: $space-2 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    
+    &:last-child {
+        border-bottom: none;
+    }
+}
+
+.lootName {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: $font-size-sm;
+}
+
+.lootChance {
+    color: $color-gold;
+    font-family: $font-mono;
+    font-size: $font-size-sm;
+}
+
+.noLoot {
+    color: rgba(255, 255, 255, 0.4);
+    text-align: center;
+    font-style: italic;
+    padding: $space-4;
 }
 

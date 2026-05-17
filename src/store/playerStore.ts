@@ -7,6 +7,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { PlayerSkills, PlayerEquipment, EquipmentItem, CombatStyle, InventoryItem, SkillName, TrainingMode, LootHistoryItem, UpgradeId, RitualDefinition } from '../engine/types';
 import { getLevelFromXp, getXpForLevel } from '../engine/xpTable';
+import { useNotificationStore } from './notificationStore';
 import {
     STARTING_VITAE_LEVEL,
 } from '../engine/constants';
@@ -57,6 +58,8 @@ interface PlayerState {
     autoEatThreshold: number;
     autoEatEnabled: boolean;
     currentVitae: number;
+    offlineProgressTiers: number;
+    lastSessionTimestamp: number;
     // Phase 2A: Foundational Resources
     bloodShards: number;
     graveSteel: number;
@@ -72,6 +75,8 @@ interface PlayerState {
     redMistIchorDrops: number;
     redMistDeaths: number;
     crucibleSealed: boolean;
+    crucibleTargetSlot: EquipmentSlot | null;
+    crucibleKillProgress: number;
     // Phase 4: Rituals & Resonance
     activeRituals: RitualDefinition[];
     nextHuntModifiers: {
@@ -98,6 +103,13 @@ interface PlayerState {
     clearLootHistory: () => void;
     toggleAutoLoot: () => void;
     unlockUpgrade: (upgradeId: UpgradeId) => void;
+    incrementOfflineTier: () => void;
+    updateLastSessionTimestamp: () => void;
+    addOfflineGains: (gains: {
+        skillGains: { [key in SkillName]?: { xp: number } };
+        itemGains: { [itemId: string]: number };
+        itemConsumed: { [itemId: string]: number };
+    }) => void;
     toggleAutoEat: () => void;
     setAutoEatThreshold: (threshold: number) => void;
     setVitae: (amount: number) => void;
@@ -113,6 +125,9 @@ interface PlayerState {
     tierShift: (slot: keyof PlayerEquipment, path: 'sanguine' | 'vile') => void;
     refineGear: (slot: keyof PlayerEquipment) => void;
     resetCrucibleSeal: () => void;
+    setCrucibleTarget: (slot: EquipmentSlot | null) => void;
+    cancelCrucibleTarget: () => void;
+    incrementCrucibleKills: () => void;
     // Phase 4 Actions
     addRitual: (ritual: RitualDefinition) => void;
     removeRitual: (id: string) => void;
@@ -137,6 +152,8 @@ export const usePlayerStore = create<PlayerState>()(
             autoEatThreshold: 0.5,
             autoEatEnabled: false,
             currentVitae: 10,
+            offlineProgressTiers: 0,
+            lastSessionTimestamp: Date.now(),
             unlockedUpgrades: [],
             bloodShards: 0,
             graveSteel: 0,
@@ -151,6 +168,8 @@ export const usePlayerStore = create<PlayerState>()(
             redMistIchorDrops: 0,
             redMistDeaths: 0,
             crucibleSealed: false,
+            crucibleTargetSlot: null,
+            crucibleKillProgress: 0,
             activeRituals: [],
             nextHuntModifiers: {
                 scentGainMultiplier: 1,
@@ -165,6 +184,18 @@ export const usePlayerStore = create<PlayerState>()(
                     const current = state.skills[skill] || { xp: 0, level: 1 };
                     const newXp = Math.min(current.xp + amount, 500_000_000);
                     const newLevel = getLevelFromXp(newXp);
+                    
+                    if (newLevel > current.level) {
+                        // Convert skill ID to pretty name
+                        const prettyName = skill.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                        
+                        useNotificationStore.getState().addNotification({
+                            type: 'level_up',
+                            label: prettyName,
+                            amount: `${current.level} to ${newLevel}`
+                        });
+                    }
+
                     return {
                         skills: {
                             ...state.skills,
@@ -255,6 +286,24 @@ export const usePlayerStore = create<PlayerState>()(
             },
 
             addInventoryItem: (item: InventoryItem) => {
+                // Handle special top-level currencies
+                if (item.id === 'blood_shard') {
+                    set((state) => ({ bloodShards: state.bloodShards + item.quantity }));
+                    return;
+                }
+                if (item.id === 'cursed_ichor') {
+                    set((state) => ({ cursedIchor: state.cursedIchor + item.quantity }));
+                    return;
+                }
+                if (item.id === 'grave_steel') {
+                    set((state) => ({ graveSteel: state.graveSteel + item.quantity }));
+                    return;
+                }
+                if (item.id === 'stabilized_ichor') {
+                    set((state) => ({ stabilizedIchor: state.stabilizedIchor + item.quantity }));
+                    return;
+                }
+
                 const itemTemplate = InventoryManager.resolveItem(item.id, ITEM_DATABASE);
                 const template = itemTemplate || item; // Fallback to provided item if not in database
                 
@@ -377,6 +426,64 @@ export const usePlayerStore = create<PlayerState>()(
                     autoEatEnabled
                 };
             }),
+            incrementOfflineTier: () => set((state) => ({
+                offlineProgressTiers: (state.offlineProgressTiers || 0) + 1
+            })),
+
+            updateLastSessionTimestamp: () => set({ lastSessionTimestamp: Date.now() }),
+
+            addOfflineGains: (gains) => set((state) => {
+                const nextSkills = { ...state.skills };
+                let nextInventory = [ ...state.inventory ];
+                let nextFood = [ ...state.food ];
+
+                // Apply XP
+                Object.entries(gains.skillGains).forEach(([skill, gain]) => {
+                    if (gain) {
+                        const s = skill as SkillName;
+                        const currentXp = nextSkills[s].xp;
+                        const newXp = currentXp + gain.xp;
+                        const newLevel = getLevelFromXp(newXp);
+                        nextSkills[s] = { level: newLevel, xp: newXp };
+                    }
+                });
+
+                // Apply Consumed Items
+                Object.entries(gains.itemConsumed).forEach(([itemId, quantity]) => {
+                    // Check if it's food
+                    const foodIdx = nextFood.findIndex(f => f.id === itemId);
+                    if (foodIdx !== -1) {
+                        nextFood[foodIdx] = { ...nextFood[foodIdx], quantity: Math.max(0, nextFood[foodIdx].quantity - quantity) };
+                    } else {
+                        // Check inventory
+                        const invIdx = nextInventory.findIndex(i => i.id === itemId);
+                        if (invIdx !== -1) {
+                            nextInventory[invIdx] = { ...nextInventory[invIdx], quantity: Math.max(0, nextInventory[invIdx].quantity - quantity) };
+                        }
+                    }
+                });
+
+                // Apply Produced Items
+                Object.entries(gains.itemGains).forEach(([itemId, quantity]) => {
+                    // We need the item template to add it!
+                    // Assuming we have ITEM_DATABASE or similar!
+                    // Let's use ITEM_DATABASE!
+                    const template = ITEM_DATABASE[itemId];
+                    if (template) {
+                        if (template.type === 'food') {
+                            nextFood = InventoryManager.addItem(nextFood, template, quantity);
+                        } else {
+                            nextInventory = InventoryManager.addItem(nextInventory, template, quantity);
+                        }
+                    }
+                });
+
+                return {
+                    skills: nextSkills,
+                    inventory: nextInventory,
+                    food: nextFood
+                };
+            }),
 
             toggleAutoEat: () => set((state) => {
                 const isUnlocked = state.unlockedUpgrades.includes('auto_eat');
@@ -468,27 +575,16 @@ export const usePlayerStore = create<PlayerState>()(
             },
 
             tierShift: (slot, path) => set((state) => {
-                if (state.crucibleSealed) return state;
                 const item = state.equipment[slot];
                 if (!item) return state;
 
+                const tierNum = parseInt(item.tier.slice(1));
+                const requiredKillsShift = 50 * tierNum;
+                if (state.crucibleKillProgress < requiredKillsShift) return state;
+                if (state.crucibleTargetSlot !== slot) return state;
+
                 // 1. Check Eligibility (Refinement 5, not terminal tier)
                 if (!isEligibleForTierShift(item)) return state;
-
-                // 2. Resource Check
-                const cost = getTierShiftCost(item.tier);
-                
-                const hasShards = state.bloodShards >= cost.shards;
-                const hasIchor = state.stabilizedIchor >= cost.stabilizedIchor;
-                const hasComponents = cost.components.every(comp => {
-                    const invItem = state.inventory.find(i => i.id === comp.id);
-                    return invItem && invItem.quantity >= comp.quantity;
-                });
-
-                if (!hasShards || !hasIchor || !hasComponents) {
-                    console.warn("Missing materials for Tier Shift", cost);
-                    return state;
-                }
 
                 // 3. Execution (Pulling base stats for next tier)
                 const nextTierItem = resolveNextTierItem(item, ITEM_DATABASE.filter(i => 'slot' in i) as EquipmentItem[]);
@@ -500,30 +596,21 @@ export const usePlayerStore = create<PlayerState>()(
                     specPath: path || item.specPath // Preserve if already set
                 };
 
-                // 4. Final Validation
-                if (!validateShiftResult(item, newItem)) return state;
-
-                // Consume components
-                let nextInventory = [...state.inventory];
-                cost.components.forEach(comp => {
-                    nextInventory = nextInventory.map(invItem => 
-                        invItem.id === comp.id ? { ...invItem, quantity: invItem.quantity - comp.quantity } : invItem
-                    ).filter(i => i.quantity > 0);
-                });
-
                 return {
-                    bloodShards: state.bloodShards - cost.shards,
-                    stabilizedIchor: state.stabilizedIchor - cost.stabilizedIchor,
-                    inventory: nextInventory,
                     equipment: { ...state.equipment, [slot]: newItem },
-                    crucibleSealed: true
+                    crucibleKillProgress: 0,
+                    crucibleTargetSlot: null
                 };
             }),
 
             refineGear: (slot) => set((state) => {
-                if (state.crucibleSealed) return state;
                 const item = state.equipment[slot];
                 if (!item) return state;
+                
+                const tierNum = parseInt(item.tier.slice(1));
+                const requiredKills = 25 * tierNum;
+                if (state.crucibleKillProgress < requiredKills) return state;
+                if (state.crucibleTargetSlot !== slot) return state;
                 
                 const currentRefinement = item.refinement || 0;
                 if (currentRefinement >= 5) return state;
@@ -538,13 +625,67 @@ export const usePlayerStore = create<PlayerState>()(
                         bloodShards: state.bloodShards - shardCost,
                         graveSteel: state.graveSteel - steelCost,
                         equipment: { ...state.equipment, [slot]: newItem },
-                        crucibleSealed: true
+                        crucibleKillProgress: 0,
+                        crucibleTargetSlot: null
                     };
                 }
                 return state;
             }),
 
             resetCrucibleSeal: () => set({ crucibleSealed: false }),
+
+            setCrucibleTarget: (slot) => set((state) => {
+                const item = state.equipment[slot];
+                if (!item) return state;
+                
+                const currentRefinement = item.refinement || 0;
+                let shardCost = 0;
+                let steelCost = 0;
+                let ichorCost = 0;
+                let components: { id: string, quantity: number }[] = [];
+                
+                if (currentRefinement >= 5) {
+                    const cost = getTierShiftCost(item.tier);
+                    shardCost = cost.shards;
+                    ichorCost = cost.stabilizedIchor;
+                    components = cost.components;
+                } else {
+                    shardCost = 25 * (currentRefinement + 1);
+                    steelCost = 5 * (currentRefinement + 1);
+                }
+                
+                // Check if can afford
+                const hasShards = state.bloodShards >= shardCost;
+                const hasSteel = state.graveSteel >= steelCost;
+                const hasIchor = state.stabilizedIchor >= ichorCost;
+                const hasComponents = components.every(comp => state.getResourceQuantity(comp.id) >= comp.quantity);
+                
+                if (hasShards && hasSteel && hasIchor && hasComponents) {
+                    // Consume resources
+                    let nextInventory = [ ...state.inventory ];
+                    components.forEach(comp => {
+                        const idx = nextInventory.findIndex(i => i.id === comp.id);
+                        if (idx !== -1) {
+                            nextInventory[idx] = { ...nextInventory[idx], quantity: nextInventory[idx].quantity - comp.quantity };
+                        }
+                    });
+                    
+                    return {
+                        bloodShards: state.bloodShards - shardCost,
+                        graveSteel: state.graveSteel - steelCost,
+                        stabilizedIchor: state.stabilizedIchor - ichorCost,
+                        inventory: nextInventory,
+                        crucibleTargetSlot: slot,
+                        crucibleKillProgress: 0
+                    };
+                }
+                
+                return state; // Can't afford!
+            }),
+
+            incrementCrucibleKills: () => set((state) => ({ crucibleKillProgress: state.crucibleKillProgress + 1 })),
+
+            cancelCrucibleTarget: () => set({ crucibleTargetSlot: null, crucibleKillProgress: 0 }),
 
             // Phase 4 Implementation
             addRitual: (ritual) => {
@@ -617,6 +758,8 @@ export const usePlayerStore = create<PlayerState>()(
                     redMistIchorDrops: 0,
                     redMistDeaths: 0,
                     crucibleSealed: false,
+                    crucibleTargetSlot: null,
+                    crucibleKillProgress: 0,
                     activeRituals: [],
                     nextHuntModifiers: {
                         scentGainMultiplier: 1,
@@ -650,7 +793,7 @@ export const usePlayerStore = create<PlayerState>()(
         }),
         {
             name: 'crimson-engine-player',
-            version: 8,
+            version: 9,
             migrate: (persistedState: any, version: number) => {
                 if (version < 4) {
                     if (!persistedState.food || persistedState.food.length === 0) {
@@ -692,6 +835,10 @@ export const usePlayerStore = create<PlayerState>()(
                         if (!skills[s]) skills[s] = { level: 1, xp: 0 };
                     });
                     persistedState.skills = skills;
+                }
+                if (version < 9) {
+                    persistedState.crucibleTargetSlot = null;
+                    persistedState.crucibleKillProgress = 0;
                 }
                 return persistedState;
             }

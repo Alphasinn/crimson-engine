@@ -57,11 +57,57 @@ export function EquipmentPanel({ hpProps, meterProps }: EquipmentPanelProps) {
                     }
 
                     const item = equipment[slotKey];
+                    const specText = item?.specPath ? `[${item.specPath.toUpperCase()}]` : '';
+                    const bonusText = item?.specPath === 'vile' ? '+5% Damage Reduction' : item?.specPath === 'sanguine' ? '+5% Attack Speed' : '';
+                    
+                    const refinementText = item?.refinement ? ` (+${item.refinement})` : '';
+                    
+                    const stats: string[] = [];
+                    if (item) {
+                        const mult = item.refinement ? item.refinement * 0.01 : 0;
+                        
+                        if (item.accuracyBonus) {
+                            const bonus = item.accuracyBonus * mult;
+                            stats.push(`Accuracy: +${item.accuracyBonus}${bonus > 0 ? ` (+${bonus.toFixed(1)})` : ''}`);
+                        }
+                        if (item.powerModifier) {
+                            const bonus = item.powerModifier * mult;
+                            stats.push(`Power: +${item.powerModifier}${bonus > 0 ? ` (+${bonus.toFixed(1)})` : ''}`);
+                        }
+                        if (item.drPercent) {
+                            const bonus = item.drPercent * mult;
+                            stats.push(`DR: ${(item.drPercent * 100).toFixed(0)}%${bonus > 0 ? ` (+${(bonus * 100).toFixed(1)}%)` : ''}`);
+                        }
+                        if (item.evasionBonus) {
+                            const bonus = item.evasionBonus * mult;
+                            stats.push(`Evasion: +${item.evasionBonus}${bonus > 0 ? ` (+${bonus.toFixed(1)})` : ''}`);
+                        }
+                        if (item.blockChance) {
+                            const bonus = item.blockChance * mult;
+                            stats.push(`Block: ${(item.blockChance * 100).toFixed(0)}%${bonus > 0 ? ` (+${(bonus * 100).toFixed(1)}%)` : ''}`);
+                        }
+                        if (item.flatArmor) {
+                            const bonus = item.flatArmor * mult;
+                            stats.push(`Armor: +${item.flatArmor}${bonus > 0 ? ` (+${bonus.toFixed(1)})` : ''}`);
+                        }
+                    }
 
                     return (
                         <div key={slotKey} className={styles.slot}>
                             {item ? (
-                                <div className={styles.filledSlot} title={item.name}>
+                                <div className={styles.filledSlot}>
+                                    {/* Custom Tooltip */}
+                                    <div className={styles.tooltip}>
+                                        <div className={styles.tooltipName}>{item.name}{refinementText}</div>
+                                        {specText && <div className={styles.tooltipSpec}>{specText}</div>}
+                                        {bonusText && <div className={styles.tooltipBonus}>• {bonusText}</div>}
+                                        {stats.length > 0 && (
+                                            <div className={styles.tooltipStats}>
+                                                <div className={styles.statsTitle}>Stats:</div>
+                                                {stats.map((s, i) => <div key={i}>• {s}</div>)}
+                                            </div>
+                                        )}
+                                    </div>
                                     {(ARMOR_MAP.get(item.id)?.icon || WEAPON_MAP.get(item.id)?.icon) ? (
                                         <img 
                                             src={ARMOR_MAP.get(item.id)?.icon || WEAPON_MAP.get(item.id)?.icon} 

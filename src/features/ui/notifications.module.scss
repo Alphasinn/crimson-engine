@@ -14,6 +14,18 @@
     width: 400px;
 }
 
+.topContainer {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 2000;
+    width: auto;
+    @include flex-col;
+    align-items: center;
+}
+
 .toast {
     background: rgba($color-bg-card, 0.9);
     border: 1px solid $color-border-accent;
@@ -48,6 +60,55 @@
             font-size: 1.2rem;
             text-transform: uppercase;
             letter-spacing: 2px;
+        }
+    }
+
+    &.type-level_up {
+        background: rgba(10, 10, 15, 0.98);
+        border: 2px solid #d97706; /* Amber/Gold */
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(217, 119, 6, 0.3);
+        padding: $space-4 $space-8;
+        border-radius: 0 0 $radius-lg $radius-lg; /* Rounded bottom corners only */
+        animation: levelUpToast 3.5s ease-out forwards;
+        backdrop-filter: blur(12px);
+        width: 500px; /* Wider to cover the requested area */
+        min-height: 100px;
+        @include flex-center;
+        position: relative; /* So absolute icon works */
+        
+        .levelUpIcon {
+            position: absolute;
+            top: $space-2;
+            right: $space-4;
+            width: 48px;
+            height: 48px;
+            filter: drop-shadow(0 0 8px rgba(217, 119, 6, 0.6)); /* Gold glow */
+        }
+        
+        .levelUpLayout {
+            @include flex-col;
+            align-items: center;
+            gap: $space-1;
+            width: 100%;
+        }
+        
+        .levelUpHeader {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #fff;
+            font-family: $font-heading;
+            letter-spacing: 1px;
+        }
+        
+        .levelUpMessage {
+            color: #e5e7eb;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+        
+        .levelUpLabel {
+            color: #ef4444; /* Crimson */
+            font-weight: bold;
         }
     }
 }
@@ -131,6 +192,25 @@
         100% {
             opacity: 0;
             transform: translateY(-40px);
+        }
+    }
+
+    @keyframes levelUpToast {
+        0% {
+            opacity: 0;
+            transform: translateY(-100%) scale(1);
+        }
+        15% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        85% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-100%) scale(1);
         }
     }
 }

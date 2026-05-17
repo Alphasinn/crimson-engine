@@ -11,7 +11,10 @@ import {
     computeDerivedStats,
     calcHitChance,
     calcStyleBonus,
+    calcHeavyWeaknessMult,
+    applyMultiplicativeCompression,
 } from '../../engine/formulas';
+import { MC_POWER_DEFAULT, MC_POWER_SLASH } from '../../engine/constants';
 import styles from './combat.module.scss';
 
 // Skill Icons for stats
@@ -21,6 +24,7 @@ import iconDefense from '../../assets/icons/defense.png';
 import iconArchery from '../../assets/icons/archery.png';
 import iconMagic from '../../assets/icons/blood_magic.png';
 import iconHp from '../../assets/icons/hp.png';
+import iconLootChest from '../../assets/icons/loot_chest.png';
 
 
 export const FightArena = React.memo(() => {
@@ -60,14 +64,42 @@ export const FightArena = React.memo(() => {
         [skills, equipment]
     );
 
-    const playerMaxHitDisplay = derived.weaponStyle === 'melee'
+    const baseMaxHit = derived.weaponStyle === 'melee'
         ? derived.meleeMaxHit
         : derived.weaponStyle === 'archery' ? derived.rangedMaxHit : derived.magicMaxHit;
+
+    let playerMaxHitDisplay = baseMaxHit;
+
+    if (activeEnemy) {
+        const isHeavy = derived.attackInterval > 2.2;
+        const weaknessMaxMult = calcHeavyWeaknessMult(
+            isHeavy,
+            derived.weaponStyle,
+            activeEnemy.weakness,
+            derived.weaponSubStyle
+        );
+        const effectiveMaxHit = Math.floor(baseMaxHit * weaknessMaxMult);
+
+        const styleBonus = calcStyleBonus(
+            derived.weaponStyle,
+            activeEnemy.weakness,
+            activeEnemy.resistance,
+            derived.weaponSubStyle
+        );
+        const totalMult = 1.0 + styleBonus;
+        const mcPower = derived.weaponSubStyle === 'slash' ? MC_POWER_SLASH : MC_POWER_DEFAULT;
+        const { finalMult } = applyMultiplicativeCompression(totalMult, mcPower);
+
+        playerMaxHitDisplay = Math.floor(effectiveMaxHit * finalMult);
+    }
+
+    const critMaxHitDisplay = Math.floor(playerMaxHitDisplay * derived.critMultiplier);
 
     const hpColor = (pct: number) => pct > 0.5 ? '#22c55e' : pct > 0.25 ? '#eab308' : '#ef4444';
 
     // Track critical flash
     const [isCritFlashing, setIsCritFlashing] = useState(false);
+    const [showLootModal, setShowLootModal] = useState(false);
     const lastHandledCritStamp = useRef(0);
     useEffect(() => {
         if (lastEnemyCritStamp > lastHandledCritStamp.current) {
@@ -116,12 +148,22 @@ export const FightArena = React.memo(() => {
                                 <span className={styles.statusText}>
                                     {flickerTicks > 0 ? 'FLICKER' : (isDashReady ? 'DASH READY' : 'RECHARGING')}
                                 </span>
+                                <div className={styles.tooltip}>
+                                    <div className={styles.tooltipTitle}>Dash</div>
+                                    <div>Automatically dodges the next enemy attack when ready.</div>
+                                    <div style={{ color: '#aaa', marginTop: '4px' }}>Cooldown: 60 Seconds</div>
+                                    <div style={{ color: '#ffc107', fontSize: '10px' }}>Sanguine reduces cooldown to 40s.</div>
+                                </div>
                             </div>
 
                             {isIronbound && (
                                 <div className={`${styles.statusBadge} ${styles.ironbound}`}>
                                     <span className={styles.statusIcon}>🛡️</span>
                                     <span className={styles.statusText}>IRONBOUND</span>
+                                    <div className={styles.tooltip}>
+                                        <div className={styles.tooltipTitle}>Ironbound</div>
+                                        <div>Reduces incoming damage significantly.</div>
+                                    </div>
                                 </div>
                             )}
 
@@ -129,6 +171,10 @@ export const FightArena = React.memo(() => {
                                 <div className={`${styles.statusBadge} ${styles.armorStatus}`}>
                                     <span className={styles.statusIcon}>🛡️</span>
                                     <span className={styles.statusText}>{derived.flatArmor}</span>
+                                    <div className={styles.tooltip}>
+                                        <div className={styles.tooltipTitle}>Armor</div>
+                                        <div>Reduces physical damage taken by a flat amount of {derived.flatArmor}.</div>
+                                    </div>
                                 </div>
                             )}
 
@@ -162,11 +208,23 @@ export const FightArena = React.memo(() => {
                                     +{Object.values(equipment).reduce((sum, item) => sum + (item?.refinement ?? 0), 0)}
                                 </span>
                             </div>
+                            <div className={styles.arenaStatBox}>
+                                <span className={styles.arenaStatLabel}>Crit Max</span>
+                                <span className={`${styles.arenaStatValue} ${styles.critText}`}>{critMaxHitDisplay}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div className={`${styles.enemyCard} ${activeEnemy.isElite ? styles.eliteCard : ''} ${isCritFlashing ? styles.enemyCardCrit : ''}`}>
+                    <img 
+                        src={iconLootChest} 
+                        alt="Loot" 
+                        className={styles.lootChestLarge} 
+                        onClick={() => setShowLootModal(true)}
+                        title="View Loot Table"
+                    />
+
                     <div className={styles.enemySplatOverlay}>
                         <DamageSplats isPlayer={false} />
                     </div>
@@ -219,6 +277,32 @@ export const FightArena = React.memo(() => {
             <div className={styles.bottomConsumableBar}>
                 <ConsumablePanel />
             </div>
+
+            {showLootModal && (
+                <div className={styles.modalOverlay} onClick={() => setShowLootModal(false)}>
+                    <div className={styles.modal} onClick={e => e.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                            <h3 className={styles.modalTitle}>Loot Table: {activeEnemy.name}</h3>
+                            <button className={styles.closeBtn} onClick={() => setShowLootModal(false)}>×</button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            {activeEnemy.lootTable.map(entry => {
+                                const totalWeight = activeEnemy.lootTable.reduce((sum, e) => sum + e.weight, 0);
+                                const chance = (entry.weight / totalWeight) * 100;
+                                return (
+                                    <div key={entry.itemId} className={styles.lootRow}>
+                                        <span className={styles.lootName}>{entry.itemName}</span>
+                                        <span className={styles.lootChance}>{chance.toFixed(1)}%</span>
+                                    </div>
+                                );
+                            })}
+                            {activeEnemy.lootTable.length === 0 && (
+                                <div className={styles.noLoot}>No drops for this enemy.</div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 });

@@ -109,6 +109,19 @@ export function useCombatEngine() {
                     }]
                 }));
             }
+
+            // Crucible Progression
+            const currentZone = useCombatStore.getState().selectedZone;
+            const playerState = usePlayerStore.getState();
+            const targetSlot = playerState.crucibleTargetSlot;
+            
+            if (currentZone && targetSlot) {
+                const targetItem = playerState.equipment[targetSlot];
+                if (targetItem && targetItem.tier === currentZone.dropTier) {
+                    playerState.incrementCrucibleKills();
+                }
+            }
+
             recordStat('kill', 1);
             updateSession(prev => ({ 
                 kills: prev.kills + 1,

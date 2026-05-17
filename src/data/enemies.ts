@@ -143,6 +143,7 @@ const ENEMIES: Enemy[] = [
             { itemId: 'bone_maul', itemName: 'Bone Maul', weight: 30 },
             { itemId: 'copper_coin', itemName: 'Copper Coin', weight: 30 },
             { itemId: 'rustborn_boots', itemName: 'Rustborn Boots', weight: 15 },
+            { itemId: 'grave_dust', itemName: 'Grave Dust', weight: 20 },
         ],
     },
     // =========================================================================

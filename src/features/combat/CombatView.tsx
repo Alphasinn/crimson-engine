@@ -74,19 +74,7 @@ export function CombatView() {
     // Stats modals
     const [showGains, setShowGains] = useState(false);
     const [showHuntingGains, setShowHuntingGains] = useState(false);
-    const [unsealToast, setUnsealToast] = useState(false);
 
-    // Phase 3: Unseal Detection
-    const lastHandledUnsealTick = useRef(-1);
-    useEffect(() => {
-        if (isRunning && crucibleSealed && currentTick >= 50 && currentTick > lastHandledUnsealTick.current) {
-            lastHandledUnsealTick.current = currentTick;
-            resetCrucibleSeal();
-            setUnsealToast(true);
-            const timer = setTimeout(() => setUnsealToast(false), 4000);
-            return () => clearTimeout(timer);
-        }
-    }, [isRunning, crucibleSealed, currentTick, resetCrucibleSeal]);
 
     const handleZoneClick = useCallback((z: Zone) => {
         setExpandedZoneId(prev => prev === z.id ? null : z.id);
@@ -224,12 +212,7 @@ export function CombatView() {
 
             {showGains && <IdleGainPanel onClose={() => setShowGains(false)} />}
 
-            {unsealToast && (
-                <div className={styles.unsealToast}>
-                    <div className={styles.toastTitle}>Crucible Unsealed</div>
-                    <div className={styles.toastBody}>The Sanctum responds to your survival</div>
-                </div>
-            )}
+
         </div>
     );
 }

@@ -39,7 +39,8 @@ export const PrepArea = React.memo(({ showZoneGrid }: PrepAreaProps) => {
     const { 
         skills, trainingMode, setTrainingMode, 
         autoEatEnabled, autoEatThreshold, toggleAutoEat,
-        setAutoEatThreshold, unlockedUpgrades
+        setAutoEatThreshold, unlockedUpgrades,
+        crucibleTargetSlot, crucibleKillProgress, equipment
     } = usePlayerStore(useShallow(s => ({
         skills: s.skills,
         trainingMode: s.trainingMode,
@@ -48,7 +49,10 @@ export const PrepArea = React.memo(({ showZoneGrid }: PrepAreaProps) => {
         autoEatThreshold: s.autoEatThreshold,
         toggleAutoEat: s.toggleAutoEat,
         setAutoEatThreshold: s.setAutoEatThreshold,
-        unlockedUpgrades: s.unlockedUpgrades
+        unlockedUpgrades: s.unlockedUpgrades,
+        crucibleTargetSlot: s.crucibleTargetSlot,
+        crucibleKillProgress: s.crucibleKillProgress,
+        equipment: s.equipment
     })));
 
     const { scentIntensity, activeEvent, isRunning, currentTick, viewMode, setViewMode } = useCombatStore(useShallow(s => ({
@@ -60,7 +64,7 @@ export const PrepArea = React.memo(({ showZoneGrid }: PrepAreaProps) => {
         setViewMode: s.setViewMode
     })));
 
-    const crucibleSealed = usePlayerStore(s => s.crucibleSealed);
+
 
     const getScourgeDescription = (eventName: string | null) => {
         switch (eventName) {
@@ -74,7 +78,6 @@ export const PrepArea = React.memo(({ showZoneGrid }: PrepAreaProps) => {
     // Determine weapon style for training modes
     // Note: This requires equipment, but we can simplify or pass it in.
     // For now, let's keep it self-contained by picking equipment from store.
-    const equipment = usePlayerStore(s => s.equipment);
     const weapon = equipment.weapon;
     const weaponStyle = weapon?.style || 'melee';
 
@@ -98,6 +101,10 @@ export const PrepArea = React.memo(({ showZoneGrid }: PrepAreaProps) => {
             { mode: 'all_melee' as const, label: <><img src={iconAll} className={styles.statIcon} alt="" /> All</> },
         ];
     }, [weaponStyle]);
+
+    const targetedItem = crucibleTargetSlot ? equipment[crucibleTargetSlot] : null;
+    const tierNum = targetedItem ? parseInt(targetedItem.tier.slice(1)) : 1;
+    const requiredKills = targetedItem ? ((targetedItem.refinement ?? 0) >= 5 ? 50 : 25) * tierNum : 25;
 
     return (
         <div className={`
@@ -197,21 +204,21 @@ export const PrepArea = React.memo(({ showZoneGrid }: PrepAreaProps) => {
 
                 {/* Crucible Status */}
                 <div className={styles.crucibleStatusArea}>
-                    <div className={`${styles.statusLabel} ${!crucibleSealed ? styles.unsealed : ''}`}>
+                    <div className={`${styles.statusLabel} ${!crucibleTargetSlot ? styles.unsealed : ''}`}>
                         <span>Sanctum Crucible</span>
-                        <span>{crucibleSealed ? 'SEALED' : 'UNSEALED'}</span>
+                        <span>{crucibleTargetSlot ? 'ACTIVE' : 'READY'}</span>
                     </div>
                     
-                    {crucibleSealed && isRunning && (
+                    {crucibleTargetSlot && targetedItem && (
                         <div className={styles.unsealProgress}>
                             <div className={styles.statusLabel}>
-                                <span>Survival Progress</span>
-                                <span>{Math.min(50, currentTick)} / 50</span>
+                                <span>{targetedItem.name} ({(targetedItem.refinement ?? 0) >= 5 ? 'Shift' : 'Refine'})</span>
+                                <span>{crucibleKillProgress} / {requiredKills}</span>
                             </div>
                             <div className={styles.unsealTrack}>
                                 <div 
                                     className={styles.unsealFill} 
-                                    style={{ width: `${Math.min(100, (currentTick / 50) * 100)}%` }}
+                                    style={{ width: `${Math.min(100, (crucibleKillProgress / requiredKills) * 100)}%` }}
                                 />
                             </div>
                         </div>

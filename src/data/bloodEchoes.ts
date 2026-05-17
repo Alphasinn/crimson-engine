@@ -28,6 +28,7 @@ export const BLOOD_ECHOES: Record<string, Enemy> = {
             { itemId: 'gravewake_splinter', itemName: 'Gravewake Splinter', weight: 25 },
             { itemId: 'weeping_iron_token', itemName: 'Weeping Iron Token', weight: 20 },
             { itemId: 'villager_last_charm', itemName: "Villager's Last Charm", weight: 15 },
+            { itemId: 'grave_dust', itemName: 'Grave Dust', weight: 20 },
         ],
     },
     'grimwood_forest': {
