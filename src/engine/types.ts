@@ -310,6 +310,8 @@ export interface InventoryItem {
     type: 'food' | 'material' | 'equipment' | 'misc' | 'raw_blood';
     healAmount?: number; // For food items
     icon?: string;
+    refinement?: number;
+    specPath?: SpecializationPath;
 }
 
 // =============================================================================

@@ -37,24 +37,24 @@ export function InventoryView() {
         permanentArmorBonus: s.permanentArmorBonus,
         finesseTicksRemaining: s.finesseTicksRemaining
     })));
-    const [selectedId, setSelectedId] = useState<string | null>(null);
-
-    const stats = computeDerivedStats(skills, equipment, {
-        permanentArmorBonus,
-        isFinesseActive: finesseTicksRemaining > 0,
-        isLowHp: false,
-        isFlickerActive: false
-    });
-
-    const allItems = [...inventory, ...food];
-    const selectedItem = allItems.find(i => i.id === selectedId);
-
-    const handleAction = (type: 'equip' | 'consume') => {
-        if (!selectedId) return;
-        if (type === 'equip') equipItem(selectedId);
-        if (type === 'consume') consumeFoodItem(selectedId);
-        setSelectedId(null);
-    };
+    const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+ 
+     const stats = computeDerivedStats(skills, equipment, {
+         permanentArmorBonus,
+         isFinesseActive: finesseTicksRemaining > 0,
+         isLowHp: false,
+         isFlickerActive: false
+     });
+ 
+     const allItems = [...inventory, ...food];
+     const selectedItem = selectedIndex !== null ? allItems[selectedIndex] : null;
+ 
+     const handleAction = (type: 'equip' | 'consume') => {
+         if (selectedIndex === null || !selectedItem) return;
+         if (type === 'equip') equipItem(selectedItem.id, selectedItem.refinement, selectedItem.specPath);
+         if (type === 'consume') consumeFoodItem(selectedItem.id);
+         setSelectedIndex(null);
+     };
 
     return (
         <div className={styles.root}>
@@ -77,18 +77,24 @@ export function InventoryView() {
                 ) : (
                     <div className={styles.grid}>
                         {allItems.map((item, idx) => (
-                            <div 
-                                key={`${item.id}-${idx}`} 
-                                className={`${styles.itemCard} ${selectedId === item.id ? styles.selected : ''}`} 
-                                onClick={() => setSelectedId(item.id === selectedId ? null : item.id)}
-                                title={item.name}
-                            >
-                                <div className={styles.itemVisual}>
-                                    {getItemVisual(item)}
-                                </div>
-                                <div className={styles.itemQty}>{item.quantity}</div>
-                            </div>
-                        ))}
+                             <div 
+                                 key={`${item.id}-${idx}`} 
+                                 className={`${styles.itemCard} ${selectedIndex === idx ? styles.selected : ''}`} 
+                                 onClick={() => setSelectedIndex(idx === selectedIndex ? null : idx)}
+                                 title={item.name}
+                             >
+                                 <div className={styles.itemVisual}>
+                                     {getItemVisual(item)}
+                                 </div>
+                                 <div className={styles.itemQty}>{item.quantity}</div>
+                                 {item.refinement !== undefined && item.refinement > 0 && (
+                                     <div className={styles.itemRefinement}>+{item.refinement}</div>
+                                 )}
+                                 {item.specPath && (
+                                     <div className={styles.itemSpecPath}>{item.specPath[0].toUpperCase()}</div>
+                                 )}
+                             </div>
+                         ))}
                     </div>
                 )}
 
@@ -101,7 +107,7 @@ export function InventoryView() {
                                 </div>
                                 <h3>{selectedItem.name}</h3>
                             </div>
-                            <button className={styles.closeBtn} onClick={() => setSelectedId(null)}>×</button>
+                            <button className={styles.closeBtn} onClick={() => setSelectedIndex(null)}>×</button>
                         </div>
                         <div className={styles.menuActions}>
                             {selectedItem.type === 'equipment' && (
@@ -114,9 +120,9 @@ export function InventoryView() {
                                     CONSUME
                                 </button>
                             )}
-                            <button className={styles.actionBtn} onClick={() => setSelectedId(null)}>
-                                CANCEL
-                            </button>
+                             <button className={styles.actionBtn} onClick={() => setSelectedIndex(null)}>
+                                 CANCEL
+                             </button>
                         </div>
                     </div>
                 )}

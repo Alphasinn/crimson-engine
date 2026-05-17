@@ -230,6 +230,36 @@
         -1px 1px 0px #000;
 }
 
+.itemRefinement {
+    font-family: 'Courier New', Courier, monospace;
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 0.8rem;
+    color: #ef4444;
+    font-weight: bold;
+    text-shadow: 
+        1px 1px 0px #000, 
+        -1px -1px 0px #000, 
+        1px -1px 0px #000, 
+        -1px 1px 0px #000;
+}
+
+.itemSpecPath {
+    font-family: 'Courier New', Courier, monospace;
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 0.8rem;
+    color: #a855f7;
+    font-weight: bold;
+    text-shadow: 
+        1px 1px 0px #000, 
+        -1px -1px 0px #000, 
+        1px -1px 0px #000, 
+        -1px 1px 0px #000;
+}
+
 .empty {
     color: #9ca3af;
     font-style: italic;

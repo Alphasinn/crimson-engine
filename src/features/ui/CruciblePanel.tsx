@@ -85,7 +85,7 @@ export const CruciblePanel: React.FC = () => {
                             const tierNum = parseInt(item.tier.slice(1));
                             const requiredKills = 25 * tierNum;
                             
-                            const isTargeted = crucibleTargetSlot === slot;
+                            const isTargeted = crucibleTargetSlot === slot && (item.refinement ?? 0) < 5;
                             const progressMet = crucibleKillProgress >= requiredKills;
                             
                             const isReady = isTargeted && progressMet && (item.refinement ?? 0) < 5;
@@ -295,7 +295,7 @@ export const CruciblePanel: React.FC = () => {
                                                         <button 
                                                             className={`${styles.refineBtnSmall} ${styles.cancelRed}`}
                                                             onClick={() => cancelCrucibleTarget()}
-                                                            style={{ width: '100%' }}
+                                                            style={{ width: '100%', gridColumn: 'span 2' }}
                                                         >
                                                             CANCEL
                                                         </button>

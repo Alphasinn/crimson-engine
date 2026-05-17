@@ -4,16 +4,18 @@
 // =============================================================================
 
 
-import React from 'react';
+import React, { useState } from 'react';
 import { getEnemiesForZone } from '../../data/enemies';
 import type { Zone, Enemy } from '../../engine/types';
 import styles from './enemyRoster.module.scss';
+import combatStyles from './combat.module.scss';
 import iconAttack from '../../assets/icons/attack.png';
 import iconStrength from '../../assets/icons/strength.png';
 import iconDefense from '../../assets/icons/defense.png';
 import iconArchery from '../../assets/icons/archery.png';
 import iconMagic from '../../assets/icons/blood_magic.png';
 import iconHp from '../../assets/icons/hp.png';
+import iconLootChest from '../../assets/icons/loot_chest.png';
 
 const STYLE_LABELS: Record<string, React.ReactNode> = {
     melee:   <><img src={iconAttack} className={styles.statIcon} alt="" /> Melee</>,
@@ -43,7 +45,7 @@ function StatBox({ icon, value, color }: { icon: string; value: number; color?: 
     );
 }
 
-function EnemyCard({ enemy, onFight }: { enemy: Enemy; onFight: (e: Enemy) => void }) {
+function EnemyCard({ enemy, onFight, onShowLoot }: { enemy: Enemy; onFight: (e: Enemy) => void; onShowLoot: (e: Enemy) => void }) {
     return (
         <div 
             className={`${styles.enemyCard} ${enemy.isElite ? styles.elite : ''}`}
@@ -59,7 +61,19 @@ function EnemyCard({ enemy, onFight }: { enemy: Enemy; onFight: (e: Enemy) => vo
                 </div>
 
                 <div className={styles.infoCol}>
-                    <div className={styles.enemyName}>{enemy.name}</div>
+                    <div className={styles.nameRow}>
+                        <div className={styles.enemyName}>{enemy.name}</div>
+                        <img 
+                            src={iconLootChest} 
+                            alt="Loot" 
+                            className={styles.lootChestIcon} 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onShowLoot(enemy);
+                            }}
+                            title="View Loot Table"
+                        />
+                    </div>
                     <div className={styles.styleRow}>
                         {STYLE_LABELS[enemy.attackCategory] ?? enemy.attackCategory}
                     </div>
@@ -102,6 +116,7 @@ interface EnemyRosterProps {
 
 export function EnemyRoster({ zone, onSelect }: EnemyRosterProps) {
     const enemies = getEnemiesForZone(zone.id);
+    const [lootEnemy, setLootEnemy] = useState<Enemy | null>(null);
 
     return (
         <div 
@@ -110,9 +125,35 @@ export function EnemyRoster({ zone, onSelect }: EnemyRosterProps) {
         >
             <div className={styles.cardRow}>
                 {enemies.map(enemy => (
-                    <EnemyCard key={enemy.id} enemy={enemy} onFight={onSelect} />
+                    <EnemyCard key={enemy.id} enemy={enemy} onFight={onSelect} onShowLoot={setLootEnemy} />
                 ))}
             </div>
+
+            {lootEnemy && (
+                <div className={combatStyles.modalOverlay} onClick={() => setLootEnemy(null)}>
+                    <div className={combatStyles.modal} onClick={e => e.stopPropagation()}>
+                        <div className={combatStyles.modalHeader}>
+                            <h3 className={combatStyles.modalTitle}>Loot Table: {lootEnemy.name}</h3>
+                            <button className={combatStyles.closeBtn} onClick={() => setLootEnemy(null)}>×</button>
+                        </div>
+                        <div className={combatStyles.modalBody}>
+                            {lootEnemy.lootTable.map(entry => {
+                                const totalWeight = lootEnemy.lootTable.reduce((sum, e) => sum + e.weight, 0);
+                                const chance = (entry.weight / totalWeight) * 100;
+                                return (
+                                    <div key={entry.itemId} className={combatStyles.lootRow}>
+                                        <span className={combatStyles.lootName}>{entry.itemName}</span>
+                                        <span className={combatStyles.lootChance}>{chance.toFixed(1)}%</span>
+                                    </div>
+                                );
+                            })}
+                            {lootEnemy.lootTable.length === 0 && (
+                                <div className={combatStyles.noLoot}>No drops for this enemy.</div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

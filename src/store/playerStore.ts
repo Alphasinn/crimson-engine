@@ -5,7 +5,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { PlayerSkills, PlayerEquipment, EquipmentItem, CombatStyle, InventoryItem, SkillName, TrainingMode, LootHistoryItem, UpgradeId, RitualDefinition } from '../engine/types';
+import type { PlayerSkills, PlayerEquipment, EquipmentItem, CombatStyle, InventoryItem, SkillName, TrainingMode, LootHistoryItem, UpgradeId, RitualDefinition, EquipmentSlot, SpecializationPath } from '../engine/types';
 import { getLevelFromXp, getXpForLevel } from '../engine/xpTable';
 import { useNotificationStore } from './notificationStore';
 import {
@@ -14,7 +14,6 @@ import {
 import { 
     isEligibleForTierShift, 
     getTierShiftCost, 
-    validateShiftResult,
     resolveNextTierItem
 } from '../engine/progression';
 import { ITEM_DATABASE } from '../data/items';
@@ -88,7 +87,7 @@ interface PlayerState {
     };
     // Actions
     gainXp: (skill: SkillName, amount: number) => void;
-    equipItem: (itemId: string) => void;
+    equipItem: (itemId: string, refinement?: number, specPath?: SpecializationPath) => void;
     unequipItem: (slot: keyof PlayerEquipment) => void;
     consumeFoodItem: (itemId: string) => void;
     setActiveStyle: (style: CombatStyle) => void;
@@ -205,9 +204,13 @@ export const usePlayerStore = create<PlayerState>()(
                 });
             },
 
-            equipItem: (itemId: string) => {
+            equipItem: (itemId: string, refinement?: number, specPath?: SpecializationPath) => {
                 set((state) => {
-                    const itemInInv = state.inventory.find(i => i.id === itemId);
+                    const itemInInv = state.inventory.find(i => 
+                        i.id === itemId && 
+                        (i.refinement ?? 0) === (refinement ?? 0) && 
+                        i.specPath === specPath
+                    );
                     if (!itemInInv) return state;
 
                     const itemTemplate = InventoryManager.resolveItem(itemId, ITEM_DATABASE);
@@ -216,15 +219,23 @@ export const usePlayerStore = create<PlayerState>()(
                     const slot = itemTemplate.slot;
                     const currentEquipped = state.equipment[slot] as EquipmentItem | undefined;
 
-                    let nextInventory = InventoryManager.removeItem(state.inventory, itemId, 1);
+                    // Remove the specific item from inventory
+                    let nextInventory = InventoryManager.removeItem(state.inventory, itemId, 1, refinement ?? 0, specPath);
 
                     if (currentEquipped) {
                         nextInventory = InventoryManager.addItem(nextInventory, currentEquipped, 1);
                     }
 
+                    // Create the item instance with preserved refinement and specPath
+                    const newItem: EquipmentItem = {
+                        ...itemTemplate,
+                        refinement: refinement ?? 0,
+                        specPath: specPath
+                    };
+
                     return {
                         inventory: nextInventory,
-                        equipment: { ...state.equipment, [slot]: itemTemplate }
+                        equipment: { ...state.equipment, [slot]: newItem }
                     };
                 });
             },
@@ -468,9 +479,9 @@ export const usePlayerStore = create<PlayerState>()(
                     // We need the item template to add it!
                     // Assuming we have ITEM_DATABASE or similar!
                     // Let's use ITEM_DATABASE!
-                    const template = ITEM_DATABASE[itemId];
+                    const template = ITEM_DATABASE.find(i => i.id === itemId);
                     if (template) {
-                        if (template.type === 'food') {
+                        if (!('slot' in template) && template.type === 'food') {
                             nextFood = InventoryManager.addItem(nextFood, template, quantity);
                         } else {
                             nextInventory = InventoryManager.addItem(nextInventory, template, quantity);
@@ -635,6 +646,7 @@ export const usePlayerStore = create<PlayerState>()(
             resetCrucibleSeal: () => set({ crucibleSealed: false }),
 
             setCrucibleTarget: (slot) => set((state) => {
+                if (!slot) return state;
                 const item = state.equipment[slot];
                 if (!item) return state;
                 
@@ -793,7 +805,7 @@ export const usePlayerStore = create<PlayerState>()(
         }),
         {
             name: 'crimson-engine-player',
-            version: 9,
+            version: 11,
             migrate: (persistedState: any, version: number) => {
                 if (version < 4) {
                     if (!persistedState.food || persistedState.food.length === 0) {
@@ -839,6 +851,42 @@ export const usePlayerStore = create<PlayerState>()(
                 if (version < 9) {
                     persistedState.crucibleTargetSlot = null;
                     persistedState.crucibleKillProgress = 0;
+                }
+                if (version < 10) {
+                    if (persistedState.inventory) {
+                        const mergedInventory: any[] = [];
+                        persistedState.inventory.forEach((item: any) => {
+                            const existingIndex = mergedInventory.findIndex(i => 
+                                i.id === item.id && 
+                                (i.refinement ?? 0) === (item.refinement ?? 0) && 
+                                i.specPath === item.specPath
+                            );
+                            if (existingIndex !== -1) {
+                                mergedInventory[existingIndex].quantity += item.quantity;
+                            } else {
+                                mergedInventory.push({ ...item });
+                            }
+                        });
+                        persistedState.inventory = mergedInventory;
+                    }
+                }
+                if (version < 11) {
+                    if (persistedState.inventory) {
+                        const mergedInventory: any[] = [];
+                        persistedState.inventory.forEach((item: any) => {
+                            const existingIndex = mergedInventory.findIndex(i => 
+                                i.id === item.id && 
+                                (i.refinement ?? 0) === (item.refinement ?? 0) && 
+                                i.specPath === item.specPath
+                            );
+                            if (existingIndex !== -1) {
+                                mergedInventory[existingIndex].quantity += item.quantity;
+                            } else {
+                                mergedInventory.push({ ...item });
+                            }
+                        });
+                        persistedState.inventory = mergedInventory;
+                    }
                 }
                 return persistedState;
             }

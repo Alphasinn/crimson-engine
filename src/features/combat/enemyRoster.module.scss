@@ -85,6 +85,25 @@
     margin-bottom: $space-1;
 }
 
+.nameRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.lootChestIcon {
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    mix-blend-mode: screen;
+    transition: transform 0.2s ease;
+    
+    &:hover {
+        transform: scale(1.2);
+    }
+}
+
 .styleRow {
     display: flex;
     align-items: center;
